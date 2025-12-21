@@ -1,30 +1,27 @@
-"I updated package.json. Now give me the complete code for lib/supabase.ts"   ...hee's what the json looks like "{
-  "name": "vite-react",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-"dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "@supabase/supabase-js": "^2.39.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.9.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "eslint": "^9.9.0",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.9",
-    "globals": "^15.9.0",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.0.1",
-    "vite": "^5.4.1"
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = 'https://ksramckuggspsqymcjpo.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ3MzYwMDAsImV4cCI6MjA1MDMxMjAwMH0.XEhCbV6tKr2cdeq50hIlbg_i370O2kg'
+
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
   }
-}"
+})
+
+export type Profile = {
+  id: string
+  email: string | null
+  name: string | null
+  bio: string | null
+  tagline: string | null
+  video_url: string | null
+  rate_per_30: number
+  qualities_offered: string[]
+  is_giver: boolean
+  available: boolean
+  created_at: string
+  updated_at: string
+}
