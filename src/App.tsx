@@ -38,6 +38,7 @@ interface Giver {
 function App() {
   const { user, loading } = useAuth()
   const [screen, setScreen] = useState('welcome')
+  const [needsAuth, setNeedsAuth] = useState(false)
   const [selectedGiver, setSelectedGiver] = useState<Giver | null>(null)
   const [givers, setGivers] = useState<Giver[]>(demoGivers)
   const [duration, setDuration] = useState(30)
@@ -51,6 +52,21 @@ function App() {
       .then(data => { if (data?.length > 0) setGivers(data) })
       .catch(() => {})
   }, [])
+
+  const handleAction = (action: string) => {
+    if (!user) {
+      setNeedsAuth(true)
+    } else {
+      setScreen(action)
+    }
+  }
+
+  useEffect(() => {
+    if (user && needsAuth) {
+      setNeedsAuth(false)
+      if (screen === 'welcome') setScreen('browse')
+    }
+  }, [user, needsAuth, screen])
 
   if (loading) {
     return (
@@ -68,7 +84,7 @@ function App() {
     )
   }
 
-  if (!user) {
+  if (needsAuth && !user) {
     return <Auth />
   }
 
@@ -139,7 +155,7 @@ function App() {
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => setScreen(item.id)}
+          onClick={() => handleAction(item.id)}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -181,11 +197,11 @@ function App() {
           </div>
           <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
           <p style={{ fontSize: '1.1rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.6, marginBottom: '50px' }}>
-            The human presence network. Give presence. Receive presence. Connect.
+            Everyone needs to be seen. Everyone can give that.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
-            <button style={btnSecondaryStyle} onClick={() => setScreen('give')}>Give Presence</button>
+            <button style={btnStyle} onClick={() => handleAction('browse')}>Find Presence</button>
+            <button style={btnSecondaryStyle} onClick={() => handleAction('give')}>Give Presence</button>
           </div>
         </div>
       </div>
@@ -428,7 +444,7 @@ function App() {
           <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
             <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
             <p>No sessions yet</p>
-            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => setScreen('browse')}>Find Someone</button>
+            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => handleAction('browse')}>Find Someone</button>
           </div>
           <Nav />
         </div>
