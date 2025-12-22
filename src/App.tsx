@@ -506,7 +506,7 @@ function App() {
             </p>
           </div>
 
-          <button style={btnStyle} onClick={() => setScreen('give')}>Continue</button>
+          <button style={btnStyle} onClick={() => requireAuth('give')}>Create Profile</button>
           <Nav />
         </div>
       </div>
