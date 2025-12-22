@@ -199,12 +199,14 @@ function App() {
             }} />
           </div>
           <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
-          <p style={{ fontSize: '1.1rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.6, marginBottom: '50px' }}>
-            Book a video call with someone eager to give you their full presence.
+          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '10px' }}>
+            People with a gift for presence - prepared, grounded, and committed to the craft of being there.
+          </p>
+          <p style={{ fontSize: '0.95rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.5, marginBottom: '50px' }}>
+            Watch their videos. Book when someone feels right.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
-            <button style={btnSecondaryStyle} onClick={() => setScreen('giverCode')}>Offer Presence</button>
+            <button style={btnStyle} onClick={() => setScreen('browse')}>See who's here</button>
           </div>
         </div>
       </div>
