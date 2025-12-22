@@ -177,29 +177,31 @@ function App() {
     </nav>
   )
 
+  const SignOutButton = () => user ? (
+    <button
+      onClick={signOut}
+      style={{
+        position: 'absolute',
+        top: '20px',
+        right: '20px',
+        padding: '8px 16px',
+        background: colors.bgSecondary,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '8px',
+        color: colors.textPrimary,
+        cursor: 'pointer',
+        fontSize: '0.9rem',
+      }}
+    >
+      Sign Out
+    </button>
+  ) : null
+
   if (screen === 'welcome') {
     return (
       <div style={containerStyle}>
-        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-          {user && (
-            <button
-              onClick={signOut}
-              style={{
-                position: 'absolute',
-                top: '20px',
-                right: '20px',
-                padding: '8px 16px',
-                background: colors.bgSecondary,
-                border: `1px solid ${colors.border}`,
-                borderRadius: '8px',
-                color: colors.textPrimary,
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-              }}
-            >
-              Sign Out
-            </button>
-          )}
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+          <SignOutButton />
           
           <div style={{
             width: '80px',
@@ -234,7 +236,9 @@ function App() {
   if (screen === 'browse') {
     return (
       <div style={containerStyle}>
-        <div style={screenStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+          
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
@@ -296,7 +300,9 @@ function App() {
 
     return (
       <div style={containerStyle}>
-        <div style={screenStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+          
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('browse')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <div style={{ width: '40px' }} />
@@ -410,7 +416,9 @@ function App() {
   if (screen === 'giverIntro') {
     return (
       <div style={containerStyle}>
-        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+          <SignOutButton />
+          
           <div style={{
             width: '80px',
             height: '80px',
@@ -444,7 +452,9 @@ function App() {
   if (screen === 'giverCode') {
     return (
       <div style={containerStyle}>
-        <div style={screenStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+          
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>The Giver Code</h2>
@@ -496,7 +506,7 @@ function App() {
             </p>
           </div>
 
-          <button style={btnStyle} onClick={() => requireAuth('give')}>This feels like me</button>
+          <button style={btnStyle} onClick={() => setScreen('give')}>Continue</button>
           <Nav />
         </div>
       </div>
@@ -504,9 +514,26 @@ function App() {
   }
 
   if (screen === 'give') {
+    if (!user) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+              <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+              <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Account</h2>
+              <div style={{ width: '40px' }} />
+            </div>
+            <Auth onBack={() => setScreen('giverCode')} />
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div style={containerStyle}>
-        <div style={screenStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+          
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Profile</h2>
@@ -558,7 +585,9 @@ function App() {
   if (screen === 'sessions') {
     return (
       <div style={containerStyle}>
-        <div style={screenStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+          
           <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
           <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
             <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
