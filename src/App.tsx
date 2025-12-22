@@ -153,7 +153,7 @@ function App() {
     <nav style={navStyle}>
       {[
         { id: 'browse', icon: '🔍', label: 'Find' },
-        { id: 'giverCode', icon: '🌱', label: 'Offer' },
+        { id: 'giverIntro', icon: '🌱', label: 'Offer' },
         { id: 'sessions', icon: '📅', label: 'Sessions' },
       ].map(item => (
         <button
@@ -164,7 +164,7 @@ function App() {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '5px',
-            color: screen === item.id ? colors.accent : colors.textMuted,
+            color: screen === item.id || screen === 'giverCode' ? colors.accent : colors.textMuted,
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -199,7 +199,7 @@ function App() {
             }} />
           </div>
           <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
-          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '10px' }}>
+          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '10px' }}>
             People with a gift for presence - prepared, grounded, and committed to the craft of being there.
           </p>
           <p style={{ fontSize: '0.95rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.5, marginBottom: '50px' }}>
@@ -207,6 +207,7 @@ function App() {
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => setScreen('browse')}>See who's here</button>
+            <button style={btnSecondaryStyle} onClick={() => setScreen('giverIntro')}>Offer Presence</button>
           </div>
         </div>
       </div>
@@ -393,22 +394,49 @@ function App() {
     )
   }
 
+  if (screen === 'giverIntro') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{
+            width: '80px',
+            height: '80px',
+            border: `2px solid ${colors.accent}`,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '40px',
+          }}>
+            <span style={{ fontSize: '2.5rem' }}>🌱</span>
+          </div>
+          
+          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '20px' }}>
+            You might be the person others come to when they need to talk. The one who listens without making it about yourself. The one who stays steady.
+          </p>
+          
+          <p style={{ fontSize: '1.1rem', color: colors.textSecondary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '60px' }}>
+            If that sounds like you, there's a place for you here.
+          </p>
+
+          <div style={{ width: '100%', maxWidth: '320px' }}>
+            <button style={btnStyle} onClick={() => setScreen('giverCode')}>Tell me more</button>
+            <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('welcome')}>Back</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'giverCode') {
     return (
       <div style={containerStyle}>
         <div style={screenStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-            <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>The Giver Code</h2>
             <div style={{ width: '40px' }} />
           </div>
-          
-          <p style={{ color: colors.textSecondary, marginBottom: '15px', lineHeight: 1.6 }}>
-            You might be the person others come to when they need to talk. The one who listens without making it about yourself. The one who stays steady.
-          </p>
-          <p style={{ color: colors.textSecondary, marginBottom: '30px', lineHeight: 1.6 }}>
-            If that sounds like you, read this.
-          </p>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
             <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
@@ -444,93 +472,4 @@ function App() {
           </div>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
-              What draws you to this?
-            </h3>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              Some want the stillness it brings. Some want to learn from lives different than theirs. Some want to be reminded that presence itself has value. Some want to step outside themselves for an hour.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              Whatever your reason - that's the right one.
-            </p>
-          </div>
-
-          <button style={btnStyle} onClick={() => requireAuth('give')}>This feels like me</button>
-          <Nav />
-        </div>
-      </div>
-    )
-  }
-
-  if (screen === 'give') {
-    return (
-      <div style={containerStyle}>
-        <div style={screenStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-            <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Profile</h2>
-            <div style={{ width: '40px' }} />
-          </div>
-          <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Share your presence with those who need it.</p>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your name</label>
-            <input style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }} placeholder="How should people know you?" />
-          </div>
-          
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your tagline</label>
-            <input style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }} placeholder="One sentence about your presence..." />
-          </div>
-
-          <button style={btnStyle} onClick={() => setScreen('giveConfirmation')}>Create Profile</button>
-          <Nav />
-        </div>
-      </div>
-    )
-  }
-
-  if (screen === 'giveConfirmation') {
-    return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-          <div style={{
-            width: '100px',
-            height: '100px',
-            background: colors.accentSoft,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '30px',
-            fontSize: '3rem',
-            color: colors.accent,
-          }}>✓</div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Created</h1>
-          <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>You're now visible to people seeking presence.</p>
-          <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('browse')}>See Other Givers</button>
-        </div>
-      </div>
-    )
-  }
-
-  if (screen === 'sessions') {
-    return (
-      <div style={containerStyle}>
-        <div style={screenStyle}>
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
-            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
-            <p>No sessions yet</p>
-            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => setScreen('browse')}>Find Someone</button>
-          </div>
-          <Nav />
-        </div>
-      </div>
-    )
-  }
-
-  return null
-}
-
-export default App
+            <h3 style={{ fon
