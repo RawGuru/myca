@@ -1,7 +1,6 @@
 // src/components/Auth.tsx
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
 
 const colors = {
   bgPrimary: '#0a0a0a',
@@ -12,7 +11,11 @@ const colors = {
   border: '#2a2a2a',
 }
 
-export default function Auth() {
+interface AuthProps {
+  onBack: () => void
+}
+
+export default function Auth({ onBack }: AuthProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -38,16 +41,6 @@ export default function Auth() {
     setLoading(false)
   }
 
-  const handleSocialAuth = async (provider: 'google' | 'apple') => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: window.location.origin
-      }
-    })
-    if (error) setError(error.message)
-  }
-
   return (
     <div style={{
       fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
@@ -66,58 +59,33 @@ export default function Auth() {
         padding: '40px',
         borderRadius: '20px',
         border: `1px solid ${colors.border}`,
+        position: 'relative',
       }}>
-        <h2 style={{ marginBottom: '30px', fontFamily: 'Georgia, serif', fontSize: '2rem' }}>
+        <button
+          onClick={onBack}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            left: '20px',
+            width: '36px',
+            height: '36px',
+            borderRadius: '50%',
+            background: colors.bgPrimary,
+            border: `1px solid ${colors.border}`,
+            color: colors.textPrimary,
+            cursor: 'pointer',
+            fontSize: '1.2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          ←
+        </button>
+
+        <h2 style={{ marginBottom: '30px', marginTop: '20px', fontFamily: 'Georgia, serif', fontSize: '2rem', textAlign: 'center' }}>
           {mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </h2>
-        
-        <div style={{ marginBottom: '30px' }}>
-          <button
-            onClick={() => handleSocialAuth('google')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              background: '#fff',
-              color: '#000',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              marginBottom: '12px',
-              fontWeight: 500,
-            }}
-          >
-            Continue with Google
-          </button>
-          
-          <button
-            onClick={() => handleSocialAuth('apple')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              background: '#000',
-              color: '#fff',
-              border: `1px solid ${colors.border}`,
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-          >
-            Continue with Apple
-          </button>
-        </div>
-
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px',
-          marginBottom: '30px',
-        }}>
-          <div style={{ flex: 1, height: '1px', background: colors.border }} />
-          <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>or</span>
-          <div style={{ flex: 1, height: '1px', background: colors.border }} />
-        </div>
 
         <form onSubmit={handleSubmit}>
           <input
@@ -184,6 +152,7 @@ export default function Auth() {
             color: error.includes('Check your email') ? '#4a9c6d' : '#dc2626',
             marginTop: '15px',
             fontSize: '0.9rem',
+            textAlign: 'center',
           }}>
             {error}
           </p>
@@ -198,6 +167,8 @@ export default function Auth() {
             color: colors.accent,
             cursor: 'pointer',
             fontSize: '0.9rem',
+            width: '100%',
+            textAlign: 'center',
           }}
         >
           {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
