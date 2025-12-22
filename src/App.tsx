@@ -472,4 +472,93 @@ function App() {
           </div>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px' }}>
-            <h3 style={{ fon
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
+              What draws you to this?
+            </h3>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              Some want the stillness it brings. Some want to learn from lives different than theirs. Some want to be reminded that presence itself has value. Some want to step outside themselves for an hour.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              Whatever your reason - that's the right one.
+            </p>
+          </div>
+
+          <button style={btnStyle} onClick={() => requireAuth('give')}>This feels like me</button>
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'give') {
+    return (
+      <div style={containerStyle}>
+        <div style={screenStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+            <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Profile</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+          <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Share your presence with those who need it.</p>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your name</label>
+            <input style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }} placeholder="How should people know you?" />
+          </div>
+          
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your tagline</label>
+            <input style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }} placeholder="One sentence about your presence..." />
+          </div>
+
+          <button style={btnStyle} onClick={() => setScreen('giveConfirmation')}>Create Profile</button>
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'giveConfirmation') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div style={{
+            width: '100px',
+            height: '100px',
+            background: colors.accentSoft,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '30px',
+            fontSize: '3rem',
+            color: colors.accent,
+          }}>✓</div>
+          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Created</h1>
+          <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>You're now visible to people seeking presence.</p>
+          <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('browse')}>See Other Givers</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'sessions') {
+    return (
+      <div style={containerStyle}>
+        <div style={screenStyle}>
+          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
+            <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
+            <p>No sessions yet</p>
+            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => setScreen('browse')}>Find Someone</button>
+          </div>
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  return null
+}
+
+export default App
