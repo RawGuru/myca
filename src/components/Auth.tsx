@@ -1,6 +1,7 @@
 // src/components/Auth.tsx
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { supabase } from '../lib/supabase'
 
 const colors = {
   bgPrimary: '#0a0a0a',
@@ -39,6 +40,16 @@ export default function Auth({ onBack }: AuthProps) {
     }
     
     setLoading(false)
+  }
+
+  const handleSocialAuth = async (provider: 'google' | 'apple' | 'facebook') => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: {
+        redirectTo: window.location.origin
+      }
+    })
+    if (error) setError(error.message)
   }
 
   return (
@@ -86,6 +97,72 @@ export default function Auth({ onBack }: AuthProps) {
         <h2 style={{ marginBottom: '30px', marginTop: '20px', fontFamily: 'Georgia, serif', fontSize: '2rem', textAlign: 'center' }}>
           {mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </h2>
+
+        <div style={{ marginBottom: '30px' }}>
+          <button
+            onClick={() => handleSocialAuth('google')}
+            style={{
+              width: '100%',
+              padding: '15px',
+              background: '#fff',
+              color: '#000',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              marginBottom: '12px',
+              fontWeight: 500,
+            }}
+          >
+            Continue with Google
+          </button>
+          
+          <button
+            onClick={() => handleSocialAuth('apple')}
+            style={{
+              width: '100%',
+              padding: '15px',
+              background: '#000',
+              color: '#fff',
+              border: `1px solid ${colors.border}`,
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              marginBottom: '12px',
+              fontWeight: 500,
+            }}
+          >
+            Continue with Apple
+          </button>
+
+          <button
+            onClick={() => handleSocialAuth('facebook')}
+            style={{
+              width: '100%',
+              padding: '15px',
+              background: '#1877F2',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              fontWeight: 500,
+            }}
+          >
+            Continue with Facebook
+          </button>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '15px',
+          marginBottom: '30px',
+        }}>
+          <div style={{ flex: 1, height: '1px', background: colors.border }} />
+          <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>or</span>
+          <div style={{ flex: 1, height: '1px', background: colors.border }} />
+        </div>
 
         <form onSubmit={handleSubmit}>
           <input
