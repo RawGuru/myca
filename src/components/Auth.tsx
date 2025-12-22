@@ -20,6 +20,7 @@ export default function Auth({ onBack }: AuthProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const { signIn, signUp } = useAuth()
@@ -42,7 +43,7 @@ export default function Auth({ onBack }: AuthProps) {
     setLoading(false)
   }
 
-  const handleSocialAuth = async (provider: 'google' | 'apple' | 'facebook') => {
+  const handleSocialAuth = async (provider: 'google' | 'facebook') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -116,24 +117,6 @@ export default function Auth({ onBack }: AuthProps) {
           >
             Continue with Google
           </button>
-          
-          <button
-            onClick={() => handleSocialAuth('apple')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              background: '#000',
-              color: '#fff',
-              border: `1px solid ${colors.border}`,
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              marginBottom: '12px',
-              fontWeight: 500,
-            }}
-          >
-            Continue with Apple
-          </button>
 
           <button
             onClick={() => handleSocialAuth('facebook')}
@@ -184,25 +167,44 @@ export default function Auth({ onBack }: AuthProps) {
             }}
           />
           
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            style={{
-              width: '100%',
-              padding: '15px',
-              marginBottom: '20px',
-              background: colors.bgPrimary,
-              border: `1px solid ${colors.border}`,
-              borderRadius: '12px',
-              color: colors.textPrimary,
-              fontSize: '1rem',
-              boxSizing: 'border-box',
-            }}
-          />
+          <div style={{ position: 'relative', marginBottom: '20px' }}>
+            <input
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={6}
+              style={{
+                width: '100%',
+                padding: '15px',
+                paddingRight: '50px',
+                background: colors.bgPrimary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '12px',
+                color: colors.textPrimary,
+                fontSize: '1rem',
+                boxSizing: 'border-box',
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              style={{
+                position: 'absolute',
+                right: '15px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: colors.textSecondary,
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              {showPassword ? 'Hide' : 'Show'}
+            </button>
+          </div>
 
           <button
             type="submit"
