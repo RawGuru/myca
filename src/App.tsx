@@ -39,6 +39,7 @@ function App() {
   const { user, loading } = useAuth()
   const [screen, setScreen] = useState('welcome')
   const [needsAuth, setNeedsAuth] = useState(false)
+  const [returnToScreen, setReturnToScreen] = useState('')
   const [selectedGiver, setSelectedGiver] = useState<Giver | null>(null)
   const [givers, setGivers] = useState<Giver[]>(demoGivers)
   const [duration, setDuration] = useState(30)
@@ -53,20 +54,22 @@ function App() {
       .catch(() => {})
   }, [])
 
-  const handleAction = (action: string) => {
+  useEffect(() => {
+    if (user && needsAuth && returnToScreen) {
+      setNeedsAuth(false)
+      setScreen(returnToScreen)
+      setReturnToScreen('')
+    }
+  }, [user, needsAuth, returnToScreen])
+
+  const requireAuth = (nextScreen: string) => {
     if (!user) {
+      setReturnToScreen(nextScreen)
       setNeedsAuth(true)
     } else {
-      setScreen(action)
+      setScreen(nextScreen)
     }
   }
-
-  useEffect(() => {
-    if (user && needsAuth) {
-      setNeedsAuth(false)
-      if (screen === 'welcome') setScreen('browse')
-    }
-  }, [user, needsAuth, screen])
 
   if (loading) {
     return (
@@ -85,7 +88,7 @@ function App() {
   }
 
   if (needsAuth && !user) {
-    return <Auth />
+    return <Auth onBack={() => { setNeedsAuth(false); setReturnToScreen(''); }} />
   }
 
   const containerStyle: React.CSSProperties = {
@@ -150,12 +153,12 @@ function App() {
     <nav style={navStyle}>
       {[
         { id: 'browse', icon: '🔍', label: 'Find' },
-        { id: 'give', icon: '✋', label: 'Give' },
+        { id: 'giverCode', icon: '🌱', label: 'Offer' },
         { id: 'sessions', icon: '📅', label: 'Sessions' },
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => handleAction(item.id)}
+          onClick={() => setScreen(item.id)}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -197,11 +200,11 @@ function App() {
           </div>
           <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
           <p style={{ fontSize: '1.1rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.6, marginBottom: '50px' }}>
-            Everyone needs to be seen. Everyone can give that.
+            Book a video call with someone eager to give you their full presence.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => handleAction('browse')}>Find Presence</button>
-            <button style={btnSecondaryStyle} onClick={() => handleAction('give')}>Give Presence</button>
+            <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
+            <button style={btnSecondaryStyle} onClick={() => setScreen('giverCode')}>Offer Presence</button>
           </div>
         </div>
       </div>
@@ -212,11 +215,15 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={screenStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
             <div style={{ width: '40px' }} />
           </div>
+          
+          <p style={{ color: colors.textSecondary, marginBottom: '30px', fontSize: '0.95rem', lineHeight: 1.5 }}>
+            Watch their videos. Find someone who feels right. Book when you're ready.
+          </p>
           
           {givers.map(giver => (
             <div key={giver.id} style={cardStyle} onClick={() => { setSelectedGiver(giver); setScreen('profile'); }}>
@@ -352,7 +359,7 @@ function App() {
               <span style={{ color: colors.textSecondary }}>Total</span>
               <span style={{ fontSize: '1.5rem', fontWeight: 600 }}>${price}</span>
             </div>
-            <button style={btnStyle} onClick={() => setScreen('confirmation')}>Book Session</button>
+            <button style={btnStyle} onClick={() => requireAuth('confirmation')}>Book Session</button>
           </div>
           <Nav />
         </div>
@@ -384,13 +391,82 @@ function App() {
     )
   }
 
-  if (screen === 'give') {
+  if (screen === 'giverCode') {
     return (
       <div style={containerStyle}>
         <div style={screenStyle}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Give Presence</h2>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>The Giver Code</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+          
+          <p style={{ color: colors.textSecondary, marginBottom: '15px', lineHeight: 1.6 }}>
+            You might be the person others come to when they need to talk. The one who listens without making it about yourself. The one who stays steady.
+          </p>
+          <p style={{ color: colors.textSecondary, marginBottom: '30px', lineHeight: 1.6 }}>
+            If that sounds like you, read this.
+          </p>
+
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
+              What happens when you do this:
+            </h3>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              Your own noise quiets. For this session, your life pauses. You get to witness someone's actual experience. You learn how other people carry what they carry. You discover that you don't need to fix anything to be valuable. You finish a little more connected and a little less stuck in your own loop.
+            </p>
+          </div>
+
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
+              What makes that possible:
+            </h3>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              You listen. Fully. Without planning what to say next.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              You stay steady. If they're overwhelmed, you remain grounded. They can feel that.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              You make it safe. Whatever they bring, you can hold it. They can say the thing they haven't said anywhere else.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              You reflect back what you hear. Their words. Their feeling. So they see themselves more clearly.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              You keep yourself out of the way. For this session, your needs stay outside the room.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              You let go when it ends. You show up fully, and when it's over, you release it. You serve their strength.
+            </p>
+          </div>
+
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px' }}>
+            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
+              What draws you to this?
+            </h3>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
+              Some want the stillness it brings. Some want to learn from lives different than theirs. Some want to be reminded that presence itself has value. Some want to step outside themselves for an hour.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              Whatever your reason - that's the right one.
+            </p>
+          </div>
+
+          <button style={btnStyle} onClick={() => requireAuth('give')}>This feels like me</button>
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'give') {
+    return (
+      <div style={containerStyle}>
+        <div style={screenStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+            <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Profile</h2>
             <div style={{ width: '40px' }} />
           </div>
           <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Share your presence with those who need it.</p>
@@ -444,7 +520,7 @@ function App() {
           <div style={{ textAlign: 'center', padding: '60px 20px', color: colors.textMuted }}>
             <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
             <p>No sessions yet</p>
-            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => handleAction('browse')}>Find Someone</button>
+            <button style={{ ...btnStyle, marginTop: '30px', maxWidth: '200px' }} onClick={() => setScreen('browse')}>Find Someone</button>
           </div>
           <Nav />
         </div>
