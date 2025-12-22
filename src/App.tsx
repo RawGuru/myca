@@ -5,7 +5,7 @@ import Auth from './components/Auth'
 
 const CONFIG = {
   SUPABASE_URL: 'https://ksramckuggspsqymcjpo.supabase.co',
-SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTMwODgsImV4cCI6MjA4MTgyOTA4OH0.CszijxFZU09QKH2aJbv6TjniWUJ1muJDnHXSe_u8DJc',
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTMwODgsImV4cCI6MjA4MTgyOTA4OH0.CszijxFZU09QKH2aJbv6TjniWUJ1muJDnHXSe_u8DJc',
 }
 
 const colors = {
@@ -36,7 +36,7 @@ interface Giver {
 }
 
 function App() {
-  const { user, loading } = useAuth()
+  const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
   const [needsAuth, setNeedsAuth] = useState(false)
   const [returnToScreen, setReturnToScreen] = useState('')
@@ -181,6 +181,26 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+          {user && (
+            <button
+              onClick={signOut}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                padding: '8px 16px',
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                color: colors.textPrimary,
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              Sign Out
+            </button>
+          )}
+          
           <div style={{
             width: '80px',
             height: '80px',
@@ -199,14 +219,11 @@ function App() {
             }} />
           </div>
           <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
-          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '10px' }}>
-            People with a gift for presence - prepared, grounded, and committed to the craft of being there.
-          </p>
-          <p style={{ fontSize: '0.95rem', color: colors.textSecondary, maxWidth: '300px', lineHeight: 1.5, marginBottom: '50px' }}>
-            Watch their videos. Book when someone feels right.
+          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
+            People with a gift for presence. Prepared, grounded, and committed to the craft of being there.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>See who's here</button>
+            <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
             <button style={btnSecondaryStyle} onClick={() => setScreen('giverIntro')}>Offer Presence</button>
           </div>
         </div>
@@ -218,15 +235,11 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={screenStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
             <div style={{ width: '40px' }} />
           </div>
-          
-          <p style={{ color: colors.textSecondary, marginBottom: '30px', fontSize: '0.95rem', lineHeight: 1.5 }}>
-            Watch their videos. Find someone who feels right. Book when you're ready.
-          </p>
           
           {givers.map(giver => (
             <div key={giver.id} style={cardStyle} onClick={() => { setSelectedGiver(giver); setScreen('profile'); }}>
@@ -415,7 +428,7 @@ function App() {
             You might be the person others come to when they need to talk. The one who listens without making it about yourself. The one who stays steady.
           </p>
           
-          <p style={{ fontSize: '1.1rem', color: colors.textSecondary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '60px' }}>
+          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '60px' }}>
             If that sounds like you, there's a place for you here.
           </p>
 
@@ -479,7 +492,7 @@ function App() {
               Some want the stillness it brings. Some want to learn from lives different than theirs. Some want to be reminded that presence itself has value. Some want to step outside themselves for an hour.
             </p>
             <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              Whatever your reason - that's the right one.
+              Whatever your reason, that's the right one.
             </p>
           </div>
 
