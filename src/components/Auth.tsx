@@ -43,7 +43,7 @@ export default function Auth({ onBack }: AuthProps) {
     setLoading(false)
   }
 
-  const handleSocialAuth = async (provider: 'google' | 'facebook') => {
+  const handleSocialAuth = async (provider: 'google') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -111,28 +111,10 @@ export default function Auth({ onBack }: AuthProps) {
               borderRadius: '12px',
               fontSize: '1rem',
               cursor: 'pointer',
-              marginBottom: '12px',
               fontWeight: 500,
             }}
           >
             Continue with Google
-          </button>
-
-          <button
-            onClick={() => handleSocialAuth('facebook')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              background: '#1877F2',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-          >
-            Continue with Facebook
           </button>
         </div>
 
