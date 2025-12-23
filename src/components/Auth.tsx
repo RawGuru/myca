@@ -55,91 +55,100 @@ export default function Auth({ onBack }: AuthProps) {
 
   return (
     <div style={{
-      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-      background: colors.bgPrimary,
-      color: colors.textPrimary,
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
+      background: colors.bgSecondary,
+      padding: '30px',
+      borderRadius: '20px',
+      border: `1px solid ${colors.border}`,
+      position: 'relative',
     }}>
-      <div style={{
-        maxWidth: '400px',
-        width: '100%',
-        background: colors.bgSecondary,
-        padding: '40px',
-        borderRadius: '20px',
-        border: `1px solid ${colors.border}`,
-        position: 'relative',
-      }}>
-        <button
-          onClick={onBack}
-          style={{
-            position: 'absolute',
-            top: '20px',
-            left: '20px',
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            background: colors.bgPrimary,
-            border: `1px solid ${colors.border}`,
-            color: colors.textPrimary,
-            cursor: 'pointer',
-            fontSize: '1.2rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          ←
-        </button>
-
-        <h2 style={{ marginBottom: '30px', marginTop: '20px', fontFamily: 'Georgia, serif', fontSize: '2rem', textAlign: 'center' }}>
-          {mode === 'signin' ? 'Sign In' : 'Sign Up'}
-        </h2>
-
-        <div style={{ marginBottom: '30px' }}>
-          <button
-            onClick={() => handleSocialAuth('google')}
-            style={{
-              width: '100%',
-              padding: '15px',
-              background: '#fff',
-              color: '#000',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-          >
-            Continue with Google
-          </button>
-        </div>
-
-        <div style={{
+      <button
+        onClick={onBack}
+        style={{
+          position: 'absolute',
+          top: '15px',
+          left: '15px',
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          background: colors.bgPrimary,
+          border: `1px solid ${colors.border}`,
+          color: colors.textPrimary,
+          cursor: 'pointer',
+          fontSize: '1.2rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '15px',
-          marginBottom: '30px',
-        }}>
-          <div style={{ flex: 1, height: '1px', background: colors.border }} />
-          <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>or</span>
-          <div style={{ flex: 1, height: '1px', background: colors.border }} />
-        </div>
+          justifyContent: 'center',
+        }}
+      >
+        ←
+      </button>
 
-        <form onSubmit={handleSubmit}>
+      <h2 style={{ marginBottom: '25px', marginTop: '10px', fontFamily: 'Georgia, serif', fontSize: '2rem', textAlign: 'center' }}>
+        {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+      </h2>
+
+      <div style={{ marginBottom: '25px' }}>
+        <button
+          onClick={() => handleSocialAuth('google')}
+          style={{
+            width: '100%',
+            padding: '15px',
+            background: '#fff',
+            color: '#000',
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '1rem',
+            cursor: 'pointer',
+            fontWeight: 500,
+          }}
+        >
+          Continue with Google
+        </button>
+      </div>
+
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '15px',
+        marginBottom: '25px',
+      }}>
+        <div style={{ flex: 1, height: '1px', background: colors.border }} />
+        <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>or</span>
+        <div style={{ flex: 1, height: '1px', background: colors.border }} />
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          style={{
+            width: '100%',
+            padding: '15px',
+            marginBottom: '12px',
+            background: colors.bgPrimary,
+            border: `1px solid ${colors.border}`,
+            borderRadius: '12px',
+            color: colors.textPrimary,
+            fontSize: '1rem',
+            boxSizing: 'border-box',
+          }}
+        />
+        
+        <div style={{ position: 'relative', marginBottom: '20px' }}>
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
+            minLength={6}
             style={{
               width: '100%',
               padding: '15px',
-              marginBottom: '12px',
+              paddingRight: '50px',
               background: colors.bgPrimary,
               border: `1px solid ${colors.border}`,
               borderRadius: '12px',
@@ -148,93 +157,71 @@ export default function Auth({ onBack }: AuthProps) {
               boxSizing: 'border-box',
             }}
           />
-          
-          <div style={{ position: 'relative', marginBottom: '20px' }}>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              style={{
-                width: '100%',
-                padding: '15px',
-                paddingRight: '50px',
-                background: colors.bgPrimary,
-                border: `1px solid ${colors.border}`,
-                borderRadius: '12px',
-                color: colors.textPrimary,
-                fontSize: '1rem',
-                boxSizing: 'border-box',
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              style={{
-                position: 'absolute',
-                right: '15px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                background: 'none',
-                border: 'none',
-                color: colors.textSecondary,
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-              }}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          </div>
-
           <button
-            type="submit"
-            disabled={loading}
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
             style={{
-              width: '100%',
-              padding: '15px',
-              background: colors.accent,
-              color: colors.bgPrimary,
+              position: 'absolute',
+              right: '15px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              background: 'none',
               border: 'none',
-              borderRadius: '12px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              opacity: loading ? 0.6 : 1,
+              color: colors.textSecondary,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
             }}
           >
-            {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
+            {showPassword ? 'Hide' : 'Show'}
           </button>
-        </form>
-
-        {error && (
-          <p style={{
-            color: error.includes('Check your email') ? '#4a9c6d' : '#dc2626',
-            marginTop: '15px',
-            fontSize: '0.9rem',
-            textAlign: 'center',
-          }}>
-            {error}
-          </p>
-        )}
+        </div>
 
         <button
-          onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+          type="submit"
+          disabled={loading}
           style={{
-            marginTop: '20px',
-            background: 'none',
-            border: 'none',
-            color: colors.accent,
-            cursor: 'pointer',
-            fontSize: '0.9rem',
             width: '100%',
-            textAlign: 'center',
+            padding: '15px',
+            background: colors.accent,
+            color: colors.bgPrimary,
+            border: 'none',
+            borderRadius: '12px',
+            fontSize: '1rem',
+            fontWeight: 600,
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.6 : 1,
           }}
         >
-          {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+          {loading ? 'Loading...' : mode === 'signin' ? 'Sign In' : 'Sign Up'}
         </button>
-      </div>
+      </form>
+
+      {error && (
+        <p style={{
+          color: error.includes('Check your email') ? '#4a9c6d' : '#dc2626',
+          marginTop: '15px',
+          fontSize: '0.9rem',
+          textAlign: 'center',
+        }}>
+          {error}
+        </p>
+      )}
+
+      <button
+        onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+        style={{
+          marginTop: '15px',
+          background: 'none',
+          border: 'none',
+          color: colors.accent,
+          cursor: 'pointer',
+          fontSize: '0.9rem',
+          width: '100%',
+          textAlign: 'center',
+        }}
+      >
+        {mode === 'signin' ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+      </button>
     </div>
   )
 }
