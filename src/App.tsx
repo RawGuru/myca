@@ -227,6 +227,19 @@ function App() {
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
             <button style={btnSecondaryStyle} onClick={() => setScreen('giverIntro')}>Offer Presence</button>
+            {!user && (
+              <button 
+                style={{ 
+                  ...btnSecondaryStyle, 
+                  marginBottom: 0,
+                  marginTop: '10px',
+                  fontSize: '0.9rem'
+                }} 
+                onClick={() => setNeedsAuth(true)}
+              >
+                Sign In
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -507,10 +520,7 @@ function App() {
           </div>
 
           {!user ? (
-            <div style={{ marginTop: '-25px' }}>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
-              <Auth onBack={() => setScreen('giverIntro')} />
-            </div>
+            <Auth onBack={() => setScreen('giverIntro')} />
           ) : (
             <button style={btnStyle} onClick={() => setScreen('give')}>Create Profile</button>
           )}
