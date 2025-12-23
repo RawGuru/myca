@@ -507,10 +507,10 @@ function App() {
           </div>
 
           {!user ? (
-            <>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '5px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
+            <div style={{ marginTop: '-10px' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
               <Auth onBack={() => setScreen('giverIntro')} />
-            </>
+            </div>
           ) : (
             <button style={btnStyle} onClick={() => setScreen('give')}>Create Profile</button>
           )}
