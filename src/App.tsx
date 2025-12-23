@@ -508,7 +508,7 @@ function App() {
 
           {!user ? (
             <>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '5px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
               <Auth onBack={() => setScreen('giverIntro')} />
             </>
           ) : (
