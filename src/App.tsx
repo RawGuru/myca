@@ -506,7 +506,15 @@ function App() {
             </p>
           </div>
 
-          <button style={btnStyle} onClick={() => requireAuth('give')}>Create Profile</button>
+          {!user ? (
+            <>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
+              <Auth onBack={() => setScreen('giverIntro')} />
+            </>
+          ) : (
+            <button style={btnStyle} onClick={() => setScreen('give')}>Create Profile</button>
+          )}
+          
           <Nav />
         </div>
       </div>
