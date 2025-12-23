@@ -507,7 +507,7 @@ function App() {
           </div>
 
           {!user ? (
-            <div style={{ marginTop: '-30px' }}>
+            <div style={{ marginTop: '-25px' }}>
               <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', fontFamily: 'Georgia, serif', textAlign: 'center' }}>Create your account</h3>
               <Auth onBack={() => setScreen('giverIntro')} />
             </div>
