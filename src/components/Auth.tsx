@@ -20,6 +20,7 @@ export default function Auth({ onBack }: AuthProps) {
   const [mode, setMode] = useState<'signin' | 'signup'>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -28,6 +29,12 @@ export default function Auth({ onBack }: AuthProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match')
+      return
+    }
+
     setLoading(true)
 
     const { error } = mode === 'signin' 
@@ -137,7 +144,7 @@ export default function Auth({ onBack }: AuthProps) {
           }}
         />
         
-        <div style={{ position: 'relative', marginBottom: '20px' }}>
+        <div style={{ position: 'relative', marginBottom: mode === 'signup' ? '12px' : '20px' }}>
           <input
             type={showPassword ? 'text' : 'password'}
             placeholder="Password"
@@ -176,6 +183,28 @@ export default function Auth({ onBack }: AuthProps) {
           </button>
         </div>
 
+        {mode === 'signup' && (
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            minLength={6}
+            style={{
+              width: '100%',
+              padding: '15px',
+              marginBottom: '20px',
+              background: colors.bgPrimary,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '12px',
+              color: colors.textPrimary,
+              fontSize: '1rem',
+              boxSizing: 'border-box',
+            }}
+          />
+        )}
+
         <button
           type="submit"
           disabled={loading}
@@ -208,7 +237,11 @@ export default function Auth({ onBack }: AuthProps) {
       )}
 
       <button
-        onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+        onClick={() => {
+          setMode(mode === 'signin' ? 'signup' : 'signin')
+          setError(null)
+          setConfirmPassword('')
+        }}
         style={{
           marginTop: '15px',
           background: 'none',
