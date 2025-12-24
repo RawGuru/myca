@@ -781,52 +781,79 @@ function App() {
 
   // Video recording functions
   const startRecording = async (retryCount = 0) => {
+    console.log('[Camera] Starting recording, retry count:', retryCount)
+
     try {
       setVideoError('')
+      console.log('[Camera] Requesting camera and microphone access...')
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: true
       })
+
+      console.log('[Camera] Camera access granted, stream tracks:', stream.getTracks().map(t => ({ kind: t.kind, enabled: t.enabled, readyState: t.readyState })))
       setMediaStream(stream)
 
-      const recorder = new MediaRecorder(stream, {
-        mimeType: MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
-          ? 'video/webm;codecs=vp9'
-          : 'video/webm'
-      })
+      const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9')
+        ? 'video/webm;codecs=vp9'
+        : 'video/webm'
+      console.log('[Camera] Creating MediaRecorder with mimeType:', mimeType)
+
+      const recorder = new MediaRecorder(stream, { mimeType })
 
       const chunks: Blob[] = []
       recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunks.push(e.data)
+        if (e.data.size > 0) {
+          console.log('[Camera] Data chunk received:', e.data.size, 'bytes')
+          chunks.push(e.data)
+        }
       }
 
       recorder.onstop = () => {
+        console.log('[Camera] Recording stopped, total chunks:', chunks.length)
         const blob = new Blob(chunks, { type: 'video/webm' })
+        console.log('[Camera] Created blob:', blob.size, 'bytes')
         setRecordedBlob(blob)
         setRecordedUrl(URL.createObjectURL(blob))
         setVideoStep('preview')
         // Stop all tracks
-        stream.getTracks().forEach(track => track.stop())
+        stream.getTracks().forEach(track => {
+          console.log('[Camera] Stopping track:', track.kind)
+          track.stop()
+        })
         setMediaStream(null)
       }
 
+      recorder.onerror = (e) => {
+        console.error('[Camera] MediaRecorder error:', e)
+        setVideoError('Recording failed. Please try again.')
+      }
+
       setMediaRecorder(recorder)
+      console.log('[Camera] Starting recorder...')
       recorder.start()
       setIsRecording(true)
       setVideoStep('recording')
       setRecordingTime(0)
+      console.log('[Camera] Recording started successfully')
     } catch (err: unknown) {
-      console.error(err)
       const error = err as Error & { name?: string }
+      console.error('[Camera] Error:', {
+        name: error.name,
+        message: error.message,
+        error: err
+      })
+
       // If permission denied, prompt user and allow retry
       if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
-        if (retryCount < 3) {
-          setVideoError('Camera permission needed. Please allow access and try again.')
-        } else {
-          setVideoError('Camera access denied. Please enable camera permissions in your browser settings.')
-        }
+        setVideoError('Camera permission needed. Please allow access and click Try Again.')
+      } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+        setVideoError('No camera found. Please check your device.')
+      } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+        setVideoError('Camera is in use by another app. Please close other apps and try again.')
       } else {
-        setVideoError('Could not access camera. Please check your device and try again.')
+        setVideoError(`Camera error: ${error.message || 'Unknown error'}. Please try again.`)
       }
     }
   }
