@@ -1630,7 +1630,7 @@ function App() {
               onClick={processPayment}
               disabled={bookingLoading}
             >
-              {bookingLoading ? 'Processing...' : `Pay $${selectedGiver.rate_per_30}`}
+              {bookingLoading ? 'Processing...' : `Pay $${selectedGiver.rate_per_30 + Math.round(selectedGiver.rate_per_30 * 0.15)}`}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '15px', textAlign: 'center' }}>
