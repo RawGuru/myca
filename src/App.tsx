@@ -507,9 +507,15 @@ function App() {
         .select('giver_id')
         .eq('seeker_id', user.id)
 
-      if (error) throw error
+      if (error) {
+        // Table might not exist yet - fail silently
+        console.log('saved_givers fetch:', error.message)
+        setSavedGiverIds(new Set())
+        return
+      }
       setSavedGiverIds(new Set(data?.map(s => s.giver_id) || []))
-    } catch {
+    } catch (err) {
+      console.log('saved_givers error:', err)
       setSavedGiverIds(new Set())
     }
   }, [user])
@@ -519,6 +525,7 @@ function App() {
   }, [fetchSavedGivers])
 
   // Toggle save/unsave a giver (private, no notifications)
+  // Requires saved_givers table in Supabase with RLS policies
   const toggleSaveGiver = async (giverId: string, e?: React.MouseEvent) => {
     if (e) {
       e.stopPropagation() // Prevent card click
@@ -531,33 +538,62 @@ function App() {
 
     const isSaved = savedGiverIds.has(giverId)
 
+    // Optimistically update UI
+    if (isSaved) {
+      setSavedGiverIds(prev => {
+        const next = new Set(prev)
+        next.delete(giverId)
+        return next
+      })
+    } else {
+      setSavedGiverIds(prev => new Set(prev).add(giverId))
+    }
+
     try {
       if (isSaved) {
         // Remove save
-        await supabase
+        const { error } = await supabase
           .from('saved_givers')
           .delete()
           .eq('seeker_id', user.id)
           .eq('giver_id', giverId)
 
-        setSavedGiverIds(prev => {
-          const next = new Set(prev)
-          next.delete(giverId)
-          return next
-        })
+        if (error) {
+          console.log('Delete save error:', error.message)
+          // Revert optimistic update
+          setSavedGiverIds(prev => new Set(prev).add(giverId))
+        }
       } else {
         // Add save
-        await supabase
+        const { error } = await supabase
           .from('saved_givers')
           .insert({
             seeker_id: user.id,
             giver_id: giverId,
           })
 
-        setSavedGiverIds(prev => new Set(prev).add(giverId))
+        if (error) {
+          console.log('Save error:', error.message)
+          // Revert optimistic update
+          setSavedGiverIds(prev => {
+            const next = new Set(prev)
+            next.delete(giverId)
+            return next
+          })
+        }
       }
     } catch (err) {
       console.error('Failed to toggle save:', err)
+      // Revert on error
+      if (isSaved) {
+        setSavedGiverIds(prev => new Set(prev).add(giverId))
+      } else {
+        setSavedGiverIds(prev => {
+          const next = new Set(prev)
+          next.delete(giverId)
+          return next
+        })
+      }
     }
   }
 
@@ -691,10 +727,6 @@ function App() {
       setProfileError('Minimum rate is $15 per 30 minutes')
       return
     }
-    if (!recordedBlob) {
-      setProfileError('Please record your introduction video')
-      return
-    }
     if (getTotalSlots() === 0) {
       setProfileError('Please select at least one availability time slot')
       return
@@ -704,8 +736,8 @@ function App() {
     setProfileError('')
 
     try {
-      // Upload video first
-      const videoUrl = await uploadVideo()
+      // Upload video if recorded (optional)
+      const videoUrl = recordedBlob ? await uploadVideo() : null
 
       const { error } = await supabase
         .from('profiles')
@@ -1856,7 +1888,7 @@ function App() {
           {/* Video Recording Section */}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Introduction video * <span style={{ color: colors.textMuted }}>(30-90 seconds)</span>
+              Introduction video <span style={{ color: colors.textMuted }}>(optional, 30-90 seconds)</span>
             </label>
 
             {videoError && (
