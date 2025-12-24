@@ -748,7 +748,7 @@ function App() {
   }
 
   // Video recording functions
-  const startRecording = async () => {
+  const startRecording = async (retryCount = 0) => {
     try {
       setVideoError('')
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -783,9 +783,19 @@ function App() {
       setIsRecording(true)
       setVideoStep('recording')
       setRecordingTime(0)
-    } catch (err) {
-      setVideoError('Could not access camera. Please allow camera permissions.')
+    } catch (err: unknown) {
       console.error(err)
+      const error = err as Error & { name?: string }
+      // If permission denied, prompt user and allow retry
+      if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+        if (retryCount < 3) {
+          setVideoError('Camera permission needed. Please allow access and try again.')
+        } else {
+          setVideoError('Camera access denied. Please enable camera permissions in your browser settings.')
+        }
+      } else {
+        setVideoError('Could not access camera. Please check your device and try again.')
+      }
     }
   }
 
@@ -1301,6 +1311,28 @@ function App() {
               <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
             </div>
           </div>
+
+          {/* Weekly availability schedule */}
+          {selectedGiver.availability_schedule && Object.keys(selectedGiver.availability_schedule).some(day => (selectedGiver.availability_schedule?.[day] || []).length > 0) && (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.textSecondary }}>Weekly Availability</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {DAYS_OF_WEEK.filter(day => (selectedGiver.availability_schedule?.[day] || []).length > 0).map(day => (
+                  <div key={day} style={{
+                    padding: '8px 12px',
+                    background: colors.bgSecondary,
+                    borderRadius: '8px',
+                    fontSize: '0.85rem'
+                  }}>
+                    <span style={{ color: colors.accent, fontWeight: 500 }}>{day.slice(0, 3)}</span>
+                    <span style={{ color: colors.textMuted, marginLeft: '6px' }}>
+                      {(selectedGiver.availability_schedule?.[day] || []).length} slots
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div style={{ ...cardStyle, cursor: 'default' }}>
             <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a 30-minute session</h3>
@@ -1818,7 +1850,7 @@ function App() {
                 }}
               />
             </div>
-            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>Minimum $15. You keep 85% of each session.</p>
+            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>Minimum $15</p>
           </div>
 
           {/* Video Recording Section */}
@@ -1835,9 +1867,28 @@ function App() {
                 borderRadius: '12px',
                 color: '#f87171',
                 marginBottom: '15px',
-                fontSize: '0.85rem'
+                fontSize: '0.85rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '10px'
               }}>
-                {videoError}
+                <span>{videoError}</span>
+                <button
+                  onClick={() => startRecording()}
+                  style={{
+                    padding: '6px 12px',
+                    background: 'rgba(220, 38, 38, 0.2)',
+                    border: '1px solid rgba(220, 38, 38, 0.4)',
+                    borderRadius: '6px',
+                    color: '#f87171',
+                    cursor: 'pointer',
+                    fontSize: '0.8rem',
+                    whiteSpace: 'nowrap'
+                  }}
+                >
+                  Try Again
+                </button>
               </div>
             )}
 
