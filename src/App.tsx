@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { supabase } from './lib/supabase'
-import { loadStripe } from '@stripe/stripe-js'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
 import Auth from './components/Auth'
 
@@ -13,9 +12,6 @@ const CONFIG = {
   DAILY_API_KEY: '40e271764da2af1594162e7c9746c5e14df18bcd3ddee5604f9e687f1ee46825',
   DAILY_DOMAIN: 'myca.daily.co',
 }
-
-// Initialize Stripe
-const stripePromise = loadStripe(CONFIG.STRIPE_PUBLISHABLE_KEY)
 
 // Booking type
 interface Booking {
@@ -872,15 +868,6 @@ function App() {
       setReturnToScreen('')
     }
   }, [user, needsAuth, returnToScreen, selectedGiver, selectedBookingDate, selectedBookingTime])
-
-  const requireAuth = (nextScreen: string) => {
-    if (!user) {
-      setReturnToScreen(nextScreen)
-      setNeedsAuth(true)
-    } else {
-      setScreen(nextScreen)
-    }
-  }
 
   if (loading) {
     return (
