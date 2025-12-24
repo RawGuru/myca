@@ -102,6 +102,7 @@ function App() {
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const dailyCallRef = useRef<DailyCall | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
+  const previewVideoRef = useRef<HTMLVideoElement>(null)
 
   // Giver profile form state
   const [giverName, setGiverName] = useState('')
@@ -937,6 +938,22 @@ function App() {
       setReturnToScreen('')
     }
   }, [user, needsAuth, returnToScreen, selectedGiver, selectedBookingDate, selectedBookingTime])
+
+  // Update video preview when mediaStream changes
+  useEffect(() => {
+    console.log('[Camera] useEffect: mediaStream changed:', mediaStream ? 'stream present' : 'no stream')
+    if (previewVideoRef.current && mediaStream) {
+      console.log('[Camera] useEffect: assigning stream to video element')
+      previewVideoRef.current.srcObject = mediaStream
+      // Try to play the video (might be blocked by autoplay policy)
+      previewVideoRef.current.play().catch(err => {
+        console.warn('[Camera] useEffect: autoplay failed (this is usually OK if muted):', err)
+      })
+    } else if (previewVideoRef.current && !mediaStream) {
+      console.log('[Camera] useEffect: clearing video element')
+      previewVideoRef.current.srcObject = null
+    }
+  }, [mediaStream])
 
   if (loading) {
     return (
@@ -2015,11 +2032,7 @@ function App() {
                     autoPlay
                     muted
                     playsInline
-                    ref={(video) => {
-                      if (video && mediaStream) {
-                        video.srcObject = mediaStream
-                      }
-                    }}
+                    ref={previewVideoRef}
                     style={{
                       width: '100%',
                       height: '100%',
