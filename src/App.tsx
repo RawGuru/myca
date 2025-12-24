@@ -1957,7 +1957,7 @@ function App() {
                     maxWidth: '200px',
                     margin: '0 auto'
                   }}
-                  onClick={startRecording}
+                  onClick={() => startRecording()}
                 >
                   Start Recording
                 </button>
