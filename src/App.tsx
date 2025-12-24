@@ -1551,10 +1551,13 @@ function App() {
                 <span style={{ color: colors.textSecondary }}>30-minute session</span>
                 <span>${selectedGiver.rate_per_30}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                <span style={{ color: colors.textMuted }}>
-                  {selectedGiver.name} receives ${Math.round(selectedGiver.rate_per_30 * 0.85)}
-                </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
+                <span style={{ color: colors.textMuted }}>Platform fee</span>
+                <span style={{ color: colors.textMuted }}>${Math.round(selectedGiver.rate_per_30 * 0.15)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '8px', borderTop: `1px solid ${colors.border}` }}>
+                <span>Total</span>
+                <span>${selectedGiver.rate_per_30 + Math.round(selectedGiver.rate_per_30 * 0.15)}</span>
               </div>
             </div>
           </div>
@@ -1738,7 +1741,7 @@ function App() {
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>The Giver Code</h2>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Before You Begin</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -1747,7 +1750,7 @@ function App() {
               What happens when you do this:
             </h3>
             <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              Your own noise quiets. For this session, your life pauses. You get to witness someone's actual experience. You learn how other people carry what they carry. You discover that you don't need to fix anything to be valuable. You finish a little more connected and a little less stuck in your own loop.
+              For this session, your role is simply to be present. Your life pauses. You get to witness someone's actual experience. You learn how other people carry what they carry. You discover that you don't need to fix anything to be valuable. You finish a little more connected and a little less stuck in your own loop.
             </p>
           </div>
 
@@ -2345,18 +2348,10 @@ function App() {
             </div>
 
             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: colors.textSecondary }}>Your rate</span>
-                <span>${myGiverProfile?.rate_per_30}/session</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span style={{ color: colors.textSecondary }}>Platform fee</span>
-                <span>15%</span>
-              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                <span style={{ color: colors.accent }}>You keep</span>
+                <span style={{ color: colors.accent }}>You receive</span>
                 <span style={{ color: colors.accent }}>
-                  ${myGiverProfile ? Math.round(myGiverProfile.rate_per_30 * 0.85) : 0}/session
+                  ${myGiverProfile?.rate_per_30}/session
                 </span>
               </div>
             </div>
@@ -2427,7 +2422,7 @@ function App() {
             You're all set to receive payments!
           </p>
           <p style={{ color: colors.accent, fontSize: '1.1rem', fontWeight: 500, marginBottom: '30px' }}>
-            You'll keep ${myGiverProfile ? Math.round(myGiverProfile.rate_per_30 * 0.85) : 0} per session
+            You receive ${myGiverProfile?.rate_per_30} per session
           </p>
           <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('giveConfirmation')}>
             Continue
@@ -2665,9 +2660,9 @@ function App() {
                 )}
                 {myGiverProfile.stripe_onboarding_complete && (
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>Per session</p>
+                    <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>You receive</p>
                     <p style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.success }}>
-                      ${Math.round(myGiverProfile.rate_per_30 * 0.85)}
+                      ${myGiverProfile.rate_per_30}
                     </p>
                   </div>
                 )}
