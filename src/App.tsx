@@ -17,6 +17,7 @@ interface Booking {
   stripe_payment_id: string | null
   video_room_url: string | null
   giver_joined_at: string | null
+  seeker_credit_earned: boolean
   created_at: string
 }
 
@@ -586,9 +587,19 @@ function App() {
 
     // Track when giver joins (for lateness detection)
     if (user && user.id === booking.giver_id) {
+      const joinTime = new Date()
+      const scheduledTime = new Date(booking.scheduled_time)
+      const lateMinutes = (joinTime.getTime() - scheduledTime.getTime()) / 1000 / 60
+
+      // Automatic seeker credit if giver joins > 2 minutes late
+      const updates: any = { giver_joined_at: joinTime.toISOString() }
+      if (lateMinutes > 2) {
+        updates.seeker_credit_earned = true
+      }
+
       await supabase
         .from('bookings')
-        .update({ giver_joined_at: new Date().toISOString() })
+        .update(updates)
         .eq('id', booking.id)
     }
 
