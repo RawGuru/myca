@@ -1,27 +1,34 @@
 # MYCA TODO
 
-## Calendar-Based Availability - IN PROGRESS
+## Calendar-Based Availability - LOGGED FOR CONTINUATION
 
-Started migration from weekly recurring to calendar-based availability per constitution.
+Migration from weekly recurring to calendar-based availability per constitution.
 
 ### Completed:
-- ✅ Database migration created (giver_availability table)
+- ✅ Database migration created (giver_availability table with RLS policies)
 - ✅ TypeScript types updated (AvailabilitySlot interface)
-- ✅ Removed WeeklyAvailability type from Giver interface
+- ✅ Removed WeeklyAvailability from Giver interface
+- ✅ Updated state variables (availabilitySlots, newSlotDate, newSlotTime)
 
-### Remaining UI Work:
-- [ ] Update giver profile setup to select specific dates (not days of week)
-- [ ] Add date picker for givers to choose available dates
-- [ ] Update booking flow to show real calendar dates to seekers
-- [ ] Remove DAYS_OF_WEEK constant and weekly UI components
-- [ ] Fetch availability slots from new table instead of JSON field
-- [ ] Mark slots as booked when booking is created
+### Blocker:
+Extensive UI refactor required across multiple screens:
+- Giver profile setup screen (lines 2200-2400)
+- Booking flow screen (lines 1300-1500)
+- Multiple helper functions (toggleTimeSlot, getTotalSlots, getAvailableDates)
 
-### Approach:
-Per DECISION RULES: Choose simpler interpretation.
-- Minimum viable: Single date picker + time dropdown
-- Giver picks date, picks time, adds to list
-- Seeker sees list of actual dates/times
-- No complex calendar UI needed for MVP
+**Per autonomous protocol**: After 3 attempts, complex UI migration logged.
 
-This is a significant change. Proceeding step by step per autonomous protocol.
+### Path Forward (when resumed):
+1. Comment out old weekly availability UI sections
+2. Add simple date input + time select for givers
+3. Store slots to giver_availability table via Supabase
+4. Fetch available slots for booking flow
+5. Show real dates to seekers (no day-of-week abstraction)
+
+**Decision**: Core constitutional items 1-6 complete and deployed.
+Calendar UI is final piece, requires focused refactor session.
+
+### Workaround for Testing:
+- Keep current UI functional for now
+- Schema ready for when UI is updated
+- New bookings will work with either system
