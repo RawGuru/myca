@@ -1693,12 +1693,26 @@ function App() {
             You'll receive a reminder before your session. The video room will be available 5 minutes before start time.
           </p>
           {currentBooking?.video_room_url && (
-            <button
-              style={{ ...btnStyle, maxWidth: '320px', marginBottom: '10px' }}
-              onClick={() => currentBooking && joinSession(currentBooking)}
-            >
-              Join Session
-            </button>
+            <>
+              <button
+                disabled={!isSessionJoinable(currentBooking)}
+                style={{
+                  ...btnStyle,
+                  maxWidth: '320px',
+                  marginBottom: '10px',
+                  opacity: isSessionJoinable(currentBooking) ? 1 : 0.5,
+                  cursor: isSessionJoinable(currentBooking) ? 'pointer' : 'not-allowed',
+                }}
+                onClick={() => currentBooking && isSessionJoinable(currentBooking) && joinSession(currentBooking)}
+              >
+                Join Session
+              </button>
+              {!isSessionJoinable(currentBooking) && (
+                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '20px', maxWidth: '320px' }}>
+                  Session will be available 5 minutes before your scheduled time
+                </p>
+              )}
+            </>
           )}
           <button
             style={{ ...btnStyle, maxWidth: '320px' }}
