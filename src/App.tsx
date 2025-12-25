@@ -94,6 +94,7 @@ function App() {
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds
   const [showTimeWarning, setShowTimeWarning] = useState(false)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
+  const [showGiverOverlay, setShowGiverOverlay] = useState(false)
   const dailyCallRef = useRef<DailyCall | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
@@ -633,11 +634,26 @@ function App() {
 
       dailyCallRef.current = call
 
+      // Show giver overlay when both participants join
+      if (user && user.id === activeSession.giver_id) {
+        call.on('participant-joined', () => {
+          const participants = call.participants()
+          const participantCount = Object.keys(participants).length
+
+          // When both are present (local + 1 remote)
+          if (participantCount >= 2) {
+            setShowGiverOverlay(true)
+            // Fade after 5 seconds
+            setTimeout(() => setShowGiverOverlay(false), 5000)
+          }
+        })
+      }
+
       await call.join({ url: activeSession.video_room_url })
     } catch (err) {
       console.error('Failed to join call:', err)
     }
-  }, [activeSession])
+  }, [activeSession, user])
 
   // Leave the video session
   const leaveSession = async (markComplete: boolean = false) => {
@@ -2607,6 +2623,32 @@ function App() {
         position: 'relative',
         overflow: 'hidden',
       }}>
+        {/* Giver opening protocol overlay */}
+        {showGiverOverlay && user && activeSession && user.id === activeSession.giver_id && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 200,
+            background: 'rgba(26, 26, 26, 0.95)',
+            padding: '40px 60px',
+            borderRadius: '16px',
+            border: `1px solid ${colors.border}`,
+            animation: 'fadeIn 0.5s ease-in',
+          }}>
+            <p style={{
+              fontSize: '1.5rem',
+              color: colors.textPrimary,
+              textAlign: 'center',
+              lineHeight: 1.6,
+              margin: 0,
+            }}>
+              This is their time.<br />You are here with them.
+            </p>
+          </div>
+        )}
+
         {/* Daily video container */}
         <div
           ref={videoContainerRef}
