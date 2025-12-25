@@ -120,58 +120,81 @@ function App() {
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [videoError, setVideoError] = useState('')
 
-  // Availability state
-  const [giverAvailability, setGiverAvailability] = useState<WeeklyAvailability>({})
-  const [selectedDay, setSelectedDay] = useState<string>('Monday')
+  // Calendar-based availability state
+  const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
+  const [newSlotDate, setNewSlotDate] = useState('')
+  const [newSlotTime, setNewSlotTime] = useState('9:00')
 
   // Saved givers state (private saves for seekers)
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
   const [showSavedOnly, setShowSavedOnly] = useState(false)
 
-  // Toggle a time slot for a day
-  const toggleTimeSlot = (day: string, time: string) => {
-    setGiverAvailability(prev => {
-      const daySlots = prev[day] || []
-      if (daySlots.includes(time)) {
-        return { ...prev, [day]: daySlots.filter(t => t !== time) }
-      } else {
-        return { ...prev, [day]: [...daySlots, time].sort((a, b) => {
-          const timeToMinutes = (t: string) => {
-            const [time, period] = t.split(' ')
-            const [hours, minutes] = time.split(':').map(Number)
-            return (hours % 12 + (period === 'PM' ? 12 : 0)) * 60 + minutes
-          }
-          return timeToMinutes(a) - timeToMinutes(b)
-        })}
-      }
-    })
+  // Add availability slot (specific date + time)
+  const addAvailabilitySlot = async () => {
+    if (!newSlotDate || !newSlotTime || !user) return
+
+    try {
+      const { data, error } = await supabase
+        .from('giver_availability')
+        .insert({
+          giver_id: user.id,
+          date: newSlotDate,
+          time: newSlotTime,
+          is_booked: false
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setAvailabilitySlots(prev => [...prev, data])
+      setNewSlotDate('')
+      setNewSlotTime('9:00')
+    } catch (err) {
+      console.error('Error adding availability slot:', err)
+    }
+  }
+
+  // Remove availability slot
+  const removeAvailabilitySlot = async (slotId: string) => {
+    try {
+      const { error } = await supabase
+        .from('giver_availability')
+        .delete()
+        .eq('id', slotId)
+
+      if (error) throw error
+
+      setAvailabilitySlots(prev => prev.filter(slot => slot.id !== slotId))
+    } catch (err) {
+      console.error('Error removing availability slot:', err)
+    }
   }
 
   // Get total slots selected
   const getTotalSlots = () => {
-    return Object.values(giverAvailability).reduce((sum, slots) => sum + slots.length, 0)
+    return availabilitySlots.length
   }
 
-  // Get available dates for a giver (next 7 days)
-  const getAvailableDates = (schedule: WeeklyAvailability | undefined) => {
-    if (!schedule) return []
+  // Fetch available slots for a specific giver
+  const fetchGiverAvailableSlots = useCallback(async (giverId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('giver_availability')
+        .select('*')
+        .eq('giver_id', giverId)
+        .eq('is_booked', false)
+        .gte('date', new Date().toISOString().split('T')[0]) // Only future dates
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
 
-    const dates: { date: Date; dayName: string; slots: string[] }[] = []
-    const today = new Date()
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today)
-      date.setDate(today.getDate() + i)
-      const dayName = DAYS_OF_WEEK[date.getDay() === 0 ? 6 : date.getDay() - 1] // Adjust for Monday start
-      const slots = schedule[dayName] || []
-
-      if (slots.length > 0) {
-        dates.push({ date, dayName, slots })
-      }
+      if (error) throw error
+      return data || []
+    } catch (err) {
+      console.error('Error fetching giver availability:', err)
+      return []
     }
-
-    return dates
-  }
+  }, [])
 
   // Format date for display
   const formatDate = (date: Date) => {
@@ -798,7 +821,6 @@ function App() {
           is_giver: true,
           available: true,
           qualities_offered: [],
-          availability_schedule: giverAvailability,
         }, { onConflict: 'id' })
 
       if (error) throw error
@@ -817,8 +839,9 @@ function App() {
       setRecordedBlob(null)
       setRecordedUrl(null)
       setVideoStep('prompt')
-      setGiverAvailability({})
-      setSelectedDay('Monday')
+      setAvailabilitySlots([])
+      setNewSlotDate('')
+      setNewSlotTime('9:00')
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Failed to create profile')
     } finally {
