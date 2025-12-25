@@ -651,14 +651,14 @@ function App() {
     const timer = setInterval(() => {
       setSessionTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up - auto disconnect
+          // Time's up - auto disconnect (hard stop)
           clearInterval(timer)
           leaveSession(true)
           return 0
         }
 
-        // Show 5-minute warning
-        if (prev === 5 * 60) {
+        // Show 5-minute warning and keep it visible until session ends
+        if (prev <= 5 * 60 && !showTimeWarning) {
           setShowTimeWarning(true)
         }
 
@@ -667,7 +667,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [activeSession, screen])
+  }, [activeSession, screen, showTimeWarning, leaveSession])
 
   // Start Daily call when entering video session
   useEffect(() => {
@@ -2604,7 +2604,7 @@ function App() {
               fontSize: '0.85rem',
               fontWeight: 500,
             }}>
-              5 minutes remaining
+              Session ending soon
             </div>
           )}
         </div>
