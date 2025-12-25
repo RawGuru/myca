@@ -644,6 +644,28 @@ function App() {
     setScreen('sessions')
   }
 
+  // Play gentle audio chime for time orientation
+  const playChime = useCallback(() => {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    // Soft, gentle chime - not urgent
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime) // Higher frequency for pleasant tone
+    oscillator.type = 'sine'
+
+    // Gentle fade in and out
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime)
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.1) // Soft volume
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.5)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 1.5)
+  }, [])
+
   // Session timer effect
   useEffect(() => {
     if (!activeSession || screen !== 'videoSession') return
@@ -657,9 +679,14 @@ function App() {
           return 0
         }
 
-        // Show 5-minute warning and keep it visible until session ends
-        if (prev <= 5 * 60 && !showTimeWarning) {
-          setShowTimeWarning(true)
+        // Gentle audio cue at 15 minutes (halfway)
+        if (prev === 15 * 60) {
+          playChime()
+        }
+
+        // Gentle audio cue at 5 minutes
+        if (prev === 5 * 60) {
+          playChime()
         }
 
         return prev - 1
@@ -667,7 +694,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [activeSession, screen, showTimeWarning, leaveSession])
+  }, [activeSession, screen, leaveSession, playChime])
 
   // Start Daily call when entering video session
   useEffect(() => {
@@ -683,14 +710,15 @@ function App() {
     return `${mins}:${secs.toString().padStart(2, '0')}`
   }
 
-  // Check if a booking is joinable (within 5 minutes of start)
+  // Check if a booking is joinable (at or after scheduled time, within 30-min window)
   const isSessionJoinable = (booking: Booking) => {
     const scheduledTime = new Date(booking.scheduled_time).getTime()
     const now = Date.now()
-    const fiveMinutesBefore = scheduledTime - 5 * 60 * 1000
     const thirtyMinutesAfter = scheduledTime + 30 * 60 * 1000
 
-    return now >= fiveMinutesBefore && now <= thirtyMinutesAfter
+    // Joinable exactly at scheduled time or after (if joining late)
+    // Session ends 30 minutes after scheduled time regardless of when joined
+    return now >= scheduledTime && now <= thirtyMinutesAfter
   }
 
   // Create giver profile
@@ -1690,7 +1718,7 @@ function App() {
             </p>
           )}
           <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '30px', maxWidth: '300px' }}>
-            You'll receive a reminder before your session. The video room will be available 5 minutes before start time.
+            You'll receive a reminder before your session. The video room will be available at your scheduled time.
           </p>
           {currentBooking?.video_room_url && (
             <>
@@ -1709,7 +1737,7 @@ function App() {
               </button>
               {!isSessionJoinable(currentBooking) && (
                 <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '20px', maxWidth: '320px' }}>
-                  Session will be available 5 minutes before your scheduled time
+                  Session will be available at your scheduled time
                 </p>
               )}
             </>
@@ -2559,56 +2587,6 @@ function App() {
         position: 'relative',
         overflow: 'hidden',
       }}>
-        {/* Session timer overlay */}
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 100,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '15px',
-        }}>
-          <div style={{
-            background: showTimeWarning ? 'rgba(201, 107, 107, 0.9)' : 'rgba(26, 26, 26, 0.9)',
-            padding: '10px 20px',
-            borderRadius: '25px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            border: `1px solid ${showTimeWarning ? '#c96b6b' : colors.border}`,
-          }}>
-            <div style={{
-              width: '10px',
-              height: '10px',
-              borderRadius: '50%',
-              background: showTimeWarning ? '#ff6b6b' : colors.success,
-              animation: 'pulse 2s infinite',
-            }} />
-            <span style={{
-              fontSize: '1.2rem',
-              fontWeight: 600,
-              color: showTimeWarning ? '#ff6b6b' : colors.textPrimary,
-              fontFamily: 'monospace',
-            }}>
-              {formatTimeRemaining(sessionTimeRemaining)}
-            </span>
-          </div>
-          {showTimeWarning && (
-            <div style={{
-              background: 'rgba(201, 107, 107, 0.9)',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              color: '#fff',
-              fontSize: '0.85rem',
-              fontWeight: 500,
-            }}>
-              Session ending soon
-            </div>
-          )}
-        </div>
-
         {/* Daily video container */}
         <div
           ref={videoContainerRef}
