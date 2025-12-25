@@ -16,6 +16,7 @@ interface Booking {
   status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
   stripe_payment_id: string | null
   video_room_url: string | null
+  giver_joined_at: string | null
   created_at: string
 }
 
@@ -581,6 +582,14 @@ function App() {
     if (!booking.video_room_url) {
       console.error('No video room URL')
       return
+    }
+
+    // Track when giver joins (for lateness detection)
+    if (user && user.id === booking.giver_id) {
+      await supabase
+        .from('bookings')
+        .update({ giver_joined_at: new Date().toISOString() })
+        .eq('id', booking.id)
     }
 
     setActiveSession(booking)
