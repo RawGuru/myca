@@ -5,14 +5,6 @@ import { supabase } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
 import Auth from './components/Auth'
 
-const CONFIG = {
-  SUPABASE_URL: 'https://ksramckuggspsqymcjpo.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTMwODgsImV4cCI6MjA4MTgyOTA4OH0.CszijxFZU09QKH2aJbv6TjniWUJ1muJDnHXSe_u8DJc',
-  STRIPE_PUBLISHABLE_KEY: 'pk_test_51SgVU7FpbjG0Fme3UWztjqthE2VUsvfMmlymtGhtOJfvanP3DowNKmu0qcSJw0BHjYZMUYNeRXP4U1KIZERlp9oO00YZ0uq3E4',
-  DAILY_API_KEY: '40e271764da2af1594162e7c9746c5e14df18bcd3ddee5604f9e687f1ee46825',
-  DAILY_DOMAIN: 'myca.daily.co',
-}
-
 // Booking type
 interface Booking {
   id: string
@@ -280,7 +272,7 @@ function App() {
       // Create Daily.co room for the video session
       let videoRoomUrl: string | null = null
       try {
-        videoRoomUrl = await createDailyRoom(currentBooking.id)
+        videoRoomUrl = await createDailyRoom()
       } catch (roomError) {
         console.error('Failed to create video room:', roomError)
         // Continue without room - can be created later
@@ -437,7 +429,7 @@ function App() {
   }
 
   // Create Daily.co room for a booking
-  const createDailyRoom = async (bookingId: string): Promise<string> => {
+  const createDailyRoom = async (): Promise<string> => {
     // Call backend API to create Daily room (expires in 35 minutes, max 2 participants)
     const response = await fetch('/api/create-room', {
       method: 'POST',
