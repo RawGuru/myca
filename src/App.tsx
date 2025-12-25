@@ -40,9 +40,14 @@ const demoGivers = [
   { id: '3', name: 'Aisha Johnson', tagline: "Grandmother energy. I see you, and you're doing better than you think.", rate_per_30: 20, qualities_offered: ['Warm', 'Honest', 'Encouraging'] },
 ]
 
-// Availability structure: day -> array of time slots
-type WeeklyAvailability = {
-  [day: string]: string[]
+// Calendar-based availability: specific date + time
+interface AvailabilitySlot {
+  id: string
+  giver_id: string
+  date: string // YYYY-MM-DD
+  time: string // HH:MM
+  is_booked: boolean
+  created_at: string
 }
 
 interface Giver {
@@ -53,7 +58,6 @@ interface Giver {
   qualities_offered?: string[]
   video_url?: string | null
   available?: boolean
-  availability_schedule?: WeeklyAvailability
   stripe_account_id?: string | null
   stripe_onboarding_complete?: boolean
 }
