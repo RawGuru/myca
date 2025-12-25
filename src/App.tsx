@@ -438,35 +438,21 @@ function App() {
 
   // Create Daily.co room for a booking
   const createDailyRoom = async (bookingId: string): Promise<string> => {
-    // Generate a unique room name based on booking ID
-    const roomName = `session-${bookingId.slice(0, 8)}-${Date.now()}`
-
-    // In production, this would call your backend to create the room
-    // For demo, we use the Daily.co REST API directly (note: API key should be on backend)
-    const response = await fetch('https://api.daily.co/v1/rooms', {
+    // Call backend API to create Daily room (expires in 35 minutes, max 2 participants)
+    const response = await fetch('/api/create-room', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${CONFIG.DAILY_API_KEY}`,
       },
-      body: JSON.stringify({
-        name: roomName,
-        properties: {
-          max_participants: 2,
-          enable_chat: false, // No chat per spec
-          enable_screenshare: false,
-          exp: Math.floor(Date.now() / 1000) + 3600, // Expires in 1 hour
-          eject_at_room_exp: true,
-        },
-      }),
     })
 
     if (!response.ok) {
-      throw new Error('Failed to create video room')
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Failed to create video room')
     }
 
-    const room = await response.json()
-    return room.url || `https://${CONFIG.DAILY_DOMAIN}/${roomName}`
+    const { roomUrl } = await response.json()
+    return roomUrl
   }
 
   // Fetch user's bookings
