@@ -1692,6 +1692,14 @@ function App() {
           <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '30px', maxWidth: '300px' }}>
             You'll receive a reminder before your session. The video room will be available 5 minutes before start time.
           </p>
+          {currentBooking?.video_room_url && (
+            <button
+              style={{ ...btnStyle, maxWidth: '320px', marginBottom: '10px' }}
+              onClick={() => currentBooking && joinSession(currentBooking)}
+            >
+              Join Session
+            </button>
+          )}
           <button
             style={{ ...btnStyle, maxWidth: '320px' }}
             onClick={() => {
