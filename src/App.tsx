@@ -62,14 +62,6 @@ interface Giver {
   stripe_onboarding_complete?: boolean
 }
 
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
-const TIME_SLOTS = [
-  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
-  '12:00 PM', '12:30 PM', '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM',
-  '3:00 PM', '3:30 PM', '4:00 PM', '4:30 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM'
-]
-
 function App() {
   const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
@@ -95,8 +87,8 @@ function App() {
 
   // Video session state
   const [activeSession, setActiveSession] = useState<Booking | null>(null)
-  const [sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds
-  const [showTimeWarning, setShowTimeWarning] = useState(false)
+  const [_sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds (internal only, not displayed)
+  const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [showGiverOverlay, setShowGiverOverlay] = useState(false)
   const dailyCallRef = useRef<DailyCall | null>(null)
@@ -124,6 +116,7 @@ function App() {
   const [availabilitySlots, setAvailabilitySlots] = useState<AvailabilitySlot[]>([])
   const [newSlotDate, setNewSlotDate] = useState('')
   const [newSlotTime, setNewSlotTime] = useState('9:00')
+  const [selectedGiverSlots, setSelectedGiverSlots] = useState<AvailabilitySlot[]>([])
 
   // Saved givers state (private saves for seekers)
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
@@ -766,13 +759,6 @@ function App() {
     }
   }, [screen, activeSession, startDailyCall])
 
-  // Format remaining time
-  const formatTimeRemaining = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
   // Check if a booking is joinable (at or after scheduled time, within 30-min window)
   const isSessionJoinable = (booking: Booking) => {
     const scheduledTime = new Date(booking.scheduled_time).getTime()
@@ -1023,6 +1009,17 @@ function App() {
       previewVideoRef.current.srcObject = null
     }
   }, [mediaStream])
+
+  // Fetch selected giver's available slots when viewing their profile
+  useEffect(() => {
+    if (selectedGiver) {
+      fetchGiverAvailableSlots(selectedGiver.id).then(slots => {
+        setSelectedGiverSlots(slots)
+      })
+    } else {
+      setSelectedGiverSlots([])
+    }
+  }, [selectedGiver, fetchGiverAvailableSlots])
 
   if (loading) {
     return (
@@ -1380,10 +1377,17 @@ function App() {
   }
 
   if (screen === 'profile' && selectedGiver) {
-    const availableDates = getAvailableDates(selectedGiver.availability_schedule)
-    const selectedDateSlots = availableDates.find(d =>
-      selectedBookingDate && d.date.toDateString() === selectedBookingDate.toDateString()
-    )?.slots || []
+    // Group slots by date
+    const slotsByDate = selectedGiverSlots.reduce((acc, slot) => {
+      const date = slot.date
+      if (!acc[date]) acc[date] = []
+      acc[date].push(slot.time)
+      return acc
+    }, {} as Record<string, string[]>)
+
+    const availableDates = Object.keys(slotsByDate).sort()
+    const selectedDateKey = selectedBookingDate?.toISOString().split('T')[0]
+    const selectedDateSlots = selectedDateKey ? (slotsByDate[selectedDateKey] || []) : []
     const price = selectedGiver.rate_per_30
 
     return (
@@ -1457,28 +1461,6 @@ function App() {
             </div>
           </div>
 
-          {/* Weekly availability schedule */}
-          {selectedGiver.availability_schedule && Object.keys(selectedGiver.availability_schedule).some(day => (selectedGiver.availability_schedule?.[day] || []).length > 0) && (
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.textSecondary }}>Weekly Availability</h3>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {DAYS_OF_WEEK.filter(day => (selectedGiver.availability_schedule?.[day] || []).length > 0).map(day => (
-                  <div key={day} style={{
-                    padding: '8px 12px',
-                    background: colors.bgSecondary,
-                    borderRadius: '8px',
-                    fontSize: '0.85rem'
-                  }}>
-                    <span style={{ color: colors.accent, fontWeight: 500 }}>{day.slice(0, 3)}</span>
-                    <span style={{ color: colors.textMuted, marginLeft: '6px' }}>
-                      {(selectedGiver.availability_schedule?.[day] || []).length} slots
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           <div style={{ ...cardStyle, cursor: 'default' }}>
             <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a 30-minute session</h3>
 
@@ -1497,38 +1479,42 @@ function App() {
                   paddingBottom: '10px',
                   marginBottom: '20px'
                 }}>
-                  {availableDates.map(({ date, slots }) => (
-                    <div
-                      key={date.toISOString()}
-                      onClick={() => {
-                        setSelectedBookingDate(date)
-                        setSelectedBookingTime('')
-                      }}
-                      style={{
-                        minWidth: '80px',
-                        padding: '15px 12px',
-                        background: selectedBookingDate?.toDateString() === date.toDateString()
-                          ? colors.accentSoft : colors.bgSecondary,
-                        border: `1px solid ${selectedBookingDate?.toDateString() === date.toDateString()
-                          ? colors.accent : colors.border}`,
-                        borderRadius: '12px',
-                        textAlign: 'center',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      <div style={{
-                        fontSize: '0.85rem',
-                        fontWeight: 600,
-                        color: selectedBookingDate?.toDateString() === date.toDateString()
-                          ? colors.accent : colors.textPrimary
-                      }}>
-                        {formatDate(date)}
+                  {availableDates.map(dateStr => {
+                    const date = new Date(dateStr + 'T00:00:00')
+                    const slots = slotsByDate[dateStr]
+                    return (
+                      <div
+                        key={dateStr}
+                        onClick={() => {
+                          setSelectedBookingDate(date)
+                          setSelectedBookingTime('')
+                        }}
+                        style={{
+                          minWidth: '80px',
+                          padding: '15px 12px',
+                          background: selectedBookingDate?.toISOString().split('T')[0] === dateStr
+                            ? colors.accentSoft : colors.bgSecondary,
+                          border: `1px solid ${selectedBookingDate?.toISOString().split('T')[0] === dateStr
+                            ? colors.accent : colors.border}`,
+                          borderRadius: '12px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <div style={{
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                          color: selectedBookingDate?.toISOString().split('T')[0] === dateStr
+                            ? colors.accent : colors.textPrimary
+                        }}>
+                          {formatDate(date)}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '4px' }}>
+                          {slots.length} slot{slots.length > 1 ? 's' : ''}
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '4px' }}>
-                        {slots.length} slot{slots.length > 1 ? 's' : ''}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
 
                 {selectedBookingDate && selectedDateSlots.length > 0 && (
@@ -2287,10 +2273,10 @@ function App() {
             )}
           </div>
 
-          {/* Availability Section */}
+          {/* Availability Section - Calendar Based */}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Weekly availability * <span style={{ color: colors.textMuted }}>({getTotalSlots()} slots selected)</span>
+              Availability * <span style={{ color: colors.textMuted }}>({getTotalSlots()} slots)</span>
             </label>
 
             <div style={{
@@ -2299,106 +2285,113 @@ function App() {
               borderRadius: '16px',
               padding: '20px'
             }}>
-              {/* Day selector */}
+              <p style={{ fontSize: '0.85rem', color: colors.textSecondary, marginBottom: '15px' }}>
+                Add specific dates and times when you're available.
+              </p>
+
+              {/* Add new slot */}
               <div style={{
                 display: 'flex',
-                gap: '8px',
-                overflowX: 'auto',
-                paddingBottom: '15px',
-                marginBottom: '15px',
-                borderBottom: `1px solid ${colors.border}`
+                gap: '10px',
+                marginBottom: '20px',
+                flexWrap: 'wrap'
               }}>
-                {DAYS_OF_WEEK.map(day => {
-                  const daySlots = giverAvailability[day] || []
-                  return (
-                    <button
-                      key={day}
-                      onClick={() => setSelectedDay(day)}
-                      style={{
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        border: selectedDay === day ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                        background: selectedDay === day ? colors.accentSoft : colors.bgSecondary,
-                        color: selectedDay === day ? colors.accent : colors.textPrimary,
-                        cursor: 'pointer',
-                        fontSize: '0.85rem',
-                        fontWeight: 500,
-                        whiteSpace: 'nowrap',
-                        position: 'relative'
-                      }}
-                    >
-                      {day.slice(0, 3)}
-                      {daySlots.length > 0 && (
-                        <span style={{
-                          position: 'absolute',
-                          top: '-5px',
-                          right: '-5px',
-                          background: colors.accent,
-                          color: colors.bgPrimary,
-                          borderRadius: '50%',
-                          width: '18px',
-                          height: '18px',
-                          fontSize: '0.7rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: 600
-                        }}>
-                          {daySlots.length}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })}
+                <input
+                  type="date"
+                  value={newSlotDate}
+                  min={new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setNewSlotDate(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: '150px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.border}`,
+                    background: colors.bgSecondary,
+                    color: colors.textPrimary,
+                    fontSize: '0.9rem'
+                  }}
+                />
+                <select
+                  value={newSlotTime}
+                  onChange={(e) => setNewSlotTime(e.target.value)}
+                  style={{
+                    flex: 1,
+                    minWidth: '120px',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: `1px solid ${colors.border}`,
+                    background: colors.bgSecondary,
+                    color: colors.textPrimary,
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  {Array.from({ length: 24 }, (_, i) => {
+                    const hour = i.toString().padStart(2, '0')
+                    return [
+                      <option key={`${hour}:00`} value={`${hour}:00`}>{`${hour}:00`}</option>,
+                      <option key={`${hour}:30`} value={`${hour}:30`}>{`${hour}:30`}</option>
+                    ]
+                  })}
+                </select>
+                <button
+                  onClick={addAvailabilitySlot}
+                  disabled={!newSlotDate || !newSlotTime}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: colors.accent,
+                    color: colors.bgPrimary,
+                    cursor: newSlotDate && newSlotTime ? 'pointer' : 'not-allowed',
+                    opacity: newSlotDate && newSlotTime ? 1 : 0.5,
+                    fontSize: '0.9rem',
+                    fontWeight: 500
+                  }}
+                >
+                  Add
+                </button>
               </div>
 
-              {/* Time slots for selected day */}
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '12px' }}>
-                Select your available 30-minute slots for {selectedDay}:
-              </p>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: '8px'
-              }}>
-                {TIME_SLOTS.map(time => {
-                  const isSelected = (giverAvailability[selectedDay] || []).includes(time)
-                  return (
-                    <button
-                      key={time}
-                      onClick={() => toggleTimeSlot(selectedDay, time)}
-                      style={{
-                        padding: '10px 6px',
-                        borderRadius: '8px',
-                        border: isSelected ? `2px solid ${colors.accent}` : `1px solid ${colors.border}`,
-                        background: isSelected ? colors.accentSoft : colors.bgSecondary,
-                        color: isSelected ? colors.accent : colors.textPrimary,
-                        cursor: 'pointer',
-                        fontSize: '0.8rem',
-                        fontWeight: isSelected ? 600 : 400
-                      }}
-                    >
-                      {time}
-                    </button>
-                  )
-                })}
-              </div>
-
-              {/* Quick summary */}
-              {getTotalSlots() > 0 && (
+              {/* List of added slots */}
+              {availabilitySlots.length > 0 && (
                 <div style={{
                   marginTop: '15px',
                   paddingTop: '15px',
-                  borderTop: `1px solid ${colors.border}`,
-                  fontSize: '0.85rem',
-                  color: colors.textSecondary
+                  borderTop: `1px solid ${colors.border}`
                 }}>
-                  <strong style={{ color: colors.textPrimary }}>Your schedule:</strong>
-                  <div style={{ marginTop: '8px' }}>
-                    {DAYS_OF_WEEK.filter(day => (giverAvailability[day] || []).length > 0).map(day => (
-                      <div key={day} style={{ marginBottom: '4px' }}>
-                        <span style={{ color: colors.accent }}>{day}:</span>{' '}
-                        {(giverAvailability[day] || []).join(', ')}
+                  <strong style={{ fontSize: '0.85rem', color: colors.textPrimary }}>Your availability:</strong>
+                  <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {availabilitySlots.map((slot, index) => (
+                      <div
+                        key={slot.id || index}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '10px 12px',
+                          background: colors.bgSecondary,
+                          borderRadius: '8px',
+                          fontSize: '0.85rem'
+                        }}
+                      >
+                        <span style={{ color: colors.textPrimary }}>
+                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {slot.time}
+                        </span>
+                        <button
+                          onClick={() => removeAvailabilitySlot(slot.id)}
+                          style={{
+                            padding: '4px 8px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            background: 'transparent',
+                            color: colors.textMuted,
+                            cursor: 'pointer',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          ✕
+                        </button>
                       </div>
                     ))}
                   </div>
