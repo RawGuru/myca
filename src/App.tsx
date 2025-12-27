@@ -639,6 +639,36 @@ function App() {
     fetchMyGiverProfile()
   }, [fetchMyGiverProfile])
 
+  // Check for shareable giver link on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const giverId = params.get('giver')
+    if (giverId) {
+      // Fetch this giver and show their profile
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', giverId)
+        .eq('is_giver', true)
+        .single()
+        .then(({ data }) => {
+          if (data) {
+            setSelectedGiver(data)
+            // Also fetch their availability
+            supabase
+              .from('giver_availability')
+              .select('*')
+              .eq('giver_id', giverId)
+              .gte('date', new Date().toISOString().split('T')[0])
+              .then(({ data: slots }) => {
+                if (slots) setSelectedGiverSlots(slots)
+              })
+            setScreen('publicGiverProfile')
+          }
+        })
+    }
+  }, [])
+
   // Start Stripe Connect onboarding
   const startStripeConnect = async () => {
     if (!user || !myGiverProfile) return
@@ -1709,6 +1739,122 @@ function App() {
           )}
 
           <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  // Public giver profile (shareable link, no login required)
+  if (screen === 'publicGiverProfile') {
+    if (!selectedGiver) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <p style={{ color: colors.textSecondary, marginTop: '20px' }}>Profile not found</p>
+            <button style={{ ...btnStyle, marginTop: '20px' }} onClick={() => setScreen('welcome')}>
+              Go to Home
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, paddingBottom: '100px' }}>
+          <h1 style={{ fontSize: '2rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '10px' }}>
+            {selectedGiver.name}
+          </h1>
+          {selectedGiver.tagline && (
+            <p style={{ color: colors.textSecondary, textAlign: 'center', marginBottom: '30px' }}>
+              {selectedGiver.tagline}
+            </p>
+          )}
+
+          {/* Video */}
+          {selectedGiver.video_url && (
+            <div style={{ marginBottom: '30px' }}>
+              <video
+                src={selectedGiver.video_url}
+                controls
+                playsInline
+                style={{
+                  width: '100%',
+                  maxHeight: '400px',
+                  borderRadius: '16px',
+                  background: '#000'
+                }}
+              />
+            </div>
+          )}
+
+          {/* Rate */}
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: colors.textSecondary }}>30-minute session</span>
+              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>
+                ${selectedGiver.rate_per_30}
+              </span>
+            </div>
+          </div>
+
+          {/* Available slots */}
+          {selectedGiverSlots.length > 0 ? (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                Available Times
+              </h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {selectedGiverSlots.slice(0, 10).map(slot => (
+                  <div
+                    key={slot.id}
+                    style={{
+                      padding: '8px 12px',
+                      background: colors.bgSecondary,
+                      borderRadius: '8px',
+                      fontSize: '0.85rem',
+                      color: colors.textPrimary
+                    }}
+                  >
+                    {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    {' at '}
+                    {formatTimeTo12Hour(slot.time)}
+                  </div>
+                ))}
+              </div>
+              {selectedGiverSlots.length > 10 && (
+                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '10px' }}>
+                  +{selectedGiverSlots.length - 10} more times available
+                </p>
+              )}
+            </div>
+          ) : (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <p style={{ color: colors.textMuted }}>No availability at this time</p>
+            </div>
+          )}
+
+          {/* Book button */}
+          <button
+            style={{ ...btnStyle, width: '100%' }}
+            onClick={() => {
+              if (!user) {
+                setScreen('welcome')
+                alert('Please sign in to book a session')
+              } else {
+                setScreen('profile')
+              }
+            }}
+          >
+            Book Session with {selectedGiver.name}
+          </button>
+
+          <button
+            style={{ ...btnSecondaryStyle, width: '100%', marginTop: '10px' }}
+            onClick={() => setScreen('welcome')}
+          >
+            Back to Home
+          </button>
         </div>
       </div>
     )
