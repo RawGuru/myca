@@ -3846,20 +3846,31 @@ function App() {
                       <button
                         onClick={async () => {
                           const isGiver = booking.giver_id === user?.id
-                          const role = isGiver ? 'giver' : 'seeker'
-                          if (confirm(`Cancel this session? ${isGiver ? 'The seeker will be notified.' : 'You may be eligible for a refund.'}`)) {
+
+                          // Different consequences based on who cancels
+                          const message = isGiver
+                            ? 'Cancel this session? The seeker will receive a full refund. You will not be paid.'
+                            : 'Cancel this session? Your payment will still go to the giver. No refund.'
+
+                          if (confirm(message)) {
                             const { error } = await supabase
                               .from('bookings')
                               .update({
                                 status: 'cancelled',
-                                cancelled_by: role,
-                                cancelled_at: new Date().toISOString()
+                                cancelled_by: isGiver ? 'giver' : 'seeker',
+                                cancelled_at: new Date().toISOString(),
+                                // Track refund status for when Stripe is real
+                                refund_to_seeker: isGiver ? true : false
                               })
                               .eq('id', booking.id)
 
                             if (!error) {
                               fetchUserBookings()
-                              alert('Session cancelled')
+                              if (isGiver) {
+                                alert('Session cancelled. The seeker will be refunded.')
+                              } else {
+                                alert('Session cancelled. Your payment has been forfeited to the giver.')
+                              }
                             }
                           }
                         }}
