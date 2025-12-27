@@ -17,6 +17,8 @@ interface Booking {
   stripe_payment_id: string | null
   video_room_url: string | null
   giver_joined_at: string | null
+  giver_left_at: string | null
+  seeker_left_at: string | null
   seeker_credit_earned: boolean
   created_at: string
 }
@@ -1016,6 +1018,36 @@ function App() {
           }
         })
       }
+
+      // Track when participants leave (for both giver and seeker)
+      call.on('participant-left', async (event) => {
+        if (!user || !activeSession) return
+
+        // Identify who left based on their session_id
+        const localParticipant = call.participants().local
+        const isLocalUserLeaving = event.participant.session_id === localParticipant?.session_id
+
+        if (isLocalUserLeaving) {
+          // Current user is leaving - track their leave time
+          const leaveTime = new Date().toISOString()
+          const isGiver = user.id === activeSession.giver_id
+
+          // Update only if not already set (first leave time only)
+          if (isGiver && !activeSession.giver_left_at) {
+            await supabase
+              .from('bookings')
+              .update({ giver_left_at: leaveTime })
+              .eq('id', activeSession.id)
+              .is('giver_left_at', null)
+          } else if (!isGiver && !activeSession.seeker_left_at) {
+            await supabase
+              .from('bookings')
+              .update({ seeker_left_at: leaveTime })
+              .eq('id', activeSession.id)
+              .is('seeker_left_at', null)
+          }
+        }
+      })
 
       await call.join({ url: activeSession.video_room_url })
     } catch (err) {
