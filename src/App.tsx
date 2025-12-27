@@ -731,6 +731,16 @@ function App() {
     fetchUserBookings()
   }, [fetchUserBookings])
 
+  // Auto-refresh sessions and confirmation pages
+  useEffect(() => {
+    if (screen === 'sessions' || screen === 'confirmation') {
+      const interval = setInterval(() => {
+        fetchUserBookings()
+      }, 10000) // Check every 10 seconds to update join button availability
+      return () => clearInterval(interval)
+    }
+  }, [screen, fetchUserBookings])
+
   // Fetch saved givers (private saves for seekers)
   const fetchSavedGivers = useCallback(async () => {
     if (!user) {
@@ -1422,13 +1432,13 @@ function App() {
     <nav style={navStyle}>
       {[
         { id: 'browse', icon: '🔍', label: 'Find' },
-        { id: 'giverIntro', icon: '🌱', label: 'Offer' },
+        ...(myGiverProfile ? [] : [{ id: 'giverIntro', icon: '🌱', label: 'Offer' }]),
         { id: 'sessions', icon: '📅', label: 'Sessions' },
         { id: 'userProfile', icon: '⚙️', label: 'Profile' },
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => setScreen(item.id === 'giverIntro' && myGiverProfile ? 'editGiverProfile' : item.id)}
+          onClick={() => setScreen(item.id)}
           style={{
             display: 'flex',
             flexDirection: 'column',
