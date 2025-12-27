@@ -122,15 +122,13 @@ function App() {
   const [bulkStartTime, setBulkStartTime] = useState('9:00')
   const [bulkEndTime, setBulkEndTime] = useState('17:00')
   const [bulkSelectedDays, setBulkSelectedDays] = useState<Set<number>>(new Set([1, 2, 3, 4, 5])) // Mon-Fri default
-  const [bulkWeekStart, setBulkWeekStart] = useState(() => {
-    // Get next Monday by default
-    const today = new Date()
-    const dayOfWeek = today.getDay()
-    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7
-    const nextMonday = new Date(today)
-    nextMonday.setDate(today.getDate() + daysUntilMonday)
-    return nextMonday.toISOString().split('T')[0]
+  const [bulkStartDate, setBulkStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [bulkEndDate, setBulkEndDate] = useState(() => {
+    const weekFromNow = new Date()
+    weekFromNow.setDate(weekFromNow.getDate() + 6)
+    return weekFromNow.toISOString().split('T')[0]
   })
+  const [weekViewDate, setWeekViewDate] = useState(new Date().toISOString().split('T')[0]) // Current week view
 
   // Saved givers state (private saves for seekers)
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
@@ -155,6 +153,7 @@ function App() {
       if (error) throw error
 
       setAvailabilitySlots(prev => [...prev, data])
+      setWeekViewDate(newSlotDate) // Show the week containing this slot
       setNewSlotDate('')
       setNewSlotTime('9:00')
     } catch (err) {
@@ -183,6 +182,15 @@ function App() {
     if (!user || bulkSelectedDays.size === 0) return
 
     try {
+      // Validate dates
+      const startDate = new Date(bulkStartDate + 'T00:00:00')
+      const endDate = new Date(bulkEndDate + 'T00:00:00')
+
+      if (startDate > endDate) {
+        alert('End date must be after start date')
+        return
+      }
+
       // Generate time slots between start and end time
       const [startHours, startMinutes] = bulkStartTime.split(':').map(Number)
       const [endHours, endMinutes] = bulkEndTime.split(':').map(Number)
@@ -201,24 +209,33 @@ function App() {
         timeSlots.push(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`)
       }
 
-      // Generate slots for each selected day
+      // Generate slots for each date in range that matches selected days
       const slotsToInsert: Array<{ giver_id: string; date: string; time: string; is_booked: boolean }> = []
-      const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+      const currentDate = new Date(startDate)
 
-      bulkSelectedDays.forEach(dayIndex => {
-        const date = new Date(weekStartDate)
-        date.setDate(weekStartDate.getDate() + dayIndex)
-        const dateStr = date.toISOString().split('T')[0]
+      while (currentDate <= endDate) {
+        const dayOfWeek = currentDate.getDay()
 
-        timeSlots.forEach(time => {
-          slotsToInsert.push({
-            giver_id: user.id,
-            date: dateStr,
-            time,
-            is_booked: false
+        if (bulkSelectedDays.has(dayOfWeek)) {
+          const dateStr = currentDate.toISOString().split('T')[0]
+
+          timeSlots.forEach(time => {
+            slotsToInsert.push({
+              giver_id: user.id,
+              date: dateStr,
+              time,
+              is_booked: false
+            })
           })
-        })
-      })
+        }
+
+        currentDate.setDate(currentDate.getDate() + 1)
+      }
+
+      if (slotsToInsert.length === 0) {
+        alert('No slots to add. Please select at least one day of the week.')
+        return
+      }
 
       // Insert all slots at once
       const { data, error } = await supabase
@@ -230,8 +247,23 @@ function App() {
 
       setAvailabilitySlots(prev => [...prev, ...data])
 
-      // Show success message
-      alert(`Added ${slotsToInsert.length} availability slots!`)
+      // Set week view to show the first added slot
+      if (data.length > 0) {
+        setWeekViewDate(data[0].date)
+      }
+
+      // Show detailed success message
+      const startDateObj = new Date(bulkStartDate + 'T00:00:00')
+      const endDateObj = new Date(bulkEndDate + 'T00:00:00')
+      const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      const selectedDayNames = Array.from(bulkSelectedDays).sort().map(i => dayNames[i]).join(', ')
+
+      alert(
+        `Added ${data.length} slots from ${startDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ` +
+        `to ${endDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}\n` +
+        `Days: ${selectedDayNames}\n` +
+        `Time: ${formatTimeTo12Hour(bulkStartTime)} - ${formatTimeTo12Hour(bulkEndTime)}`
+      )
     } catch (err) {
       console.error('Error adding bulk availability slots:', err)
       alert('Error adding slots. Some may already exist.')
@@ -2424,26 +2456,47 @@ function App() {
                   Add multiple time slots at once for selected days
                 </p>
 
-                {/* Week Start Date */}
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
-                    Week Starting (Monday)
-                  </label>
-                  <input
-                    type="date"
-                    value={bulkWeekStart}
-                    min={new Date().toISOString().split('T')[0]}
-                    onChange={(e) => setBulkWeekStart(e.target.value)}
-                    style={{
-                      width: '100%',
-                      padding: '10px',
-                      borderRadius: '8px',
-                      border: `1px solid ${colors.border}`,
-                      background: colors.bgSecondary,
-                      color: colors.textPrimary,
-                      fontSize: '0.85rem'
-                    }}
-                  />
+                {/* Date Range */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={bulkStartDate}
+                      onChange={(e) => setBulkStartDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border}`,
+                        background: colors.bgSecondary,
+                        color: colors.textPrimary,
+                        fontSize: '0.85rem'
+                      }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={bulkEndDate}
+                      min={bulkStartDate}
+                      onChange={(e) => setBulkEndDate(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border}`,
+                        background: colors.bgSecondary,
+                        color: colors.textPrimary,
+                        fontSize: '0.85rem'
+                      }}
+                    />
+                  </div>
                 </div>
 
                 {/* Time Range */}
@@ -2579,7 +2632,6 @@ function App() {
                 <input
                   type="date"
                   value={newSlotDate}
-                  min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setNewSlotDate(e.target.value)}
                   style={{
                     flex: 1,
@@ -2661,7 +2713,11 @@ function App() {
                         { label: 'Fri', index: 5 },
                         { label: 'Sat', index: 6 }
                       ].map(day => {
-                        const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+                        // Get Sunday of the week containing weekViewDate
+                        const viewDate = new Date(weekViewDate + 'T00:00:00')
+                        const dayOfWeek = viewDate.getDay()
+                        const weekStartDate = new Date(viewDate)
+                        weekStartDate.setDate(viewDate.getDate() - dayOfWeek)
                         const date = new Date(weekStartDate)
                         date.setDate(weekStartDate.getDate() + day.index)
                         return (
@@ -2699,7 +2755,11 @@ function App() {
 
                             {/* Day cells */}
                             {[0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
-                              const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+                              // Get Sunday of the week containing weekViewDate
+                              const viewDate = new Date(weekViewDate + 'T00:00:00')
+                              const dayOfWeek = viewDate.getDay()
+                              const weekStartDate = new Date(viewDate)
+                              weekStartDate.setDate(viewDate.getDate() - dayOfWeek)
                               const date = new Date(weekStartDate)
                               date.setDate(weekStartDate.getDate() + dayIndex)
                               const dateStr = date.toISOString().split('T')[0]
@@ -2741,9 +2801,9 @@ function App() {
                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
                   <button
                     onClick={() => {
-                      const currentWeek = new Date(bulkWeekStart + 'T00:00:00')
+                      const currentWeek = new Date(weekViewDate + 'T00:00:00')
                       currentWeek.setDate(currentWeek.getDate() - 7)
-                      setBulkWeekStart(currentWeek.toISOString().split('T')[0])
+                      setWeekViewDate(currentWeek.toISOString().split('T')[0])
                     }}
                     style={{
                       padding: '8px 16px',
@@ -2759,9 +2819,9 @@ function App() {
                   </button>
                   <button
                     onClick={() => {
-                      const currentWeek = new Date(bulkWeekStart + 'T00:00:00')
+                      const currentWeek = new Date(weekViewDate + 'T00:00:00')
                       currentWeek.setDate(currentWeek.getDate() + 7)
-                      setBulkWeekStart(currentWeek.toISOString().split('T')[0])
+                      setWeekViewDate(currentWeek.toISOString().split('T')[0])
                     }}
                     style={{
                       padding: '8px 16px',
