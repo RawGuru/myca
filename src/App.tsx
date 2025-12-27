@@ -7,20 +7,76 @@ import Auth from './components/Auth'
 
 const SUPABASE_URL = 'https://ksramckuggspsqymcjpo.supabase.co'
 
-// Booking type
+// Mode types
+type Mode = 'vault' | 'mirror' | 'strategist' | 'teacher' | 'challenger' | 'vibe_check'
+
+// Category types
+type Category = 'health' | 'relationships' | 'creativity' | 'career_money' | 'life_transitions' | 'spirituality' | 'general'
+
+// Listing type (new multi-listing architecture)
+export interface Listing {
+  id: string
+  user_id: string
+  topic: string
+  mode: Mode
+  price_cents: number
+  description: string | null
+  is_active: boolean
+  created_at: string
+  updated_at: string
+  categories?: Category[]
+}
+
+// Extension type
+export interface Extension {
+  id: string
+  booking_id: string
+  extended_at: string
+  amount_cents: number
+  stripe_payment_intent_id: string | null
+  giver_confirmed: boolean
+  seeker_confirmed: boolean
+  created_at: string
+}
+
+// Feedback type
+export interface Feedback {
+  id: string
+  booking_id: string
+  seeker_id: string
+  giver_id: string
+  would_book_again: boolean | null
+  matched_mode: boolean | null
+  created_at: string
+}
+
+// Booking type (updated for multi-listing)
 interface Booking {
   id: string
   seeker_id: string
   giver_id: string
+  listing_id: string
   scheduled_time: string
+  blocks_booked: number
   duration_minutes: number
   amount_cents: number
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
+  total_amount_cents: number
+  platform_fee_cents: number
+  giver_payout_cents: number
+  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
   stripe_payment_id: string | null
+  stripe_payment_intent_id: string | null
   video_room_url: string | null
   giver_joined_at: string | null
+  seeker_joined_at: string | null
   giver_left_at: string | null
   seeker_left_at: string | null
+  session_started_at: string | null
+  session_ended_at: string | null
+  extended_count: number
+  cancelled_by: 'giver' | 'seeker' | 'system' | null
+  cancelled_at: string | null
+  refund_issued: boolean
   seeker_credit_earned: boolean
   created_at: string
 }
@@ -103,6 +159,32 @@ const QUALITIES = [
   'Grounded',
   'Wise',
 ]
+
+// Modes of interaction
+export const MODES: { value: Mode; label: string; description: string }[] = [
+  { value: 'vault', label: 'The Vault', description: 'Pure listening. No advice.' },
+  { value: 'mirror', label: 'The Mirror', description: 'Reflective listening to help you see yourself.' },
+  { value: 'strategist', label: 'The Strategist', description: 'Active problem solving and brainstorming.' },
+  { value: 'teacher', label: 'The Teacher', description: 'Instruction and skill transfer.' },
+  { value: 'challenger', label: 'The Challenger', description: 'Debate and challenge assumptions.' },
+  { value: 'vibe_check', label: 'The Vibe Check', description: 'Casual conversation and chemistry test.' },
+]
+
+// Categories for listings
+export const CATEGORIES: { value: Category; label: string }[] = [
+  { value: 'health', label: 'Health & Wellness' },
+  { value: 'relationships', label: 'Relationships' },
+  { value: 'creativity', label: 'Creativity' },
+  { value: 'career_money', label: 'Career & Money' },
+  { value: 'life_transitions', label: 'Life Transitions' },
+  { value: 'spirituality', label: 'Spirituality' },
+  { value: 'general', label: 'General' },
+]
+
+// Time physics constants
+export const ACTIVE_MINUTES_PER_BLOCK = 25
+export const BUFFER_MINUTES = 5
+export const TOTAL_BLOCK_MINUTES = 30
 
 function App() {
   const { user, loading, signOut } = useAuth()
