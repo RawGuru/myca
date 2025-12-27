@@ -325,16 +325,25 @@ function App() {
   // Fetch available slots for a specific giver
   const fetchGiverAvailableSlots = useCallback(async (giverId: string) => {
     try {
+      // Use local date, not UTC
+      const today = new Date()
+      const todayLocal = formatDateLocal(today)
+
       const { data, error } = await supabase
         .from('giver_availability')
         .select('*')
         .eq('giver_id', giverId)
         .eq('is_booked', false)
-        .gte('date', new Date().toISOString().split('T')[0]) // Only future dates
+        .gte('date', todayLocal) // Only future dates (local timezone)
         .order('date', { ascending: true })
         .order('time', { ascending: true })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching giver availability:', error)
+        throw error
+      }
+
+      console.log(`Fetched ${data?.length || 0} available slots for giver ${giverId}`)
       return data || []
     } catch (err) {
       console.error('Error fetching giver availability:', err)
