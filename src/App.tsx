@@ -350,6 +350,14 @@ function App() {
     return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`
   }
 
+  // Format date as YYYY-MM-DD in local timezone (not UTC)
+  const formatDateLocal = (date: Date) => {
+    const year = date.getFullYear()
+    const month = (date.getMonth() + 1).toString().padStart(2, '0')
+    const day = date.getDate().toString().padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+
   // Format date for display
   const formatDate = (date: Date) => {
     const today = new Date()
@@ -2762,7 +2770,7 @@ function App() {
                               weekStartDate.setDate(viewDate.getDate() - dayOfWeek)
                               const date = new Date(weekStartDate)
                               date.setDate(weekStartDate.getDate() + dayIndex)
-                              const dateStr = date.toISOString().split('T')[0]
+                              const dateStr = formatDateLocal(date)
 
                               const hasSlot = availabilitySlots.some(
                                 slot => slot.date === dateStr && slot.time === time24
