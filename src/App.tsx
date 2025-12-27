@@ -755,7 +755,7 @@ function App() {
         .from('user_profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (error) {
         // Profile might not exist yet - that's OK
@@ -1369,6 +1369,7 @@ function App() {
         { id: 'browse', icon: '🔍', label: 'Find' },
         { id: 'giverIntro', icon: '🌱', label: 'Offer' },
         { id: 'sessions', icon: '📅', label: 'Sessions' },
+        { id: 'userProfile', icon: '⚙️', label: 'Profile' },
       ].map(item => (
         <button
           key={item.id}
@@ -3545,6 +3546,125 @@ function App() {
               </button>
             </div>
           )}
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'userProfile') {
+    if (!user) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to view your profile</p>
+              <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    const currentTimezone = userProfile?.timezone || myGiverProfile?.timezone || 'America/New_York'
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+
+          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Profile Settings</h2>
+
+          {/* Timezone Setting */}
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Timezone</h3>
+            <select
+              value={currentTimezone}
+              onChange={async (e) => {
+                const newTimezone = e.target.value
+                try {
+                  // Update user_profiles table
+                  const { error: profileError } = await supabase
+                    .from('user_profiles')
+                    .upsert({
+                      id: user.id,
+                      timezone: newTimezone,
+                      updated_at: new Date().toISOString()
+                    }, { onConflict: 'id' })
+
+                  if (profileError) throw profileError
+
+                  // If giver, also update profiles table
+                  if (myGiverProfile) {
+                    const { error: giverError } = await supabase
+                      .from('profiles')
+                      .update({ timezone: newTimezone })
+                      .eq('id', user.id)
+
+                    if (giverError) throw giverError
+                  }
+
+                  // Refresh data
+                  await fetchUserProfile()
+                  if (myGiverProfile) await fetchMyGiverProfile()
+
+                  alert('Timezone updated successfully!')
+                } catch (err) {
+                  console.error('Error updating timezone:', err)
+                  alert('Failed to update timezone. Please try again.')
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '15px',
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '12px',
+                color: colors.textPrimary,
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '10px' }}>
+              Times will be displayed in your timezone
+            </p>
+          </div>
+
+          {/* Giver Profile Link */}
+          {myGiverProfile && (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Giver Profile</h3>
+              <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                Manage your profile, availability, and settings
+              </p>
+              <button
+                style={{ ...btnStyle, margin: 0 }}
+                onClick={() => setScreen('myGiverProfile')}
+              >
+                Edit Giver Profile
+              </button>
+            </div>
+          )}
+
+          {/* Account Info */}
+          <div style={{ ...cardStyle, cursor: 'default' }}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Account</h3>
+            <div style={{ marginBottom: '12px' }}>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
+              <p style={{ color: colors.textPrimary }}>{user.email}</p>
+            </div>
+            {myGiverProfile && (
+              <div style={{ marginBottom: '12px' }}>
+                <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Name</p>
+                <p style={{ color: colors.textPrimary }}>{myGiverProfile.name}</p>
+              </div>
+            )}
+          </div>
+
           <Nav />
         </div>
       </div>
