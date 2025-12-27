@@ -1,8 +1,8 @@
 -- Add timezone support for users
 -- Times are stored in the user's local timezone and converted when displayed
 
--- Add timezone to givers table
-ALTER TABLE givers
+-- Add timezone to profiles table (for givers)
+ALTER TABLE profiles
 ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/New_York';
 
 -- Create user_profiles table for all users (givers and seekers)
@@ -37,5 +37,5 @@ CREATE POLICY "Anyone can view profiles"
   USING (true);
 
 COMMENT ON TABLE user_profiles IS 'User profiles with timezone information for proper time conversion';
-COMMENT ON COLUMN givers.timezone IS 'Giver timezone - used to interpret their availability times';
+COMMENT ON COLUMN profiles.timezone IS 'Giver timezone - used to interpret their availability times';
 COMMENT ON COLUMN user_profiles.timezone IS 'User timezone - used to display times in their local timezone';
