@@ -196,7 +196,8 @@ function App() {
   const [givers, setGivers] = useState<Giver[]>(demoGivers)
   const [selectedBookingDate, setSelectedBookingDate] = useState<Date | null>(null)
   const [selectedBookingTime, setSelectedBookingTime] = useState<string>('')
-  const [_selectedListingForBooking, _setSelectedListingForBooking] = useState<Listing | null>(null) // Reserved for Phase 4 booking flow
+  const [selectedListingForBooking, setSelectedListingForBooking] = useState<Listing | null>(null)
+  const [blocksBooked, setBlocksBooked] = useState<1 | 2 | 3>(1) // Multi-block booking (Phase 4)
 
   // Booking/payment state
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null)
@@ -588,17 +589,32 @@ function App() {
 
     try {
       const scheduledTime = getScheduledTime(selectedBookingDate, selectedBookingTime)
-      const amountCents = selectedGiver.rate_per_30 * 100
 
-      // Create booking record
+      // Multi-listing price calculation (Phase 4)
+      const basePrice = selectedListingForBooking
+        ? selectedListingForBooking.price_cents / 100
+        : selectedGiver.rate_per_30
+      const totalPrice = basePrice * blocksBooked
+      const durationMinutes = blocksBooked * TOTAL_BLOCK_MINUTES
+      const amountCents = Math.round(basePrice * 100)
+      const totalAmountCents = Math.round(totalPrice * 100)
+      const platformFeeCents = Math.floor(totalAmountCents * 0.15)
+      const giverPayoutCents = totalAmountCents - platformFeeCents
+
+      // Create booking record with multi-listing data
       const { data, error } = await supabase
         .from('bookings')
         .insert({
           seeker_id: user.id,
           giver_id: selectedGiver.id,
+          listing_id: selectedListingForBooking?.id || null,
           scheduled_time: scheduledTime,
-          duration_minutes: 30,
+          duration_minutes: durationMinutes,
+          blocks_booked: blocksBooked,
           amount_cents: amountCents,
+          total_amount_cents: totalAmountCents,
+          platform_fee_cents: platformFeeCents,
+          giver_payout_cents: giverPayoutCents,
           status: 'pending',
           stripe_payment_id: null,
           video_room_url: null,
@@ -2495,7 +2511,16 @@ function App() {
     const availableDates = Object.keys(slotsByDate).sort()
     const selectedDateKey = selectedBookingDate?.toISOString().split('T')[0]
     const selectedDateSlots = selectedDateKey ? (slotsByDate[selectedDateKey] || []) : []
-    const price = selectedGiver.rate_per_30
+
+    // Multi-listing price calculation (Phase 4)
+    const basePrice = selectedListingForBooking
+      ? selectedListingForBooking.price_cents / 100
+      : selectedGiver.rate_per_30
+    const totalPrice = basePrice * blocksBooked
+    const activeMinutes = blocksBooked * ACTIVE_MINUTES_PER_BLOCK
+    const totalAmountCents = Math.round(totalPrice * 100)
+    const platformFeeCents = Math.floor(totalAmountCents * 0.15)
+    const giverPayoutCents = totalAmountCents - platformFeeCents
 
     return (
       <div style={containerStyle}>
@@ -2699,7 +2724,87 @@ function App() {
           )}
 
           <div style={{ ...cardStyle, cursor: 'default' }}>
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a 30-minute session</h3>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a Session</h3>
+
+            {/* Listing Selection (Multi-listing architecture) */}
+            {selectedGiver.listings && selectedGiver.listings.length > 0 && (
+              <>
+                <p style={{ color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+                  Select an offering
+                </p>
+                <div style={{ marginBottom: '20px' }}>
+                  {selectedGiver.listings.map(listing => {
+                    const modeInfo = MODES.find(m => m.value === listing.mode)
+                    const isSelected = selectedListingForBooking?.id === listing.id
+                    return (
+                      <div
+                        key={listing.id}
+                        onClick={() => setSelectedListingForBooking(listing)}
+                        style={{
+                          padding: '15px',
+                          marginBottom: '10px',
+                          background: isSelected ? colors.accentSoft : colors.bgSecondary,
+                          border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                          borderRadius: '12px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px' }}>
+                              {listing.topic}
+                            </div>
+                            <div style={{ fontSize: '0.85rem', color: colors.accent }}>
+                              {modeInfo?.label || listing.mode}
+                            </div>
+                          </div>
+                          <div style={{ fontSize: '1.1rem', fontWeight: 600, color: isSelected ? colors.accent : colors.textPrimary }}>
+                            ${(listing.price_cents / 100).toFixed(0)}
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+
+            {/* Block Selection (Multi-block booking) */}
+            <p style={{ color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Select duration
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+              {([1, 2, 3] as const).map(blocks => {
+                const activeMinutes = blocks * ACTIVE_MINUTES_PER_BLOCK
+                const isSelected = blocksBooked === blocks
+                return (
+                  <div
+                    key={blocks}
+                    onClick={() => setBlocksBooked(blocks)}
+                    style={{
+                      padding: '15px 10px',
+                      background: isSelected ? colors.accentSoft : colors.bgSecondary,
+                      border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                      borderRadius: '12px',
+                      textAlign: 'center',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    <div style={{
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      color: isSelected ? colors.accent : colors.textPrimary,
+                      marginBottom: '4px'
+                    }}>
+                      {activeMinutes} min
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                      {blocks} block{blocks > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
 
             {availableDates.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px 0', color: colors.textSecondary }}>
@@ -2796,9 +2901,33 @@ function App() {
                   </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: '20px 0', borderTop: `1px solid ${colors.border}` }}>
-                  <span style={{ color: colors.textSecondary }}>30 minutes</span>
-                  <span style={{ fontSize: '1.5rem', fontWeight: 600 }}>${price}</span>
+                {/* Price Summary */}
+                <div style={{ padding: '20px 0', borderTop: `1px solid ${colors.border}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ color: colors.textSecondary }}>Duration</span>
+                    <span style={{ fontWeight: 600 }}>{activeMinutes} minutes active</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ color: colors.textSecondary }}>Price per block</span>
+                    <span>${basePrice.toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <span style={{ color: colors.textSecondary }}>Blocks</span>
+                    <span>× {blocksBooked}</span>
+                  </div>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    paddingTop: '12px',
+                    borderTop: `1px solid ${colors.border}`,
+                    marginTop: '8px'
+                  }}>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Total</span>
+                    <span style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${totalPrice.toFixed(2)}</span>
+                  </div>
+                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '8px', textAlign: 'right' }}>
+                    Giver receives ${(giverPayoutCents / 100).toFixed(2)} (85%)
+                  </p>
                 </div>
                 <button
                   style={{
