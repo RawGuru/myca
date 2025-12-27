@@ -118,6 +118,20 @@ function App() {
   const [newSlotTime, setNewSlotTime] = useState('9:00')
   const [selectedGiverSlots, setSelectedGiverSlots] = useState<AvailabilitySlot[]>([])
 
+  // Bulk availability state
+  const [bulkStartTime, setBulkStartTime] = useState('9:00')
+  const [bulkEndTime, setBulkEndTime] = useState('17:00')
+  const [bulkSelectedDays, setBulkSelectedDays] = useState<Set<number>>(new Set([1, 2, 3, 4, 5])) // Mon-Fri default
+  const [bulkWeekStart, setBulkWeekStart] = useState(() => {
+    // Get next Monday by default
+    const today = new Date()
+    const dayOfWeek = today.getDay()
+    const daysUntilMonday = dayOfWeek === 0 ? 1 : (8 - dayOfWeek) % 7 || 7
+    const nextMonday = new Date(today)
+    nextMonday.setDate(today.getDate() + daysUntilMonday)
+    return nextMonday.toISOString().split('T')[0]
+  })
+
   // Saved givers state (private saves for seekers)
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
   const [showSavedOnly, setShowSavedOnly] = useState(false)
@@ -162,6 +176,79 @@ function App() {
     } catch (err) {
       console.error('Error removing availability slot:', err)
     }
+  }
+
+  // Add bulk availability slots
+  const addBulkAvailabilitySlots = async () => {
+    if (!user || bulkSelectedDays.size === 0) return
+
+    try {
+      // Generate time slots between start and end time
+      const [startHours, startMinutes] = bulkStartTime.split(':').map(Number)
+      const [endHours, endMinutes] = bulkEndTime.split(':').map(Number)
+      const startTotalMinutes = startHours * 60 + startMinutes
+      const endTotalMinutes = endHours * 60 + endMinutes
+
+      if (startTotalMinutes >= endTotalMinutes) {
+        alert('End time must be after start time')
+        return
+      }
+
+      const timeSlots: string[] = []
+      for (let minutes = startTotalMinutes; minutes < endTotalMinutes; minutes += 30) {
+        const hours = Math.floor(minutes / 60)
+        const mins = minutes % 60
+        timeSlots.push(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`)
+      }
+
+      // Generate slots for each selected day
+      const slotsToInsert: Array<{ giver_id: string; date: string; time: string; is_booked: boolean }> = []
+      const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+
+      bulkSelectedDays.forEach(dayIndex => {
+        const date = new Date(weekStartDate)
+        date.setDate(weekStartDate.getDate() + dayIndex)
+        const dateStr = date.toISOString().split('T')[0]
+
+        timeSlots.forEach(time => {
+          slotsToInsert.push({
+            giver_id: user.id,
+            date: dateStr,
+            time,
+            is_booked: false
+          })
+        })
+      })
+
+      // Insert all slots at once
+      const { data, error } = await supabase
+        .from('giver_availability')
+        .insert(slotsToInsert)
+        .select()
+
+      if (error) throw error
+
+      setAvailabilitySlots(prev => [...prev, ...data])
+
+      // Show success message
+      alert(`Added ${slotsToInsert.length} availability slots!`)
+    } catch (err) {
+      console.error('Error adding bulk availability slots:', err)
+      alert('Error adding slots. Some may already exist.')
+    }
+  }
+
+  // Toggle day selection for bulk add
+  const toggleBulkDay = (dayIndex: number) => {
+    setBulkSelectedDays(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(dayIndex)) {
+        newSet.delete(dayIndex)
+      } else {
+        newSet.add(dayIndex)
+      }
+      return newSet
+    })
   }
 
   // Get total slots selected
@@ -2290,11 +2377,165 @@ function App() {
               borderRadius: '16px',
               padding: '20px'
             }}>
-              <p style={{ fontSize: '0.85rem', color: colors.textSecondary, marginBottom: '15px' }}>
-                Add specific dates and times when you're available.
-              </p>
+              {/* Bulk Add Section */}
+              <div style={{
+                marginBottom: '25px',
+                paddingBottom: '20px',
+                borderBottom: `2px solid ${colors.border}`
+              }}>
+                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>
+                  Bulk Add Availability
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '15px' }}>
+                  Add multiple time slots at once for selected days
+                </p>
 
-              {/* Add new slot */}
+                {/* Week Start Date */}
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                    Week Starting (Monday)
+                  </label>
+                  <input
+                    type="date"
+                    value={bulkWeekStart}
+                    min={new Date().toISOString().split('T')[0]}
+                    onChange={(e) => setBulkWeekStart(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '10px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.border}`,
+                      background: colors.bgSecondary,
+                      color: colors.textPrimary,
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+
+                {/* Time Range */}
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                      Start Time
+                    </label>
+                    <select
+                      value={bulkStartTime}
+                      onChange={(e) => setBulkStartTime(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border}`,
+                        background: colors.bgSecondary,
+                        color: colors.textPrimary,
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0')
+                        return [
+                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
+                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
+                        ]
+                      })}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>
+                      End Time
+                    </label>
+                    <select
+                      value={bulkEndTime}
+                      onChange={(e) => setBulkEndTime(e.target.value)}
+                      style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${colors.border}`,
+                        background: colors.bgSecondary,
+                        color: colors.textPrimary,
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0')
+                        return [
+                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
+                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
+                        ]
+                      })}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Day Selection */}
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>
+                    Select Days
+                  </label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'Sun', index: 0 },
+                      { label: 'Mon', index: 1 },
+                      { label: 'Tue', index: 2 },
+                      { label: 'Wed', index: 3 },
+                      { label: 'Thu', index: 4 },
+                      { label: 'Fri', index: 5 },
+                      { label: 'Sat', index: 6 }
+                    ].map(day => (
+                      <div
+                        key={day.index}
+                        onClick={() => toggleBulkDay(day.index)}
+                        style={{
+                          flex: '1 1 40px',
+                          minWidth: '45px',
+                          padding: '8px 4px',
+                          borderRadius: '8px',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          fontSize: '0.8rem',
+                          fontWeight: 500,
+                          background: bulkSelectedDays.has(day.index) ? colors.accent : colors.bgSecondary,
+                          color: bulkSelectedDays.has(day.index) ? colors.bgPrimary : colors.textSecondary,
+                          border: `1px solid ${bulkSelectedDays.has(day.index) ? colors.accent : colors.border}`,
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        {day.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={addBulkAvailabilitySlots}
+                  disabled={bulkSelectedDays.size === 0}
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary,
+                    color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted,
+                    cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}
+                >
+                  Add Bulk Slots
+                </button>
+              </div>
+
+              {/* Single Slot Add Section */}
+              <div>
+                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>
+                  Add Single Slot
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '15px' }}>
+                  Add a specific date and time
+                </p>
+
+                {/* Add new slot */}
               <div style={{
                 display: 'flex',
                 gap: '10px',
@@ -2356,6 +2597,7 @@ function App() {
                 >
                   Add
                 </button>
+              </div>
               </div>
 
               {/* List of added slots */}
