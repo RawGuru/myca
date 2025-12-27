@@ -1285,6 +1285,15 @@ function App() {
     }
   }, [selectedGiver, fetchGiverAvailableSlots])
 
+  // Populate profile form when navigating to userProfile screen
+  useEffect(() => {
+    if (screen === 'userProfile' && myGiverProfile) {
+      setGiverName(myGiverProfile.name || '')
+      setGiverTagline(myGiverProfile.tagline || '')
+      setGiverRate(myGiverProfile.rate_per_30 || 15)
+    }
+  }, [screen, myGiverProfile])
+
   if (loading) {
     return (
       <div style={{
@@ -3570,10 +3579,21 @@ function App() {
 
     return (
       <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative' }}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Profile Settings</h2>
+          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>
+            {myGiverProfile ? 'Profile & Settings' : 'Profile Settings'}
+          </h2>
+
+          {/* Account Info */}
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Account</h3>
+            <div style={{ marginBottom: '12px' }}>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
+              <p style={{ color: colors.textPrimary }}>{user.email}</p>
+            </div>
+          </div>
 
           {/* Timezone Setting */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
@@ -3634,36 +3654,176 @@ function App() {
             </p>
           </div>
 
-          {/* Giver Profile Link */}
-          {myGiverProfile && (
+          {/* Giver Profile Section - Full Editor */}
+          {myGiverProfile ? (
+            <>
+              {/* Name & Tagline */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Public Profile</h3>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Name</label>
+                  <input
+                    value={giverName}
+                    onChange={(e) => setGiverName(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: colors.bgSecondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      color: colors.textPrimary,
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Tagline</label>
+                  <input
+                    value={giverTagline}
+                    onChange={(e) => setGiverTagline(e.target.value)}
+                    placeholder="Optional tagline"
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: colors.bgSecondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      color: colors.textPrimary,
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                </div>
+
+                <button
+                  onClick={async () => {
+                    if (!giverName.trim()) {
+                      alert('Name is required')
+                      return
+                    }
+                    try {
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({
+                          name: giverName.trim(),
+                          tagline: giverTagline.trim() || null,
+                        })
+                        .eq('id', user.id)
+
+                      if (error) throw error
+
+                      await fetchMyGiverProfile()
+                      await fetchGivers()
+                      alert('Profile updated successfully!')
+                    } catch (err) {
+                      console.error('Error updating profile:', err)
+                      alert('Failed to update profile. Please try again.')
+                    }
+                  }}
+                  style={{
+                    ...btnStyle,
+                    margin: 0,
+                    width: '100%'
+                  }}
+                >
+                  Save Profile
+                </button>
+              </div>
+
+              {/* Rate */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Rate</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
+                  <input
+                    type="number"
+                    min={15}
+                    value={giverRate}
+                    onChange={(e) => setGiverRate(parseInt(e.target.value) || 0)}
+                    onBlur={(e) => {
+                      const val = parseInt(e.target.value)
+                      if (!val || val < 15) {
+                        setGiverRate(15)
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      background: colors.bgSecondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      color: colors.textPrimary,
+                      fontSize: '1rem',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span>
+                </div>
+                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>Minimum $15</p>
+                <button
+                  onClick={async () => {
+                    if (giverRate < 15) {
+                      alert('Minimum rate is $15 per 30 minutes')
+                      return
+                    }
+                    try {
+                      const { error } = await supabase
+                        .from('profiles')
+                        .update({ rate_per_30: giverRate })
+                        .eq('id', user.id)
+
+                      if (error) throw error
+
+                      await fetchMyGiverProfile()
+                      await fetchGivers()
+                      alert('Rate updated successfully!')
+                    } catch (err) {
+                      console.error('Error updating rate:', err)
+                      alert('Failed to update rate. Please try again.')
+                    }
+                  }}
+                  style={{
+                    ...btnStyle,
+                    margin: 0,
+                    width: '100%'
+                  }}
+                >
+                  Save Rate
+                </button>
+              </div>
+
+              {/* Video & Availability - Link to Full Editor */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Video & Availability</h3>
+                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                  Manage your intro video and availability calendar
+                </p>
+                <button
+                  style={{ ...btnStyle, margin: 0, width: '100%' }}
+                  onClick={() => setScreen('myGiverProfile')}
+                >
+                  Edit Video & Availability
+                </button>
+              </div>
+            </>
+          ) : (
+            /* Non-giver: Option to become a giver */
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Giver Profile</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Become a Giver</h3>
               <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                Manage your profile, availability, and settings
+                Share your presence with those who need it
               </p>
               <button
-                style={{ ...btnStyle, margin: 0 }}
-                onClick={() => setScreen('myGiverProfile')}
+                style={{ ...btnStyle, margin: 0, width: '100%' }}
+                onClick={() => setScreen('giverIntro')}
               >
-                Edit Giver Profile
+                Offer Presence
               </button>
             </div>
           )}
-
-          {/* Account Info */}
-          <div style={{ ...cardStyle, cursor: 'default' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Account</h3>
-            <div style={{ marginBottom: '12px' }}>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
-              <p style={{ color: colors.textPrimary }}>{user.email}</p>
-            </div>
-            {myGiverProfile && (
-              <div style={{ marginBottom: '12px' }}>
-                <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Name</p>
-                <p style={{ color: colors.textPrimary }}>{myGiverProfile.name}</p>
-              </div>
-            )}
-          </div>
 
           <Nav />
         </div>
