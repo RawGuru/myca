@@ -56,6 +56,7 @@ interface Giver {
   tagline: string | null
   rate_per_30: number
   qualities_offered?: string[]
+  bio?: string | null
   video_url?: string | null
   available?: boolean
   stripe_account_id?: string | null
@@ -79,6 +80,22 @@ const TIMEZONES = [
   { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
   { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+]
+
+// Predefined qualities for giver profiles
+const QUALITIES = [
+  'Present',
+  'Warm',
+  'Patient',
+  'Calming',
+  'Insightful',
+  'Honest',
+  'Encouraging',
+  'Compassionate',
+  'Non-judgmental',
+  'Empathetic',
+  'Grounded',
+  'Wise',
 ]
 
 function App() {
@@ -119,6 +136,8 @@ function App() {
   const [giverTagline, setGiverTagline] = useState('')
   const [giverRate, setGiverRate] = useState(15)
   const [giverTimezone, setGiverTimezone] = useState('America/New_York')
+  const [giverBio, setGiverBio] = useState('')
+  const [giverQualities, setGiverQualities] = useState<string[]>([])
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
 
@@ -1139,11 +1158,12 @@ function App() {
           email: user.email,
           name: giverName.trim(),
           tagline: giverTagline.trim() || null,
+          bio: giverBio.trim() || null,
           video_url: videoUrl,
           rate_per_30: giverRate,
           is_giver: true,
           available: true,
-          qualities_offered: [],
+          qualities_offered: giverQualities,
           timezone: giverTimezone,
         }, { onConflict: 'id' })
 
@@ -1174,6 +1194,8 @@ function App() {
       setGiverName('')
       setGiverTagline('')
       setGiverRate(15)
+      setGiverBio('')
+      setGiverQualities([])
       setRecordedBlob(null)
       setRecordedUrl(null)
       setVideoStep('prompt')
@@ -1379,6 +1401,8 @@ function App() {
       setGiverName(myGiverProfile.name || '')
       setGiverTagline(myGiverProfile.tagline || '')
       setGiverRate(myGiverProfile.rate_per_30 || 15)
+      setGiverBio(myGiverProfile.bio || '')
+      setGiverQualities(myGiverProfile.qualities_offered || [])
     }
   }, [screen, myGiverProfile])
 
@@ -1698,6 +1722,16 @@ function App() {
                   </span>
                 ))}
               </div>
+              {giver.bio && (
+                <p style={{
+                  fontSize: '0.85rem',
+                  color: colors.textSecondary,
+                  lineHeight: 1.5,
+                  marginBottom: '15px'
+                }}>
+                  {giver.bio.length > 100 ? `${giver.bio.slice(0, 100)}...` : giver.bio}
+                </p>
+              )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: `1px solid ${colors.border}` }}>
                 <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span></div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1785,6 +1819,42 @@ function App() {
                   background: '#000'
                 }}
               />
+            </div>
+          )}
+
+          {/* Qualities */}
+          {selectedGiver.qualities_offered && selectedGiver.qualities_offered.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {selectedGiver.qualities_offered.map((quality, i) => (
+                  <span
+                    key={quality}
+                    style={{
+                      padding: '8px 16px',
+                      background: i < 3 ? colors.accentSoft : colors.bgCard,
+                      border: `1px solid ${i < 3 ? colors.accent : colors.border}`,
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      color: i < 3 ? colors.accent : colors.textSecondary,
+                      fontWeight: i < 3 ? 600 : 400
+                    }}
+                  >
+                    {quality}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bio */}
+          {selectedGiver.bio && (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                About
+              </h3>
+              <p style={{ color: colors.textPrimary, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                {selectedGiver.bio}
+              </p>
             </div>
           )}
 
@@ -1967,6 +2037,42 @@ function App() {
               <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
             </div>
           </div>
+
+          {/* Qualities */}
+          {selectedGiver.qualities_offered && selectedGiver.qualities_offered.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+                {selectedGiver.qualities_offered.map((quality, i) => (
+                  <span
+                    key={quality}
+                    style={{
+                      padding: '8px 16px',
+                      background: i < 3 ? colors.accentSoft : colors.bgCard,
+                      border: `1px solid ${i < 3 ? colors.accent : colors.border}`,
+                      borderRadius: '20px',
+                      fontSize: '0.85rem',
+                      color: i < 3 ? colors.accent : colors.textSecondary,
+                      fontWeight: i < 3 ? 600 : 400
+                    }}
+                  >
+                    {quality}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Bio */}
+          {selectedGiver.bio && (
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                About
+              </h3>
+              <p style={{ color: colors.textPrimary, lineHeight: 1.6, fontSize: '0.95rem' }}>
+                {selectedGiver.bio}
+              </p>
+            </div>
+          )}
 
           <div style={{ ...cardStyle, cursor: 'default' }}>
             <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a 30-minute session</h3>
@@ -2819,6 +2925,87 @@ function App() {
             <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
               Your availability times will be stored in this timezone
             </p>
+          </div>
+
+          {/* Bio/Background */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Bio/background <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
+            </label>
+            <textarea
+              value={giverBio}
+              onChange={(e) => {
+                if (e.target.value.length <= 500) {
+                  setGiverBio(e.target.value)
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '15px',
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '12px',
+                color: colors.textPrimary,
+                fontSize: '1rem',
+                boxSizing: 'border-box',
+                minHeight: '100px',
+                resize: 'vertical',
+                fontFamily: 'inherit'
+              }}
+              placeholder="Share a bit about your background and experience..."
+            />
+            <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', textAlign: 'right' }}>
+              {giverBio.length}/500
+            </p>
+          </div>
+
+          {/* Qualities Offered */}
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Qualities you offer <span style={{ color: colors.textMuted }}>(select up to 5)</span>
+            </label>
+            <div style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '8px'
+            }}>
+              {QUALITIES.map(quality => {
+                const isSelected = giverQualities.includes(quality)
+                return (
+                  <button
+                    key={quality}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setGiverQualities(prev => prev.filter(q => q !== quality))
+                      } else if (giverQualities.length < 5) {
+                        setGiverQualities(prev => [...prev, quality])
+                      }
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      background: isSelected ? colors.accent : colors.bgSecondary,
+                      border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                      borderRadius: '20px',
+                      color: isSelected ? colors.bgPrimary : colors.textPrimary,
+                      cursor: giverQualities.length >= 5 && !isSelected ? 'not-allowed' : 'pointer',
+                      fontSize: '0.85rem',
+                      fontWeight: isSelected ? 600 : 400,
+                      opacity: giverQualities.length >= 5 && !isSelected ? 0.5 : 1,
+                      transition: 'all 0.2s'
+                    }}
+                    disabled={giverQualities.length >= 5 && !isSelected}
+                  >
+                    {quality}
+                  </button>
+                )
+              })}
+            </div>
+            {giverQualities.length > 0 && (
+              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '8px' }}>
+                Selected: {giverQualities.join(', ')}
+              </p>
+            )}
           </div>
 
           {/* Video Recording Section */}
@@ -4272,6 +4459,85 @@ function App() {
                   />
                 </div>
 
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                    Bio/background <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
+                  </label>
+                  <textarea
+                    value={giverBio}
+                    onChange={(e) => {
+                      if (e.target.value.length <= 500) {
+                        setGiverBio(e.target.value)
+                      }
+                    }}
+                    placeholder="Share a bit about your background and experience..."
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      background: colors.bgSecondary,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '8px',
+                      color: colors.textPrimary,
+                      fontSize: '1rem',
+                      boxSizing: 'border-box',
+                      minHeight: '80px',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                  <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', textAlign: 'right' }}>
+                    {giverBio.length}/500
+                  </p>
+                </div>
+
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                    Qualities you offer <span style={{ color: colors.textMuted }}>(select up to 5)</span>
+                  </label>
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: '6px'
+                  }}>
+                    {QUALITIES.map(quality => {
+                      const isSelected = giverQualities.includes(quality)
+                      return (
+                        <button
+                          key={quality}
+                          type="button"
+                          onClick={() => {
+                            if (isSelected) {
+                              setGiverQualities(prev => prev.filter(q => q !== quality))
+                            } else if (giverQualities.length < 5) {
+                              setGiverQualities(prev => [...prev, quality])
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            background: isSelected ? colors.accent : colors.bgSecondary,
+                            border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                            borderRadius: '16px',
+                            color: isSelected ? colors.bgPrimary : colors.textPrimary,
+                            cursor: giverQualities.length >= 5 && !isSelected ? 'not-allowed' : 'pointer',
+                            fontSize: '0.8rem',
+                            fontWeight: isSelected ? 600 : 400,
+                            opacity: giverQualities.length >= 5 && !isSelected ? 0.5 : 1,
+                            transition: 'all 0.2s'
+                          }}
+                          disabled={giverQualities.length >= 5 && !isSelected}
+                        >
+                          {quality}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {giverQualities.length > 0 && (
+                    <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '8px' }}>
+                      Selected: {giverQualities.join(', ')}
+                    </p>
+                  )}
+                </div>
+
                 <button
                   onClick={async () => {
                     if (!giverName.trim()) {
@@ -4284,6 +4550,8 @@ function App() {
                         .update({
                           name: giverName.trim(),
                           tagline: giverTagline.trim() || null,
+                          bio: giverBio.trim() || null,
+                          qualities_offered: giverQualities,
                         })
                         .eq('id', user.id)
 
