@@ -1440,7 +1440,12 @@ function App() {
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
-            <button style={btnSecondaryStyle} onClick={() => setScreen('giverIntro')}>Offer Presence</button>
+            <button
+              style={btnSecondaryStyle}
+              onClick={() => setScreen(user && myGiverProfile ? 'myGiverProfile' : 'giverIntro')}
+            >
+              {user && myGiverProfile ? 'My Giver Profile' : 'Offer Presence'}
+            </button>
             {!user && (
               <button 
                 style={{ 
@@ -2190,6 +2195,12 @@ function App() {
   }
 
   if (screen === 'give') {
+    // If user already has a giver profile, redirect to their dashboard
+    if (user && myGiverProfile) {
+      setScreen('myGiverProfile')
+      return null
+    }
+
     if (!user) {
       return (
         <div style={containerStyle}>
@@ -2259,7 +2270,13 @@ function App() {
                 type="number"
                 min={15}
                 value={giverRate}
-                onChange={(e) => setGiverRate(Math.max(15, parseInt(e.target.value) || 15))}
+                onChange={(e) => setGiverRate(parseInt(e.target.value) || 0)}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value)
+                  if (!val || val < 15) {
+                    setGiverRate(15)
+                  }
+                }}
                 style={{
                   flex: 1,
                   padding: '15px',
