@@ -219,6 +219,14 @@ function App() {
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [showGiverOverlay, setShowGiverOverlay] = useState(false)
+
+  // Extension system state (Phase 6)
+  const [extensionOffered, setExtensionOffered] = useState(false)
+  const [showExtensionUI, setShowExtensionUI] = useState(false)
+  const [myExtensionResponse, setMyExtensionResponse] = useState<'yes' | 'no' | null>(null)
+  const [otherPartyExtensionResponse, setOtherPartyExtensionResponse] = useState<'yes' | 'no' | null>(null)
+  const [extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // 60-second window
+  const [extensionProcessing, setExtensionProcessing] = useState(false)
   const dailyCallRef = useRef<DailyCall | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
@@ -708,6 +716,71 @@ function App() {
       setBookingError(err instanceof Error ? err.message : 'Payment failed')
     } finally {
       setBookingLoading(false)
+    }
+  }
+
+  // Process extension payment and add time (Phase 6)
+  const processExtensionPayment = async () => {
+    if (!activeSession || !user) return
+
+    try {
+      // Calculate extension amount (use booking's amount_cents as listing price)
+      const extensionPriceCents = activeSession.amount_cents || 0
+      const platformFeeCents = Math.floor(extensionPriceCents * 0.15)
+      const totalAmountCents = extensionPriceCents + platformFeeCents
+
+      console.log(`Processing extension payment: $${(totalAmountCents / 100).toFixed(2)}`)
+
+      // TODO: Production - Process real payment via Stripe
+      // 1. Create PaymentIntent for extension amount
+      // 2. Confirm payment
+      // 3. Handle payment errors
+
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      // Generate mock payment ID
+      const mockPaymentId = `pi_ext_demo_${Date.now()}`
+
+      // Create extension record in database
+      const { error: extensionError } = await supabase
+        .from('extensions')
+        .insert({
+          booking_id: activeSession.id,
+          amount_cents: extensionPriceCents,
+          stripe_payment_intent_id: mockPaymentId,
+          giver_confirmed: true,
+          seeker_confirmed: true,
+        })
+        .select()
+        .single()
+
+      if (extensionError) throw extensionError
+
+      // Update booking with incremented extended_count
+      const currentExtendedCount = activeSession.extended_count || 0
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({
+          extended_count: currentExtendedCount + 1,
+        })
+        .eq('id', activeSession.id)
+
+      if (bookingError) throw bookingError
+
+      // Add 30 minutes to session time
+      setSessionTimeRemaining(prev => prev + (30 * 60)) // Add 30 minutes in seconds
+
+      // Update local activeSession state
+      setActiveSession({
+        ...activeSession,
+        extended_count: currentExtendedCount + 1,
+      })
+
+      console.log('Extension payment processed! Added 30 minutes to session.')
+    } catch (err) {
+      console.error('Extension payment failed:', err)
+      // TODO: Show error to user
     }
   }
 
@@ -1387,6 +1460,15 @@ function App() {
 
     setShowTimeWarning(false)
     setShowCountdown(false)
+
+    // Reset extension state (Phase 6)
+    setExtensionOffered(false)
+    setShowExtensionUI(false)
+    setMyExtensionResponse(null)
+    setOtherPartyExtensionResponse(null)
+    setExtensionTimeRemaining(60)
+    setExtensionProcessing(false)
+
     setScreen('videoSession')
   }
 
@@ -1493,6 +1575,15 @@ function App() {
     setSessionTimeRemaining(30 * 60)
     setShowTimeWarning(false)
     setShowCountdown(false)
+
+    // Reset extension state (Phase 6)
+    setExtensionOffered(false)
+    setShowExtensionUI(false)
+    setMyExtensionResponse(null)
+    setOtherPartyExtensionResponse(null)
+    setExtensionTimeRemaining(60)
+    setExtensionProcessing(false)
+
     setScreen('sessions')
   }
 
@@ -1518,7 +1609,7 @@ function App() {
     oscillator.stop(audioContext.currentTime + 1.5)
   }, [])
 
-  // Session timer effect (Phase 5: Time Physics)
+  // Session timer effect (Phase 5: Time Physics + Phase 6: Extensions)
   useEffect(() => {
     if (!activeSession || screen !== 'videoSession') return
 
@@ -1530,6 +1621,14 @@ function App() {
           setShowCountdown(false)
           leaveSession(true)
           return 0
+        }
+
+        // Offer extension at 3 minutes (Phase 6: Extension System)
+        // In production: Check if giver's next slot is available
+        if (prev === 3 * 60 && !extensionOffered) {
+          setExtensionOffered(true)
+          setShowExtensionUI(true)
+          setExtensionTimeRemaining(60)
         }
 
         // 30-second countdown overlay
@@ -1548,7 +1647,108 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [activeSession, screen, leaveSession, playChime, showCountdown])
+  }, [activeSession, screen, leaveSession, playChime, showCountdown, extensionOffered])
+
+  // Extension response timer (Phase 6: 60-second window)
+  useEffect(() => {
+    if (!showExtensionUI || !activeSession) return
+
+    const timer = setInterval(() => {
+      setExtensionTimeRemaining(prev => {
+        if (prev <= 1) {
+          // Time's up - close extension UI (counts as "no")
+          clearInterval(timer)
+          setShowExtensionUI(false)
+          if (myExtensionResponse === null) {
+            setMyExtensionResponse('no')
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timer)
+  }, [showExtensionUI, activeSession, myExtensionResponse])
+
+  // Sync extension responses (Phase 6: Double-blind mechanic)
+  useEffect(() => {
+    if (!activeSession || !showExtensionUI) return
+    if (myExtensionResponse === null) return
+
+    // TODO: Production implementation - Use Supabase Realtime
+    // 1. When myExtensionResponse is set, write to extensions table
+    // 2. Subscribe to extensions table changes for this booking
+    // 3. When other party responds, update otherPartyExtensionResponse
+    //
+    // Example Supabase integration:
+    // const channel = supabase.channel(`extension:${activeSession.id}`)
+    // channel.on('postgres_changes', {
+    //   event: 'UPDATE',
+    //   schema: 'public',
+    //   table: 'extensions',
+    //   filter: `booking_id=eq.${activeSession.id}`
+    // }, (payload) => {
+    //   const isGiver = activeSession.giver_id === user?.id
+    //   const otherResponse = isGiver ? payload.new.seeker_confirmed : payload.new.giver_confirmed
+    //   if (otherResponse !== null) {
+    //     setOtherPartyExtensionResponse(otherResponse ? 'yes' : 'no')
+    //   }
+    // })
+    // channel.subscribe()
+
+    // PLACEHOLDER: Simulate other party response after 2-5 seconds (for testing)
+    const delay = Math.random() * 3000 + 2000 // 2-5 seconds
+    const timer = setTimeout(() => {
+      // Random response for testing
+      setOtherPartyExtensionResponse(Math.random() > 0.5 ? 'yes' : 'no')
+    }, delay)
+
+    return () => clearTimeout(timer)
+  }, [myExtensionResponse, showExtensionUI, activeSession])
+
+  // Handle extension outcome when both parties have responded (Phase 6)
+  useEffect(() => {
+    if (!activeSession || extensionProcessing) return
+    if (myExtensionResponse === null || otherPartyExtensionResponse === null) return
+
+    const handleExtensionOutcome = async () => {
+      setExtensionProcessing(true)
+
+      // Both parties have responded - check for match
+      if (myExtensionResponse === 'yes' && otherPartyExtensionResponse === 'yes') {
+        // MATCH! Process extension payment and add time
+        console.log('Extension matched! Processing payment...')
+
+        await processExtensionPayment()
+
+        // Close extension UI
+        setShowExtensionUI(false)
+
+        // Reset for potential future extensions
+        setTimeout(() => {
+          setMyExtensionResponse(null)
+          setOtherPartyExtensionResponse(null)
+          setExtensionProcessing(false)
+        }, 500)
+      } else {
+        // No match - at least one party declined
+        console.log('Extension declined by one or both parties')
+
+        // Close extension UI
+        setShowExtensionUI(false)
+
+        // Reset state
+        setTimeout(() => {
+          setMyExtensionResponse(null)
+          setOtherPartyExtensionResponse(null)
+          setExtensionProcessing(false)
+        }, 500)
+      }
+    }
+
+    handleExtensionOutcome()
+  }, [myExtensionResponse, otherPartyExtensionResponse, activeSession, extensionProcessing])
 
   // Start Daily call when entering video session
   useEffect(() => {
@@ -4813,6 +5013,141 @@ function App() {
               letterSpacing: '2px',
             }}>
               Session Ending
+            </div>
+          </div>
+        )}
+
+        {/* Extension UI overlay (Phase 6: Double-blind extension system) */}
+        {showExtensionUI && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 225,
+            background: 'rgba(26, 26, 26, 0.97)',
+            padding: '50px 70px',
+            borderRadius: '16px',
+            border: `2px solid ${colors.accent}`,
+            textAlign: 'center',
+            maxWidth: '500px',
+          }}>
+            {/* Double-blind indicator */}
+            <div style={{
+              fontSize: '0.75rem',
+              color: colors.textSecondary,
+              textTransform: 'uppercase',
+              letterSpacing: '1.5px',
+              marginBottom: '20px',
+            }}>
+              Extension Offered • Double-Blind
+            </div>
+
+            {/* Extension offer */}
+            <div style={{
+              fontSize: '1.8rem',
+              fontWeight: 600,
+              color: colors.textPrimary,
+              marginBottom: '15px',
+              lineHeight: 1.3,
+            }}>
+              Extend session by 30 minutes?
+            </div>
+
+            {/* Price display */}
+            <div style={{
+              fontSize: '1.1rem',
+              color: colors.accent,
+              marginBottom: '25px',
+            }}>
+              ${((activeSession?.amount_cents || 0) / 100).toFixed(2)} + platform fee
+            </div>
+
+            {/* Response status or buttons */}
+            {myExtensionResponse === null ? (
+              <div>
+                <div style={{
+                  fontSize: '0.9rem',
+                  color: colors.textSecondary,
+                  marginBottom: '20px',
+                  lineHeight: 1.5,
+                }}>
+                  Both parties must agree. Your response is private<br />
+                  until both have answered.
+                </div>
+
+                <div style={{
+                  display: 'flex',
+                  gap: '15px',
+                  justifyContent: 'center',
+                  marginBottom: '20px',
+                }}>
+                  <button
+                    onClick={() => setMyExtensionResponse('yes')}
+                    style={{
+                      flex: 1,
+                      padding: '16px 30px',
+                      background: colors.success,
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Yes
+                  </button>
+                  <button
+                    onClick={() => setMyExtensionResponse('no')}
+                    style={{
+                      flex: 1,
+                      padding: '16px 30px',
+                      background: 'rgba(201, 107, 107, 0.9)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '1.1rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    No
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                padding: '20px',
+                background: colors.bgSecondary,
+                borderRadius: '10px',
+                marginBottom: '20px',
+              }}>
+                <div style={{
+                  fontSize: '1rem',
+                  color: colors.textPrimary,
+                  marginBottom: '8px',
+                }}>
+                  Your response: <span style={{ fontWeight: 600, color: myExtensionResponse === 'yes' ? colors.success : 'rgba(201, 107, 107, 1)' }}>
+                    {myExtensionResponse === 'yes' ? 'Yes' : 'No'}
+                  </span>
+                </div>
+                <div style={{
+                  fontSize: '0.85rem',
+                  color: colors.textSecondary,
+                }}>
+                  Waiting for other party...
+                </div>
+              </div>
+            )}
+
+            {/* Countdown timer */}
+            <div style={{
+              fontSize: '0.8rem',
+              color: colors.textMuted,
+              fontFamily: 'monospace',
+            }}>
+              {extensionTimeRemaining}s remaining
             </div>
           </div>
         )}
