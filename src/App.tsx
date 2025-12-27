@@ -891,7 +891,7 @@ function App() {
 
   // Load existing availability for existing givers
   useEffect(() => {
-    if (user && myGiverProfile && (screen === 'editGiverProfile' || screen === 'userProfile')) {
+    if (user && myGiverProfile && (screen === 'editVideo' || screen === 'userProfile')) {
       supabase
         .from('giver_availability')
         .select('*')
@@ -2669,7 +2669,7 @@ function App() {
     )
   }
 
-  if (screen === 'editGiverProfile') {
+  if (screen === 'editVideo') {
     if (!user || !myGiverProfile) {
       return (
         <div style={containerStyle}>
@@ -4749,17 +4749,49 @@ function App() {
                 </button>
               </div>
 
-              {/* Video & Availability - Link to Full Editor */}
+              {/* Update Video */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Video & Availability</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Update Video</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Manage your intro video and availability calendar
+                  Record or update your introduction video
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('editGiverProfile')}
+                  onClick={() => setScreen('editVideo')}
                 >
-                  Edit Video & Availability
+                  Update Video
+                </button>
+              </div>
+
+              {/* Manage Availability */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Manage Availability</h3>
+                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                  Add, remove, and manage your available time slots
+                </p>
+                <button
+                  style={{ ...btnStyle, margin: 0, width: '100%' }}
+                  onClick={() => setScreen('manageAvailability')}
+                >
+                  Manage Availability
+                </button>
+              </div>
+
+              {/* Share Profile */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Share Your Profile</h3>
+                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                  Copy your unique profile link to share with potential seekers
+                </p>
+                <button
+                  style={{ ...btnStyle, margin: 0, width: '100%' }}
+                  onClick={() => {
+                    const shareUrl = `${window.location.origin}?giver=${user.id}`
+                    navigator.clipboard.writeText(shareUrl)
+                    alert('Link copied to clipboard!')
+                  }}
+                >
+                  Copy Share Link
                 </button>
               </div>
 
