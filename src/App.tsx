@@ -804,17 +804,19 @@ function App() {
 
   // Load existing availability for existing givers
   useEffect(() => {
-    if (user && myGiverProfile) {
+    if (user && myGiverProfile && (screen === 'editGiverProfile' || screen === 'userProfile')) {
       supabase
         .from('giver_availability')
         .select('*')
         .eq('giver_id', user.id)
         .gte('date', new Date().toISOString().split('T')[0])
+        .order('date', { ascending: true })
+        .order('time', { ascending: true })
         .then(({ data }) => {
           if (data) setAvailabilitySlots(data)
         })
     }
-  }, [user, myGiverProfile])
+  }, [user, myGiverProfile, screen])
 
   // Toggle save/unsave a giver (private, no notifications)
   // Requires saved_givers table in Supabase with RLS policies
@@ -3839,15 +3841,52 @@ function App() {
                         )}
                       </button>
                     )}
+
+                    {booking.status === 'confirmed' && !isPast && (
+                      <button
+                        onClick={async () => {
+                          const isGiver = booking.giver_id === user?.id
+                          const role = isGiver ? 'giver' : 'seeker'
+                          if (confirm(`Cancel this session? ${isGiver ? 'The seeker will be notified.' : 'You may be eligible for a refund.'}`)) {
+                            const { error } = await supabase
+                              .from('bookings')
+                              .update({
+                                status: 'cancelled',
+                                cancelled_by: role,
+                                cancelled_at: new Date().toISOString()
+                              })
+                              .eq('id', booking.id)
+
+                            if (!error) {
+                              fetchUserBookings()
+                              alert('Session cancelled')
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '10px',
+                          border: `1px solid rgba(220,38,38,0.3)`,
+                          background: 'rgba(220,38,38,0.1)',
+                          color: '#f87171',
+                          cursor: 'pointer',
+                          marginTop: '10px',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        Cancel Session
+                      </button>
+                    )}
                   </div>
                 )
               })}
 
               <button
                 style={{ ...btnSecondaryStyle, marginTop: '20px' }}
-                onClick={() => setScreen('browse')}
+                onClick={() => setScreen(myGiverProfile ? 'editGiverProfile' : 'browse')}
               >
-                Book Another Session
+                {myGiverProfile ? 'Manage Availability' : 'Book Another Session'}
               </button>
             </div>
           )}
@@ -4114,6 +4153,58 @@ function App() {
                   <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Your Intro Video</h3>
                   <div style={{ borderRadius: '12px', overflow: 'hidden' }}>
                     <video src={myGiverProfile.video_url} controls playsInline style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                  </div>
+                </div>
+              )}
+
+              {/* Upcoming Availability */}
+              {myGiverProfile && availabilitySlots.length > 0 && (
+                <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                    Your Upcoming Availability ({availabilitySlots.length} slots)
+                  </h3>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {Object.entries(
+                      availabilitySlots
+                        .filter(s => s.date >= new Date().toISOString().split('T')[0])
+                        .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`))
+                        .reduce((acc, slot) => {
+                          if (!acc[slot.date]) acc[slot.date] = []
+                          acc[slot.date].push(slot)
+                          return acc
+                        }, {} as Record<string, typeof availabilitySlots>)
+                    ).map(([date, slots]) => (
+                      <div key={date} style={{ marginBottom: '15px' }}>
+                        <div style={{
+                          fontSize: '0.9rem',
+                          fontWeight: 600,
+                          color: colors.accent,
+                          marginBottom: '8px'
+                        }}>
+                          {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
+                        </div>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {slots.map(slot => (
+                            <span
+                              key={slot.id}
+                              style={{
+                                padding: '6px 10px',
+                                background: colors.bgSecondary,
+                                borderRadius: '6px',
+                                fontSize: '0.8rem',
+                                color: colors.textPrimary
+                              }}
+                            >
+                              {formatTimeTo12Hour(slot.time)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
