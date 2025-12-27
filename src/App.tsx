@@ -251,6 +251,40 @@ function App() {
     })
   }
 
+  // Toggle a specific slot in week view
+  const toggleWeekViewSlot = async (date: string, time: string) => {
+    if (!user) return
+
+    // Check if slot already exists
+    const existingSlot = availabilitySlots.find(
+      slot => slot.date === date && slot.time === time
+    )
+
+    if (existingSlot) {
+      // Remove it
+      await removeAvailabilitySlot(existingSlot.id)
+    } else {
+      // Add it
+      try {
+        const { data, error } = await supabase
+          .from('giver_availability')
+          .insert({
+            giver_id: user.id,
+            date,
+            time,
+            is_booked: false
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        setAvailabilitySlots(prev => [...prev, data])
+      } catch (err) {
+        console.error('Error toggling slot:', err)
+      }
+    }
+  }
+
   // Get total slots selected
   const getTotalSlots = () => {
     return availabilitySlots.length
@@ -2598,6 +2632,150 @@ function App() {
                   Add
                 </button>
               </div>
+              </div>
+
+              {/* Week View */}
+              <div style={{
+                marginTop: '25px',
+                paddingTop: '20px',
+                borderTop: `2px solid ${colors.border}`
+              }}>
+                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>
+                  Week View
+                </h4>
+                <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '15px' }}>
+                  Click cells to add or remove availability
+                </p>
+
+                <div style={{ overflowX: 'auto' }}>
+                  <div style={{ minWidth: '600px' }}>
+                    {/* Week header with dates */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '80px repeat(7, 1fr)', gap: '2px', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '0.75rem', color: colors.textMuted }}></div>
+                      {[
+                        { label: 'Sun', index: 0 },
+                        { label: 'Mon', index: 1 },
+                        { label: 'Tue', index: 2 },
+                        { label: 'Wed', index: 3 },
+                        { label: 'Thu', index: 4 },
+                        { label: 'Fri', index: 5 },
+                        { label: 'Sat', index: 6 }
+                      ].map(day => {
+                        const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+                        const date = new Date(weekStartDate)
+                        date.setDate(weekStartDate.getDate() + day.index)
+                        return (
+                          <div key={day.index} style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textPrimary }}>{day.label}</div>
+                            <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>
+                              {date.getMonth() + 1}/{date.getDate()}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+
+                    {/* Time slots grid */}
+                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                      {Array.from({ length: 32 }, (_, i) => {
+                        // Generate time slots from 6:00 AM to 9:30 PM (6:00 to 21:30)
+                        const totalMinutes = 360 + (i * 30) // Start at 6:00 AM (360 minutes)
+                        const hours = Math.floor(totalMinutes / 60)
+                        const minutes = totalMinutes % 60
+                        const time24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
+
+                        return (
+                          <div key={time24} style={{ display: 'grid', gridTemplateColumns: '80px repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
+                            {/* Time label */}
+                            <div style={{
+                              fontSize: '0.7rem',
+                              color: colors.textMuted,
+                              padding: '6px 4px',
+                              textAlign: 'right',
+                              paddingRight: '8px'
+                            }}>
+                              {formatTimeTo12Hour(time24)}
+                            </div>
+
+                            {/* Day cells */}
+                            {[0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
+                              const weekStartDate = new Date(bulkWeekStart + 'T00:00:00')
+                              const date = new Date(weekStartDate)
+                              date.setDate(weekStartDate.getDate() + dayIndex)
+                              const dateStr = date.toISOString().split('T')[0]
+
+                              const hasSlot = availabilitySlots.some(
+                                slot => slot.date === dateStr && slot.time === time24
+                              )
+
+                              return (
+                                <div
+                                  key={dayIndex}
+                                  onClick={() => toggleWeekViewSlot(dateStr, time24)}
+                                  style={{
+                                    padding: '6px',
+                                    background: hasSlot ? colors.accent : colors.bgSecondary,
+                                    border: `1px solid ${hasSlot ? colors.accent : colors.border}`,
+                                    borderRadius: '4px',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.15s',
+                                    minHeight: '28px'
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.opacity = '0.8'
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.opacity = '1'
+                                  }}
+                                />
+                              )
+                            })}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Week navigation */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
+                  <button
+                    onClick={() => {
+                      const currentWeek = new Date(bulkWeekStart + 'T00:00:00')
+                      currentWeek.setDate(currentWeek.getDate() - 7)
+                      setBulkWeekStart(currentWeek.toISOString().split('T')[0])
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.border}`,
+                      background: colors.bgSecondary,
+                      color: colors.textPrimary,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    ← Previous Week
+                  </button>
+                  <button
+                    onClick={() => {
+                      const currentWeek = new Date(bulkWeekStart + 'T00:00:00')
+                      currentWeek.setDate(currentWeek.getDate() + 7)
+                      setBulkWeekStart(currentWeek.toISOString().split('T')[0])
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: `1px solid ${colors.border}`,
+                      background: colors.bgSecondary,
+                      color: colors.textPrimary,
+                      cursor: 'pointer',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    Next Week →
+                  </button>
+                </div>
               </div>
 
               {/* List of added slots */}
