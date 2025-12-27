@@ -216,6 +216,7 @@ function App() {
   const [activeSession, setActiveSession] = useState<Booking | null>(null)
   const [_sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds (internal only, not displayed)
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
+  const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [showGiverOverlay, setShowGiverOverlay] = useState(false)
   const dailyCallRef = useRef<DailyCall | null>(null)
@@ -1378,8 +1379,14 @@ function App() {
     }
 
     setActiveSession(booking)
-    setSessionTimeRemaining(30 * 60)
+
+    // Time Physics (Phase 5): Active time = (blocks × 30) - 5 = blocks × 25 minutes
+    const blocks = booking.blocks_booked || 1
+    const activeMinutes = blocks * ACTIVE_MINUTES_PER_BLOCK
+    setSessionTimeRemaining(activeMinutes * 60) // Convert to seconds
+
     setShowTimeWarning(false)
+    setShowCountdown(false)
     setScreen('videoSession')
   }
 
@@ -1485,6 +1492,7 @@ function App() {
     setActiveSession(null)
     setSessionTimeRemaining(30 * 60)
     setShowTimeWarning(false)
+    setShowCountdown(false)
     setScreen('sessions')
   }
 
@@ -1510,27 +1518,29 @@ function App() {
     oscillator.stop(audioContext.currentTime + 1.5)
   }, [])
 
-  // Session timer effect
+  // Session timer effect (Phase 5: Time Physics)
   useEffect(() => {
     if (!activeSession || screen !== 'videoSession') return
 
     const timer = setInterval(() => {
       setSessionTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up - auto disconnect (hard stop)
+          // Time's up - hard cut (auto disconnect)
           clearInterval(timer)
+          setShowCountdown(false)
           leaveSession(true)
           return 0
         }
 
-        // Gentle audio cue at 15 minutes (halfway)
-        if (prev === 15 * 60) {
-          playChime()
+        // 30-second countdown overlay
+        if (prev === 30 && !showCountdown) {
+          setShowCountdown(true)
         }
 
-        // Gentle audio cue at 5 minutes
+        // 5-minute warning chime (before final buffer)
         if (prev === 5 * 60) {
           playChime()
+          setShowTimeWarning(true)
         }
 
         return prev - 1
@@ -1538,7 +1548,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [activeSession, screen, leaveSession, playChime])
+  }, [activeSession, screen, leaveSession, playChime, showCountdown])
 
   // Start Daily call when entering video session
   useEffect(() => {
@@ -4770,6 +4780,40 @@ function App() {
             }}>
               This is their time.<br />You are here with them.
             </p>
+          </div>
+        )}
+
+        {/* 30-second countdown overlay (Phase 5: Time Physics) */}
+        {showCountdown && _sessionTimeRemaining <= 30 && (
+          <div style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 250,
+            background: 'rgba(220, 38, 38, 0.95)',
+            padding: '60px 80px',
+            borderRadius: '16px',
+            border: '2px solid rgba(239, 68, 68, 0.8)',
+            textAlign: 'center',
+          }}>
+            <div style={{
+              fontSize: '5rem',
+              fontWeight: 700,
+              color: '#fff',
+              marginBottom: '10px',
+              fontFamily: 'monospace',
+            }}>
+              {_sessionTimeRemaining}
+            </div>
+            <div style={{
+              fontSize: '1.2rem',
+              color: 'rgba(255, 255, 255, 0.9)',
+              textTransform: 'uppercase',
+              letterSpacing: '2px',
+            }}>
+              Session Ending
+            </div>
           </div>
         )}
 
