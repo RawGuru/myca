@@ -62,6 +62,8 @@ interface Giver {
   stripe_account_id?: string | null
   stripe_onboarding_complete?: boolean
   timezone?: string
+  total_sessions_completed?: number
+  times_joined_late?: number
 }
 
 interface UserProfile {
@@ -957,6 +959,11 @@ function App() {
       const updates: any = { giver_joined_at: joinTime.toISOString() }
       if (lateMinutes > 2) {
         updates.seeker_credit_earned = true
+
+        // Increment giver's times_joined_late counter
+        await supabase.rpc('increment_times_joined_late', {
+          giver_user_id: booking.giver_id
+        })
       }
 
       await supabase
@@ -1030,6 +1037,11 @@ function App() {
         .from('bookings')
         .update({ status: 'completed' })
         .eq('id', activeSession.id)
+
+      // Increment giver's total_sessions_completed counter
+      await supabase.rpc('increment_sessions_completed', {
+        giver_user_id: activeSession.giver_id
+      })
 
       // Refresh bookings
       fetchUserBookings()
@@ -1858,6 +1870,20 @@ function App() {
             </div>
           )}
 
+          {/* Accountability Stats */}
+          {(selectedGiver.total_sessions_completed || 0) > 0 && (
+            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
+                {selectedGiver.total_sessions_completed} session{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
+              </p>
+              {(selectedGiver.times_joined_late || 0) > 0 && (
+                <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
+                  Joined late {selectedGiver.times_joined_late} time{selectedGiver.times_joined_late === 1 ? '' : 's'}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Rate */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2071,6 +2097,20 @@ function App() {
               <p style={{ color: colors.textPrimary, lineHeight: 1.6, fontSize: '0.95rem' }}>
                 {selectedGiver.bio}
               </p>
+            </div>
+          )}
+
+          {/* Accountability Stats */}
+          {(selectedGiver.total_sessions_completed || 0) > 0 && (
+            <div style={{ marginBottom: '20px', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
+                {selectedGiver.total_sessions_completed} session{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
+              </p>
+              {(selectedGiver.times_joined_late || 0) > 0 && (
+                <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
+                  Joined late {selectedGiver.times_joined_late} time{selectedGiver.times_joined_late === 1 ? '' : 's'}
+                </p>
+              )}
             </div>
           )}
 
