@@ -390,6 +390,25 @@ function App() {
     return `${year}-${month}-${day}`
   }
 
+  // Get timezone abbreviation (ET, PT, etc.)
+  const getTimezoneAbbr = (timezone: string): string => {
+    const tzMap: { [key: string]: string } = {
+      'America/New_York': 'ET',
+      'America/Chicago': 'CT',
+      'America/Denver': 'MT',
+      'America/Phoenix': 'AZ',
+      'America/Los_Angeles': 'PT',
+      'America/Anchorage': 'AKT',
+      'Pacific/Honolulu': 'HT',
+    }
+    return tzMap[timezone] || timezone
+  }
+
+  // Format time with timezone indicator (e.g., "2:00 PM ET")
+  const formatTimeWithTz = (time: string, timezone: string): string => {
+    return `${formatTimeTo12Hour(time)} ${getTimezoneAbbr(timezone)}`
+  }
+
   // Format date for display
   const formatDate = (date: Date) => {
     const today = new Date()
@@ -724,6 +743,37 @@ function App() {
     fetchSavedGivers()
   }, [fetchSavedGivers])
 
+  // Fetch user profile with timezone
+  const fetchUserProfile = useCallback(async () => {
+    if (!user) {
+      setUserProfile(null)
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+
+      if (error) {
+        // Profile might not exist yet - that's OK
+        console.log('user_profiles fetch:', error.message)
+        setUserProfile(null)
+        return
+      }
+      setUserProfile(data)
+    } catch (err) {
+      console.log('user_profiles error:', err)
+      setUserProfile(null)
+    }
+  }, [user])
+
+  useEffect(() => {
+    fetchUserProfile()
+  }, [fetchUserProfile])
+
   // Toggle save/unsave a giver (private, no notifications)
   // Requires saved_givers table in Supabase with RLS policies
   const toggleSaveGiver = async (giverId: string, e?: React.MouseEvent) => {
@@ -993,7 +1043,8 @@ function App() {
       // Upload video if recorded (optional)
       const videoUrl = recordedBlob ? await uploadVideo() : null
 
-      const { error } = await supabase
+      // Create/update profile with timezone
+      const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user.id,
@@ -1005,9 +1056,24 @@ function App() {
           is_giver: true,
           available: true,
           qualities_offered: [],
+          timezone: giverTimezone,
         }, { onConflict: 'id' })
 
-      if (error) throw error
+      if (profileError) throw profileError
+
+      // Also create/update user_profiles table for timezone info
+      const { error: userProfileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          timezone: giverTimezone,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' })
+
+      if (userProfileError) {
+        console.warn('Failed to update user_profiles:', userProfileError)
+        // Don't throw - this is not critical
+      }
 
       // Refresh givers list and user's giver profile
       await fetchGivers()
@@ -1717,7 +1783,9 @@ function App() {
 
                 {selectedBookingDate && selectedDateSlots.length > 0 && (
                   <>
-                    <p style={{ color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Select a time</p>
+                    <p style={{ color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+                      Select a time ({selectedGiver?.timezone ? getTimezoneAbbr(selectedGiver.timezone) : 'ET'})
+                    </p>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
                       {selectedDateSlots.map(t => (
                         <div
@@ -2205,6 +2273,31 @@ function App() {
               />
             </div>
             <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>Minimum $15</p>
+          </div>
+
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your timezone *</label>
+            <select
+              value={giverTimezone}
+              onChange={(e) => setGiverTimezone(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '15px',
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '12px',
+                color: colors.textPrimary,
+                fontSize: '1rem',
+                boxSizing: 'border-box'
+              }}
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
+              Your availability times will be stored in this timezone
+            </p>
           </div>
 
           {/* Video Recording Section */}
@@ -2901,7 +2994,7 @@ function App() {
                         }}
                       >
                         <span style={{ color: colors.textPrimary }}>
-                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeTo12Hour(slot.time)}
+                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeWithTz(slot.time, myGiverProfile?.timezone || 'America/New_York')}
                         </span>
                         <button
                           onClick={() => removeAvailabilitySlot(slot.id)}
@@ -3382,6 +3475,7 @@ function App() {
                             minute: '2-digit',
                             hour12: true,
                           })}
+                          {userProfile && ` (${getTimezoneAbbr(userProfile.timezone)})`}
                         </div>
                       </div>
                     </div>
