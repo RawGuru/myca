@@ -264,6 +264,18 @@ function App() {
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
   const [showSavedOnly, setShowSavedOnly] = useState(false)
 
+  // Listing management state (multi-listing architecture)
+  const [myListings, setMyListings] = useState<Listing[]>([])
+  const [listingsLoading, setListingsLoading] = useState(false)
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
+  const [listingFormData, setListingFormData] = useState({
+    topic: '',
+    mode: 'mirror' as Mode,
+    price_cents: 2500,
+    description: '',
+    selectedCategories: [] as Category[]
+  })
+
   // Add availability slot (specific date + time)
   const addAvailabilitySlot = async () => {
     if (!newSlotDate || !newSlotTime || !user) return
@@ -970,6 +982,225 @@ function App() {
   useEffect(() => {
     fetchUserProfile()
   }, [fetchUserProfile])
+
+  // === LISTING MANAGEMENT FUNCTIONS (Multi-Listing Architecture) ===
+
+  // Fetch current user's listings
+  const fetchMyListings = useCallback(async () => {
+    if (!user) {
+      setMyListings([])
+      return
+    }
+
+    setListingsLoading(true)
+    try {
+      // Fetch listings
+      const { data: listingsData, error: listingsError } = await supabase
+        .from('listings')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+
+      if (listingsError) throw listingsError
+
+      // Fetch categories for each listing
+      if (listingsData && listingsData.length > 0) {
+        const listingIds = listingsData.map(l => l.id)
+        const { data: categoriesData, error: categoriesError } = await supabase
+          .from('listing_categories')
+          .select('listing_id, category')
+          .in('listing_id', listingIds)
+
+        if (categoriesError) throw categoriesError
+
+        // Merge categories into listings
+        const listingsWithCategories = listingsData.map(listing => ({
+          ...listing,
+          categories: categoriesData
+            ?.filter(c => c.listing_id === listing.id)
+            .map(c => c.category as Category) || []
+        }))
+
+        setMyListings(listingsWithCategories)
+      } else {
+        setMyListings([])
+      }
+    } catch (err) {
+      console.error('Error fetching listings:', err)
+      setMyListings([])
+    } finally {
+      setListingsLoading(false)
+    }
+  }, [user])
+
+  useEffect(() => {
+    fetchMyListings()
+  }, [fetchMyListings])
+
+  // Create a new listing
+  const createListing = async (listingData: {
+    topic: string
+    mode: Mode
+    price_cents: number
+    description: string
+    categories: Category[]
+  }) => {
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    try {
+      // Insert listing
+      const { data: newListing, error: listingError } = await supabase
+        .from('listings')
+        .insert({
+          user_id: user.id,
+          topic: listingData.topic,
+          mode: listingData.mode,
+          price_cents: listingData.price_cents,
+          description: listingData.description,
+          is_active: true
+        })
+        .select()
+        .single()
+
+      if (listingError) throw listingError
+
+      // Insert categories
+      if (listingData.categories.length > 0) {
+        const categoryInserts = listingData.categories.map(category => ({
+          listing_id: newListing.id,
+          category
+        }))
+
+        const { error: categoriesError } = await supabase
+          .from('listing_categories')
+          .insert(categoryInserts)
+
+        if (categoriesError) throw categoriesError
+      }
+
+      // Refresh listings
+      await fetchMyListings()
+
+      return { success: true, listing: newListing }
+    } catch (err) {
+      console.error('Error creating listing:', err)
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to create listing' }
+    }
+  }
+
+  // Update an existing listing
+  const updateListing = async (
+    listingId: string,
+    updates: {
+      topic?: string
+      mode?: Mode
+      price_cents?: number
+      description?: string
+      categories?: Category[]
+    }
+  ) => {
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    try {
+      // Update listing
+      const { topic, mode, price_cents, description, categories } = updates
+      const listingUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+
+      if (topic !== undefined) listingUpdates.topic = topic
+      if (mode !== undefined) listingUpdates.mode = mode
+      if (price_cents !== undefined) listingUpdates.price_cents = price_cents
+      if (description !== undefined) listingUpdates.description = description
+
+      const { error: listingError } = await supabase
+        .from('listings')
+        .update(listingUpdates)
+        .eq('id', listingId)
+        .eq('user_id', user.id) // Security: only update own listings
+
+      if (listingError) throw listingError
+
+      // Update categories if provided
+      if (categories !== undefined) {
+        // Delete existing categories
+        const { error: deleteError } = await supabase
+          .from('listing_categories')
+          .delete()
+          .eq('listing_id', listingId)
+
+        if (deleteError) throw deleteError
+
+        // Insert new categories
+        if (categories.length > 0) {
+          const categoryInserts = categories.map(category => ({
+            listing_id: listingId,
+            category
+          }))
+
+          const { error: insertError } = await supabase
+            .from('listing_categories')
+            .insert(categoryInserts)
+
+          if (insertError) throw insertError
+        }
+      }
+
+      // Refresh listings
+      await fetchMyListings()
+
+      return { success: true }
+    } catch (err) {
+      console.error('Error updating listing:', err)
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to update listing' }
+    }
+  }
+
+  // Deactivate a listing (soft delete)
+  const deactivateListing = async (listingId: string) => {
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    try {
+      const { error } = await supabase
+        .from('listings')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('id', listingId)
+        .eq('user_id', user.id) // Security: only deactivate own listings
+
+      if (error) throw error
+
+      // Refresh listings
+      await fetchMyListings()
+
+      return { success: true }
+    } catch (err) {
+      console.error('Error deactivating listing:', err)
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to deactivate listing' }
+    }
+  }
+
+  // Reactivate a listing
+  const reactivateListing = async (listingId: string) => {
+    if (!user) return { success: false, error: 'Not authenticated' }
+
+    try {
+      const { error } = await supabase
+        .from('listings')
+        .update({ is_active: true, updated_at: new Date().toISOString() })
+        .eq('id', listingId)
+        .eq('user_id', user.id) // Security: only reactivate own listings
+
+      if (error) throw error
+
+      // Refresh listings
+      await fetchMyListings()
+
+      return { success: true }
+    } catch (err) {
+      console.error('Error reactivating listing:', err)
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to reactivate listing' }
+    }
+  }
+
+  // === END LISTING MANAGEMENT FUNCTIONS ===
 
   // Load existing availability for existing givers
   useEffect(() => {
@@ -4859,6 +5090,20 @@ function App() {
                 </button>
               </div>
 
+              {/* Manage Listings */}
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>My Listings</h3>
+                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                  Create and manage your offerings ({myListings.filter(l => l.is_active).length} active)
+                </p>
+                <button
+                  style={{ ...btnStyle, margin: 0, width: '100%' }}
+                  onClick={() => setScreen('manageListings')}
+                >
+                  Manage Listings
+                </button>
+              </div>
+
               {/* Share Profile */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Share Your Profile</h3>
@@ -4954,6 +5199,695 @@ function App() {
               </button>
             </div>
           )}
+
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  // === LISTING MANAGEMENT SCREENS (Multi-Listing Architecture) ===
+
+  if (screen === 'manageListings') {
+    if (!user) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to manage listings</p>
+              <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
+          <SignOutButton />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>My Listings</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          {listingsLoading ? (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <p style={{ color: colors.textSecondary }}>Loading listings...</p>
+            </div>
+          ) : (
+            <>
+              {/* Create New Listing Button */}
+              <button
+                style={{
+                  ...btnStyle,
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => {
+                  // Reset form
+                  setListingFormData({
+                    topic: '',
+                    mode: 'mirror',
+                    price_cents: 2500,
+                    description: '',
+                    selectedCategories: []
+                  })
+                  setSelectedListing(null)
+                  setScreen('createListing')
+                }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>+</span>
+                Create New Listing
+              </button>
+
+              {/* Listings List */}
+              {myListings.length === 0 ? (
+                <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center' }}>
+                  <p style={{ color: colors.textSecondary, marginBottom: '15px' }}>
+                    You haven't created any listings yet
+                  </p>
+                  <p style={{ color: colors.textMuted, fontSize: '0.9rem' }}>
+                    Create a listing to start offering your presence
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {myListings.map(listing => {
+                    const modeInfo = MODES.find(m => m.value === listing.mode)
+                    return (
+                      <div
+                        key={listing.id}
+                        style={{
+                          ...cardStyle,
+                          opacity: listing.is_active ? 1 : 0.6,
+                          borderLeft: listing.is_active ? `3px solid ${colors.accent}` : `3px solid ${colors.border}`
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                          <div style={{ flex: 1 }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                              {listing.topic}
+                            </h3>
+                            <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
+                              {modeInfo?.label || listing.mode}
+                            </p>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: colors.textPrimary }}>
+                              ${(listing.price_cents / 100).toFixed(0)}
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                              per 30 min
+                            </div>
+                          </div>
+                        </div>
+
+                        {listing.description && (
+                          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '12px' }}>
+                            {listing.description}
+                          </p>
+                        )}
+
+                        {listing.categories && listing.categories.length > 0 && (
+                          <div style={{ marginBottom: '12px' }}>
+                            {listing.categories.map(cat => {
+                              const catInfo = CATEGORIES.find(c => c.value === cat)
+                              return (
+                                <span
+                                  key={cat}
+                                  style={{
+                                    padding: '4px 10px',
+                                    background: colors.bgSecondary,
+                                    borderRadius: '12px',
+                                    fontSize: '0.75rem',
+                                    color: colors.textSecondary,
+                                    marginRight: '6px'
+                                  }}
+                                >
+                                  {catInfo?.label || cat}
+                                </span>
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
+                          <button
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              background: colors.bgSecondary,
+                              border: `1px solid ${colors.border}`,
+                              borderRadius: '8px',
+                              color: colors.textPrimary,
+                              cursor: 'pointer',
+                              fontSize: '0.9rem'
+                            }}
+                            onClick={() => {
+                              setSelectedListing(listing)
+                              setListingFormData({
+                                topic: listing.topic,
+                                mode: listing.mode,
+                                price_cents: listing.price_cents,
+                                description: listing.description || '',
+                                selectedCategories: listing.categories || []
+                              })
+                              setScreen('editListing')
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            style={{
+                              flex: 1,
+                              padding: '10px',
+                              background: listing.is_active ? colors.bgSecondary : colors.accentSoft,
+                              border: `1px solid ${listing.is_active ? colors.border : colors.accent}`,
+                              borderRadius: '8px',
+                              color: listing.is_active ? colors.textSecondary : colors.accent,
+                              cursor: 'pointer',
+                              fontSize: '0.9rem'
+                            }}
+                            onClick={async () => {
+                              if (listing.is_active) {
+                                if (confirm('Deactivate this listing? It will no longer be visible to seekers.')) {
+                                  const result = await deactivateListing(listing.id)
+                                  if (!result.success) {
+                                    alert(result.error || 'Failed to deactivate listing')
+                                  }
+                                }
+                              } else {
+                                const result = await reactivateListing(listing.id)
+                                if (!result.success) {
+                                  alert(result.error || 'Failed to reactivate listing')
+                                }
+                              }
+                            }}
+                          >
+                            {listing.is_active ? 'Deactivate' : 'Reactivate'}
+                          </button>
+                        </div>
+
+                        {!listing.is_active && (
+                          <div style={{
+                            marginTop: '12px',
+                            padding: '8px 12px',
+                            background: 'rgba(255, 200, 100, 0.1)',
+                            border: '1px solid rgba(255, 200, 100, 0.3)',
+                            borderRadius: '6px',
+                            fontSize: '0.8rem',
+                            color: 'rgb(255, 200, 100)'
+                          }}>
+                            Inactive - not visible to seekers
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </>
+              )}
+            </>
+          )}
+
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'createListing') {
+    if (!user) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to create a listing</p>
+              <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
+          <SignOutButton />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Listing</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+
+              // Validation
+              if (!listingFormData.topic.trim()) {
+                alert('Please enter a topic for your listing')
+                return
+              }
+
+              if (listingFormData.price_cents < 1500) {
+                alert('Minimum price is $15 per 30 minutes')
+                return
+              }
+
+              const result = await createListing({
+                topic: listingFormData.topic.trim(),
+                mode: listingFormData.mode,
+                price_cents: listingFormData.price_cents,
+                description: listingFormData.description.trim(),
+                categories: listingFormData.selectedCategories
+              })
+
+              if (result.success) {
+                setScreen('manageListings')
+              } else {
+                alert(result.error || 'Failed to create listing')
+              }
+            }}
+          >
+            {/* Topic */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Topic / What you offer <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={listingFormData.topic}
+                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                placeholder="e.g., Career Transitions, Relationship Advice, Creative Block"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                required
+              />
+            </div>
+
+            {/* Mode */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
+                Mode of Attention <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {MODES.map(mode => (
+                  <label
+                    key={mode.value}
+                    style={{
+                      padding: '12px',
+                      background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
+                      border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'start',
+                      gap: '10px'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="mode"
+                      value={mode.value}
+                      checked={listingFormData.mode === mode.value}
+                      onChange={(e) => setListingFormData({ ...listingFormData, mode: e.target.value as Mode })}
+                      style={{ marginTop: '3px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary, marginBottom: '4px' }}>
+                        {mode.label}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                        {mode.description}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Price */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
+                <input
+                  type="number"
+                  min="15"
+                  step="1"
+                  value={listingFormData.price_cents / 100}
+                  onChange={(e) => {
+                    const dollars = parseFloat(e.target.value) || 15
+                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    color: colors.textPrimary,
+                    fontSize: '1rem',
+                    boxSizing: 'border-box'
+                  }}
+                  required
+                />
+              </div>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
+                Minimum: $15 • You'll receive 85% (${((listingFormData.price_cents / 100) * 0.85).toFixed(2)}) after platform fee
+              </p>
+            </div>
+
+            {/* Categories */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
+                Categories (select up to 3)
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {CATEGORIES.map(cat => {
+                  const isSelected = listingFormData.selectedCategories.includes(cat.value)
+                  return (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setListingFormData({
+                            ...listingFormData,
+                            selectedCategories: listingFormData.selectedCategories.filter(c => c !== cat.value)
+                          })
+                        } else if (listingFormData.selectedCategories.length < 3) {
+                          setListingFormData({
+                            ...listingFormData,
+                            selectedCategories: [...listingFormData.selectedCategories, cat.value]
+                          })
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        background: isSelected ? colors.accentSoft : colors.bgSecondary,
+                        border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                        borderRadius: '20px',
+                        color: isSelected ? colors.accent : colors.textSecondary,
+                        cursor: 'pointer',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Description (optional)
+              </label>
+              <textarea
+                value={listingFormData.description}
+                onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
+                placeholder="Add more detail about this specific offering..."
+                maxLength={500}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  minHeight: '100px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
+                {listingFormData.description.length}/500 characters
+              </p>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" style={btnStyle}>
+              Create Listing
+            </button>
+          </form>
+
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'editListing') {
+    if (!user || !selectedListing) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Listing not found</p>
+              <button style={btnStyle} onClick={() => setScreen('manageListings')}>Back to Listings</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
+          <SignOutButton />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Edit Listing</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+
+              // Validation
+              if (!listingFormData.topic.trim()) {
+                alert('Please enter a topic for your listing')
+                return
+              }
+
+              if (listingFormData.price_cents < 1500) {
+                alert('Minimum price is $15 per 30 minutes')
+                return
+              }
+
+              const result = await updateListing(selectedListing.id, {
+                topic: listingFormData.topic.trim(),
+                mode: listingFormData.mode,
+                price_cents: listingFormData.price_cents,
+                description: listingFormData.description.trim(),
+                categories: listingFormData.selectedCategories
+              })
+
+              if (result.success) {
+                setScreen('manageListings')
+              } else {
+                alert(result.error || 'Failed to update listing')
+              }
+            }}
+          >
+            {/* Topic */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Topic / What you offer <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={listingFormData.topic}
+                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                placeholder="e.g., Career Transitions, Relationship Advice, Creative Block"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box'
+                }}
+                required
+              />
+            </div>
+
+            {/* Mode */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
+                Mode of Attention <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {MODES.map(mode => (
+                  <label
+                    key={mode.value}
+                    style={{
+                      padding: '12px',
+                      background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
+                      border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'start',
+                      gap: '10px'
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="mode"
+                      value={mode.value}
+                      checked={listingFormData.mode === mode.value}
+                      onChange={(e) => setListingFormData({ ...listingFormData, mode: e.target.value as Mode })}
+                      style={{ marginTop: '3px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary, marginBottom: '4px' }}>
+                        {mode.label}
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                        {mode.description}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Price */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
+                <input
+                  type="number"
+                  min="15"
+                  step="1"
+                  value={listingFormData.price_cents / 100}
+                  onChange={(e) => {
+                    const dollars = parseFloat(e.target.value) || 15
+                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    color: colors.textPrimary,
+                    fontSize: '1rem',
+                    boxSizing: 'border-box'
+                  }}
+                  required
+                />
+              </div>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
+                Minimum: $15 • You'll receive 85% (${((listingFormData.price_cents / 100) * 0.85).toFixed(2)}) after platform fee
+              </p>
+            </div>
+
+            {/* Categories */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
+                Categories (select up to 3)
+              </label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {CATEGORIES.map(cat => {
+                  const isSelected = listingFormData.selectedCategories.includes(cat.value)
+                  return (
+                    <button
+                      key={cat.value}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setListingFormData({
+                            ...listingFormData,
+                            selectedCategories: listingFormData.selectedCategories.filter(c => c !== cat.value)
+                          })
+                        } else if (listingFormData.selectedCategories.length < 3) {
+                          setListingFormData({
+                            ...listingFormData,
+                            selectedCategories: [...listingFormData.selectedCategories, cat.value]
+                          })
+                        }
+                      }}
+                      style={{
+                        padding: '8px 16px',
+                        background: isSelected ? colors.accentSoft : colors.bgSecondary,
+                        border: `1px solid ${isSelected ? colors.accent : colors.border}`,
+                        borderRadius: '20px',
+                        color: isSelected ? colors.accent : colors.textSecondary,
+                        cursor: 'pointer',
+                        fontSize: '0.85rem'
+                      }}
+                    >
+                      {cat.label}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Description (optional)
+              </label>
+              <textarea
+                value={listingFormData.description}
+                onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
+                placeholder="Add more detail about this specific offering..."
+                maxLength={500}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  minHeight: '100px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
+                {listingFormData.description.length}/500 characters
+              </p>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" style={btnStyle}>
+              Save Changes
+            </button>
+          </form>
 
           <Nav />
         </div>
