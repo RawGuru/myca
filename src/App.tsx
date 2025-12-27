@@ -260,10 +260,26 @@ function App() {
         return
       }
 
-      // Insert all slots at once
+      // First get existing slots for this date range to avoid duplicates
+      const { data: existing } = await supabase
+        .from('giver_availability')
+        .select('date, time')
+        .eq('giver_id', user.id)
+        .gte('date', bulkStartDate)
+        .lte('date', bulkEndDate)
+
+      const existingSet = new Set(existing?.map(e => `${e.date}-${e.time}`) || [])
+      const newSlots = slotsToInsert.filter(s => !existingSet.has(`${s.date}-${s.time}`))
+
+      if (newSlots.length === 0) {
+        alert('All selected slots already exist in your availability.')
+        return
+      }
+
+      // Insert only new slots
       const { data, error } = await supabase
         .from('giver_availability')
-        .insert(slotsToInsert)
+        .insert(newSlots)
         .select()
 
       if (error) throw error
@@ -281,12 +297,14 @@ function App() {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const selectedDayNames = Array.from(bulkSelectedDays).sort().map(i => dayNames[i]).join(', ')
 
-      alert(
-        `Added ${data.length} slots from ${startDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ` +
+      const skippedCount = slotsToInsert.length - newSlots.length
+      const message = `Added ${data.length} new slot${data.length !== 1 ? 's' : ''} from ${startDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ` +
         `to ${endDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}\n` +
         `Days: ${selectedDayNames}\n` +
-        `Time: ${formatTimeTo12Hour(bulkStartTime)} - ${formatTimeTo12Hour(bulkEndTime)}`
-      )
+        `Time: ${formatTimeTo12Hour(bulkStartTime)} - ${formatTimeTo12Hour(bulkEndTime)}` +
+        (skippedCount > 0 ? `\n\n(Skipped ${skippedCount} duplicate slot${skippedCount !== 1 ? 's' : ''})` : '')
+
+      alert(message)
     } catch (err) {
       console.error('Error adding bulk availability slots:', err)
       alert('Error adding slots. Some may already exist.')
@@ -1410,7 +1428,7 @@ function App() {
       ].map(item => (
         <button
           key={item.id}
-          onClick={() => setScreen(item.id)}
+          onClick={() => setScreen(item.id === 'giverIntro' && myGiverProfile ? 'editGiverProfile' : item.id)}
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -2427,9 +2445,9 @@ function App() {
                 </div>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ flex: '1 1 40px', minWidth: '45px', padding: '8px 4px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
+                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 4px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
                         {day}
                       </div>
                     ))}
@@ -3803,11 +3821,11 @@ function App() {
                         ) : isPast ? (
                           'Session ended'
                         ) : (
-                          `Opens ${scheduledDate.toLocaleTimeString('en-US', {
+                          `Opens at ${scheduledDate.toLocaleTimeString('en-US', {
                             hour: 'numeric',
                             minute: '2-digit',
                             hour12: true,
-                          })} (5 min before)`
+                          })}`
                         )}
                       </button>
                     )}
@@ -4079,6 +4097,16 @@ function App() {
                   Edit Video & Availability
                 </button>
               </div>
+
+              {/* Current Video Preview */}
+              {myGiverProfile?.video_url && (
+                <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Your Intro Video</h3>
+                  <div style={{ borderRadius: '12px', overflow: 'hidden' }}>
+                    <video src={myGiverProfile.video_url} controls playsInline style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                  </div>
+                </div>
+              )}
             </>
           ) : (
             /* Non-giver: Option to become a giver */
