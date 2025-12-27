@@ -2083,6 +2083,28 @@ function App() {
               Payment is held until the session completes, then released to {selectedGiver.name}.
             </p>
 
+            {/* Cancellation Policy Notice */}
+            <div style={{
+              padding: '15px',
+              background: 'rgba(201, 166, 107, 0.1)',
+              border: `1px solid ${colors.accent}`,
+              borderRadius: '12px',
+              marginBottom: '20px',
+            }}>
+              <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
+                Cancellation Policy
+              </p>
+              <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+                If you cancel: Your payment goes to the giver. No refund.
+              </p>
+              <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+                If giver cancels: You receive a full refund.
+              </p>
+              <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
+                By booking, you agree to these terms.
+              </p>
+            </div>
+
             <button
               style={{
                 ...btnStyle,
@@ -2131,6 +2153,9 @@ function App() {
           )}
           <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '30px', maxWidth: '300px' }}>
             You'll receive a reminder before your session. The video room will be available at your scheduled time.
+          </p>
+          <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', maxWidth: '300px' }}>
+            Remember: If you cancel, your payment goes to {selectedGiver?.name}. If they cancel, you'll be refunded.
           </p>
           {currentBooking?.video_room_url && (
             <>
@@ -2497,6 +2522,31 @@ function App() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Giver Commitment Policy */}
+          <div style={{
+            padding: '15px',
+            background: 'rgba(201, 166, 107, 0.1)',
+            border: `1px solid ${colors.accent}`,
+            borderRadius: '12px',
+            marginBottom: '20px',
+          }}>
+            <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
+              Your Commitment
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              When someone books your time, they pay upfront.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              If you cancel: They get refunded. You receive nothing.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              If they cancel: You keep their payment.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
+              Only offer times you can reliably keep.
+            </p>
           </div>
 
           <Nav />
@@ -3343,6 +3393,31 @@ function App() {
             </div>
           </div>
 
+          {/* Giver Commitment Policy */}
+          <div style={{
+            padding: '15px',
+            background: 'rgba(201, 166, 107, 0.1)',
+            border: `1px solid ${colors.accent}`,
+            borderRadius: '12px',
+            marginBottom: '20px',
+          }}>
+            <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
+              Your Commitment
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              When someone books your time, they pay upfront.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              If you cancel: They get refunded. You receive nothing.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+              If they cancel: You keep their payment.
+            </p>
+            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
+              Only offer times you can reliably keep.
+            </p>
+          </div>
+
           <button
             style={{
               ...btnStyle,
@@ -3843,9 +3918,15 @@ function App() {
                     )}
 
                     {booking.status === 'confirmed' && !isPast && (
-                      <button
-                        onClick={async () => {
-                          const isGiver = booking.giver_id === user?.id
+                      <>
+                        <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '10px', marginBottom: '5px' }}>
+                          {booking.giver_id === user?.id
+                            ? 'Cancelling forfeits your payment for this session.'
+                            : 'Cancelling means the giver keeps your payment.'}
+                        </p>
+                        <button
+                          onClick={async () => {
+                            const isGiver = booking.giver_id === user?.id
 
                           // Different consequences based on who cancels
                           const message = isGiver
@@ -3888,6 +3969,7 @@ function App() {
                       >
                         Cancel Session
                       </button>
+                      </>
                     )}
                   </div>
                 )
