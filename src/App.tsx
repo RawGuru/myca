@@ -774,6 +774,20 @@ function App() {
     fetchUserProfile()
   }, [fetchUserProfile])
 
+  // Load existing availability for existing givers
+  useEffect(() => {
+    if (user && myGiverProfile) {
+      supabase
+        .from('giver_availability')
+        .select('*')
+        .eq('giver_id', user.id)
+        .gte('date', new Date().toISOString().split('T')[0])
+        .then(({ data }) => {
+          if (data) setAvailabilitySlots(data)
+        })
+    }
+  }, [user, myGiverProfile])
+
   // Toggle save/unsave a giver (private, no notifications)
   // Requires saved_givers table in Supabase with RLS policies
   const toggleSaveGiver = async (giverId: string, e?: React.MouseEvent) => {
@@ -1484,6 +1498,7 @@ function App() {
               </button>
             )}
           </div>
+          {user && <Nav />}
         </div>
       </div>
     )
@@ -2235,6 +2250,225 @@ function App() {
             <button style={btnStyle} onClick={() => setScreen('give')}>Create Profile</button>
           )}
           
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
+  if (screen === 'editGiverProfile') {
+    if (!user || !myGiverProfile) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <p style={{ color: colors.textSecondary }}>Please set up your giver profile first.</p>
+            <button style={btnStyle} onClick={() => setScreen('giverIntro')}>Get Started</button>
+            <Nav />
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+            <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Video & Availability</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          {/* Video Section */}
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Your Introduction Video
+            </label>
+
+            {myGiverProfile.video_url && !recordedUrl && videoStep === 'done' && (
+              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px', marginBottom: '15px' }}>
+                <video
+                  src={myGiverProfile.video_url}
+                  controls
+                  style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', marginBottom: '15px' }}
+                />
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    onClick={async () => {
+                      if (confirm('Delete your current video? You can record a new one.')) {
+                        await supabase.from('givers').update({ video_url: null }).eq('user_id', user.id)
+                        setMyGiverProfile({ ...myGiverProfile, video_url: null })
+                      }
+                    }}
+                    style={{ ...btnSecondaryStyle, flex: 1, background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' }}
+                  >
+                    Delete Video
+                  </button>
+                  <button
+                    onClick={() => setVideoStep('prompt')}
+                    style={{ ...btnStyle, flex: 1 }}
+                  >
+                    Record New Video
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {(!myGiverProfile.video_url || videoStep !== 'done') && (
+              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px' }}>
+                {videoStep === 'done' && (
+                  <button onClick={() => setVideoStep('prompt')} style={{ width: '100%', ...btnStyle }}>
+                    Record Introduction Video
+                  </button>
+                )}
+
+                {videoStep === 'prompt' && (
+                  <div>
+                    <p style={{ fontSize: '0.95rem', color: colors.textSecondary, marginBottom: '20px', lineHeight: '1.6' }}>
+                      Ready to record your introduction video? Share who you are and why you want to give presence.
+                    </p>
+                    <div style={{ marginBottom: '20px' }}>
+                      <video ref={previewVideoRef} autoPlay playsInline muted style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', background: '#000' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={() => setVideoStep('done')} style={{ ...btnSecondaryStyle, flex: 1 }}>Cancel</button>
+                      <button onClick={() => startRecording()} style={{ ...btnStyle, flex: 1 }}>Start Recording</button>
+                    </div>
+                  </div>
+                )}
+
+                {videoStep === 'recording' && (
+                  <div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <video ref={previewVideoRef} autoPlay playsInline muted style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', background: '#000' }} />
+                    </div>
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                      <div style={{ fontSize: '2rem', fontWeight: 'bold', color: colors.accent, marginBottom: '5px' }}>
+                        {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')}
+                      </div>
+                      <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>Recording...</div>
+                    </div>
+                    <button onClick={stopRecording} style={{ width: '100%', ...btnStyle, background: '#dc2626' }}>Stop Recording</button>
+                  </div>
+                )}
+
+                {videoStep === 'preview' && recordedUrl && (
+                  <div>
+                    <div style={{ marginBottom: '20px' }}>
+                      <video src={recordedUrl} controls style={{ width: '100%', maxHeight: '400px', borderRadius: '12px' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button onClick={retakeVideo} style={{ ...btnSecondaryStyle, flex: 1 }}>Retake</button>
+                      <button
+                        onClick={async () => {
+                          const url = await uploadVideo()
+                          if (url) {
+                            await supabase.from('givers').update({ video_url: url }).eq('user_id', user.id)
+                            setMyGiverProfile({ ...myGiverProfile, video_url: url })
+                            setVideoStep('done')
+                            setRecordedUrl(null)
+                          }
+                        }}
+                        style={{ ...btnStyle, flex: 1 }}
+                      >
+                        Save Video
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Availability Section */}
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Your Availability <span style={{ color: colors.textMuted }}>({availabilitySlots.length} slots)</span>
+            </label>
+
+            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px' }}>
+              {/* Bulk Add */}
+              <div style={{ marginBottom: '25px', paddingBottom: '20px', borderBottom: `2px solid ${colors.border}` }}>
+                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Quick Add</h4>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Date</label>
+                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Date</label>
+                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Time</label>
+                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0')
+                        return [
+                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
+                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
+                        ]
+                      })}
+                    </select>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Time</label>
+                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                      {Array.from({ length: 24 }, (_, i) => {
+                        const hour = i.toString().padStart(2, '0')
+                        return [
+                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
+                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
+                        ]
+                      })}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
+                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ flex: '1 1 40px', minWidth: '45px', padding: '8px 4px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
+                        {day}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: '0.9rem', fontWeight: 600 }}>
+                  Add Availability
+                </button>
+              </div>
+
+              {/* Current slots list */}
+              {availabilitySlots.length > 0 && (
+                <div>
+                  <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
+                  <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
+                      <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '8px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                        <span style={{ color: colors.textPrimary }}>
+                          {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeTo12Hour(slot.time)}
+                        </span>
+                        <button onClick={() => removeAvailabilitySlot(slot.id)} style={{ padding: '4px 8px', borderRadius: '4px', border: 'none', background: 'transparent', color: colors.textMuted, cursor: 'pointer', fontSize: '0.85rem' }}>✕</button>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={async () => {
+                    if (confirm('Remove all availability slots?')) {
+                      for (const slot of availabilitySlots) {
+                        await supabase.from('giver_availability').delete().eq('id', slot.id)
+                      }
+                      setAvailabilitySlots([])
+                    }
+                  }} style={{ ...btnSecondaryStyle, marginTop: '15px', background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' }}>
+                    Clear All Slots
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
           <Nav />
         </div>
       </div>
@@ -3840,7 +4074,7 @@ function App() {
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('give')}
+                  onClick={() => setScreen('editGiverProfile')}
                 >
                   Edit Video & Availability
                 </button>
