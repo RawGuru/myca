@@ -189,6 +189,14 @@ function App() {
     }
   }, [])
 
+  // Convert 24-hour time (HH:MM) to 12-hour format (h:MM AM/PM)
+  const formatTimeTo12Hour = (time24: string) => {
+    const [hours, minutes] = time24.split(':').map(Number)
+    const period = hours >= 12 ? 'PM' : 'AM'
+    const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours
+    return `${hours12}:${minutes.toString().padStart(2, '0')} ${period}`
+  }
+
   // Format date for display
   const formatDate = (date: Date) => {
     const today = new Date()
@@ -209,17 +217,14 @@ function App() {
       day: 'numeric',
       year: 'numeric'
     }
-    return `${date.toLocaleDateString('en-US', options)} at ${time}`
+    return `${date.toLocaleDateString('en-US', options)} at ${formatTimeTo12Hour(time)}`
   }
 
-  // Convert time string to scheduled datetime
+  // Convert time string to scheduled datetime (accepts HH:MM format)
   const getScheduledTime = (date: Date, time: string): string => {
-    const [timeStr, period] = time.split(' ')
-    const [hours, minutes] = timeStr.split(':').map(Number)
-    const hour24 = period === 'PM' ? (hours % 12) + 12 : hours % 12
-
+    const [hours, minutes] = time.split(':').map(Number)
     const scheduled = new Date(date)
-    scheduled.setHours(hour24, minutes, 0, 0)
+    scheduled.setHours(hours, minutes, 0, 0)
     return scheduled.toISOString()
   }
 
@@ -1536,7 +1541,7 @@ function App() {
                             fontSize: '0.9rem',
                           }}
                         >
-                          {t}
+                          {formatTimeTo12Hour(t)}
                         </div>
                       ))}
                     </div>
@@ -2329,8 +2334,8 @@ function App() {
                   {Array.from({ length: 24 }, (_, i) => {
                     const hour = i.toString().padStart(2, '0')
                     return [
-                      <option key={`${hour}:00`} value={`${hour}:00`}>{`${hour}:00`}</option>,
-                      <option key={`${hour}:30`} value={`${hour}:30`}>{`${hour}:30`}</option>
+                      <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
+                      <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
                     ]
                   })}
                 </select>
@@ -2376,7 +2381,7 @@ function App() {
                         }}
                       >
                         <span style={{ color: colors.textPrimary }}>
-                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {slot.time}
+                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeTo12Hour(slot.time)}
                         </span>
                         <button
                           onClick={() => removeAvailabilitySlot(slot.id)}
