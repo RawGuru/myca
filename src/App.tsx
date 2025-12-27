@@ -5,6 +5,8 @@ import { supabase } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
 import Auth from './components/Auth'
 
+const SUPABASE_URL = 'https://ksramckuggspsqymcjpo.supabase.co'
+
 // Booking type
 interface Booking {
   id: string
@@ -571,6 +573,9 @@ function App() {
 
       if (error) throw error
 
+      // Send confirmation notification
+      sendNotification('booking_confirmed', currentBooking.id)
+
       // Update local booking state
       setCurrentBooking({
         ...currentBooking,
@@ -592,6 +597,35 @@ function App() {
       setBookingLoading(false)
     }
   }
+
+  // Send email notification (placeholder - actual emails to be implemented later)
+  const sendNotification = async (type: 'booking_confirmed' | 'session_reminder' | 'cancellation', bookingId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) return
+
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/send-notification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ type, booking_id: bookingId })
+      })
+
+      const result = await response.json()
+      console.log('Notification sent:', result)
+    } catch (err) {
+      console.error('Failed to send notification:', err)
+      // Don't throw - notifications are non-critical
+    }
+  }
+
+  // TODO: Add scheduled task to send session reminders 24 hours before scheduled_time
+  // This will require a cron job or scheduled edge function to:
+  // 1. Query all bookings where scheduled_time is in 24 hours
+  // 2. Call sendNotification('session_reminder', booking.id) for each
+  // Consider using Supabase pg_cron or a separate scheduler service
 
   // Format card number with spaces
   const formatCardNumber = (value: string) => {
@@ -4351,6 +4385,9 @@ function App() {
                               .eq('id', booking.id)
 
                             if (!error) {
+                              // Send cancellation notification
+                              sendNotification('cancellation', booking.id)
+
                               fetchUserBookings()
                               if (isGiver) {
                                 alert('Session cancelled. The seeker will be refunded.')
