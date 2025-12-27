@@ -60,7 +60,26 @@ interface Giver {
   available?: boolean
   stripe_account_id?: string | null
   stripe_onboarding_complete?: boolean
+  timezone?: string
 }
+
+interface UserProfile {
+  id: string
+  timezone: string
+  created_at: string
+  updated_at: string
+}
+
+// Common US timezones
+const TIMEZONES = [
+  { value: 'America/New_York', label: 'Eastern Time (ET)' },
+  { value: 'America/Chicago', label: 'Central Time (CT)' },
+  { value: 'America/Denver', label: 'Mountain Time (MT)' },
+  { value: 'America/Phoenix', label: 'Arizona (no DST)' },
+  { value: 'America/Los_Angeles', label: 'Pacific Time (PT)' },
+  { value: 'America/Anchorage', label: 'Alaska Time (AKT)' },
+  { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
+]
 
 function App() {
   const { user, loading, signOut } = useAuth()
@@ -99,8 +118,12 @@ function App() {
   const [giverName, setGiverName] = useState('')
   const [giverTagline, setGiverTagline] = useState('')
   const [giverRate, setGiverRate] = useState(15)
+  const [giverTimezone, setGiverTimezone] = useState('America/New_York')
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
+
+  // User profile state
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // Video recording state
   const [videoStep, setVideoStep] = useState<'prompt' | 'recording' | 'preview' | 'done'>('prompt')
