@@ -1040,6 +1040,20 @@ function App() {
     setProfileError('')
 
     try {
+      // Check if user already has a giver profile
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .eq('is_giver', true)
+        .maybeSingle()
+
+      if (existing) {
+        setProfileError('You already have a giver profile')
+        setProfileLoading(false)
+        return
+      }
+
       // Upload video if recorded (optional)
       const videoUrl = recordedBlob ? await uploadVideo() : null
 
@@ -1655,7 +1669,30 @@ function App() {
     )
   }
 
-  if (screen === 'profile' && selectedGiver) {
+  if (screen === 'profile') {
+    if (!selectedGiver) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <button
+              onClick={() => setScreen('browse')}
+              style={{
+                padding: '10px 20px',
+                background: colors.bgSecondary,
+                border: `1px solid ${colors.border}`,
+                borderRadius: '8px',
+                color: colors.textPrimary,
+                cursor: 'pointer'
+              }}
+            >
+              ← Back to Browse
+            </button>
+            <p style={{ color: colors.textSecondary, marginTop: '20px' }}>Profile not found</p>
+          </div>
+        </div>
+      )
+    }
+
     // Group slots by date
     const slotsByDate = selectedGiverSlots.reduce((acc, slot) => {
       const date = slot.date
@@ -2277,10 +2314,13 @@ function App() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
               <input
-                type="number"
-                min={15}
+                type="text"
+                inputMode="numeric"
                 value={giverRate}
-                onChange={(e) => setGiverRate(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^0-9]/g, '')
+                  setGiverRate(val === '' ? 0 : parseInt(val))
+                }}
                 onBlur={(e) => {
                   const val = parseInt(e.target.value)
                   if (!val || val < 15) {
@@ -3739,10 +3779,13 @@ function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
                   <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
                   <input
-                    type="number"
-                    min={15}
+                    type="text"
+                    inputMode="numeric"
                     value={giverRate}
-                    onChange={(e) => setGiverRate(parseInt(e.target.value) || 0)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/[^0-9]/g, '')
+                      setGiverRate(val === '' ? 0 : parseInt(val))
+                    }}
                     onBlur={(e) => {
                       const val = parseInt(e.target.value)
                       if (!val || val < 15) {
