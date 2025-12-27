@@ -124,6 +124,7 @@ interface Giver {
   timezone?: string
   total_sessions_completed?: number
   times_joined_late?: number
+  listings?: Listing[] // Multi-listing architecture
 }
 
 interface UserProfile {
@@ -195,6 +196,7 @@ function App() {
   const [givers, setGivers] = useState<Giver[]>(demoGivers)
   const [selectedBookingDate, setSelectedBookingDate] = useState<Date | null>(null)
   const [selectedBookingTime, setSelectedBookingTime] = useState<string>('')
+  const [_selectedListingForBooking, _setSelectedListingForBooking] = useState<Listing | null>(null) // Reserved for Phase 4 booking flow
 
   // Booking/payment state
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null)
@@ -742,20 +744,58 @@ function App() {
     return v
   }
 
-  // Fetch givers from database
+  // Fetch givers from database with their listings
   const fetchGivers = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .eq('is_giver', true)
 
-      if (error) throw error
-      if (data && data.length > 0) {
-        // Merge with demo givers, real profiles first
-        setGivers([...data, ...demoGivers])
+      if (profilesError) throw profilesError
+
+      if (profilesData && profilesData.length > 0) {
+        // Fetch active listings for all givers
+        const giverIds = profilesData.map(p => p.id)
+        const { data: listingsData, error: listingsError } = await supabase
+          .from('listings')
+          .select('*')
+          .in('user_id', giverIds)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+
+        if (listingsError) throw listingsError
+
+        // Fetch categories for listings
+        if (listingsData && listingsData.length > 0) {
+          const listingIds = listingsData.map(l => l.id)
+          const { data: categoriesData } = await supabase
+            .from('listing_categories')
+            .select('listing_id, category')
+            .in('listing_id', listingIds)
+
+          // Merge categories into listings
+          const listingsWithCategories = listingsData.map(listing => ({
+            ...listing,
+            categories: categoriesData
+              ?.filter(c => c.listing_id === listing.id)
+              .map(c => c.category as Category) || []
+          }))
+
+          // Attach listings to each giver
+          const giversWithListings = profilesData.map(giver => ({
+            ...giver,
+            listings: listingsWithCategories.filter(l => l.user_id === giver.id)
+          }))
+
+          setGivers([...giversWithListings, ...demoGivers])
+        } else {
+          // No listings yet, just use profiles
+          setGivers([...profilesData.map(g => ({ ...g, listings: [] })), ...demoGivers])
+        }
       }
-    } catch {
+    } catch (err) {
+      console.error('Error fetching givers:', err)
       // Keep demo givers on error
     }
   }, [])
@@ -2124,7 +2164,19 @@ function App() {
                 </p>
               )}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: `1px solid ${colors.border}` }}>
-                <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span></div>
+                {/* Multi-listing display */}
+                {giver.listings && giver.listings.length > 0 ? (
+                  <div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
+                      {giver.listings.length} {giver.listings.length === 1 ? 'offering' : 'offerings'}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} / 30 min
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span></div>
+                )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button
                     onClick={(e) => toggleSaveGiver(giver.id, e)}
@@ -2246,6 +2298,79 @@ function App() {
               <p style={{ color: colors.textPrimary, lineHeight: 1.6, fontSize: '0.95rem' }}>
                 {selectedGiver.bio}
               </p>
+            </div>
+          )}
+
+          {/* Listings Menu (Multi-listing architecture) */}
+          {selectedGiver.listings && selectedGiver.listings.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Offerings</h3>
+              {selectedGiver.listings.map(listing => {
+                const modeInfo = MODES.find(m => m.value === listing.mode)
+                return (
+                  <div
+                    key={listing.id}
+                    style={{
+                      ...cardStyle,
+                      cursor: 'default',
+                      marginBottom: '15px',
+                      borderLeft: `3px solid ${colors.accent}`
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                          {listing.topic}
+                        </h4>
+                        <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
+                          {modeInfo?.label || listing.mode}
+                        </p>
+                        {modeInfo && (
+                          <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '8px' }}>
+                            {modeInfo.description}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', marginLeft: '15px' }}>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 600, color: colors.textPrimary }}>
+                          ${(listing.price_cents / 100).toFixed(0)}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                          per 30 min
+                        </div>
+                      </div>
+                    </div>
+
+                    {listing.description && (
+                      <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px', lineHeight: 1.5 }}>
+                        {listing.description}
+                      </p>
+                    )}
+
+                    {listing.categories && listing.categories.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {listing.categories.map(cat => {
+                          const catInfo = CATEGORIES.find(c => c.value === cat)
+                          return (
+                            <span
+                              key={cat}
+                              style={{
+                                padding: '4px 10px',
+                                background: colors.bgSecondary,
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                color: colors.textSecondary
+                              }}
+                            >
+                              {catInfo?.label || cat}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -2439,7 +2564,14 @@ function App() {
             <div style={{ textAlign: 'center' }}>
               <h1 style={{ fontSize: '2rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{selectedGiver.name}</h1>
               <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>{selectedGiver.tagline}</p>
-              <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
+              {/* Show listing count or fallback to single rate */}
+              {selectedGiver.listings && selectedGiver.listings.length > 0 ? (
+                <div style={{ fontSize: '1.1rem', color: colors.accent }}>
+                  {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'offering' : 'offerings'} available
+                </div>
+              ) : (
+                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
+              )}
             </div>
           </div>
 
@@ -2476,6 +2608,79 @@ function App() {
               <p style={{ color: colors.textPrimary, lineHeight: 1.6, fontSize: '0.95rem' }}>
                 {selectedGiver.bio}
               </p>
+            </div>
+          )}
+
+          {/* Listings Menu (Multi-listing architecture) */}
+          {selectedGiver.listings && selectedGiver.listings.length > 0 && (
+            <div style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Offerings</h3>
+              {selectedGiver.listings.map(listing => {
+                const modeInfo = MODES.find(m => m.value === listing.mode)
+                return (
+                  <div
+                    key={listing.id}
+                    style={{
+                      ...cardStyle,
+                      cursor: 'default',
+                      marginBottom: '15px',
+                      borderLeft: `3px solid ${colors.accent}`
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                      <div style={{ flex: 1 }}>
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                          {listing.topic}
+                        </h4>
+                        <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
+                          {modeInfo?.label || listing.mode}
+                        </p>
+                        {modeInfo && (
+                          <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '8px' }}>
+                            {modeInfo.description}
+                          </p>
+                        )}
+                      </div>
+                      <div style={{ textAlign: 'right', marginLeft: '15px' }}>
+                        <div style={{ fontSize: '1.3rem', fontWeight: 600, color: colors.textPrimary }}>
+                          ${(listing.price_cents / 100).toFixed(0)}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                          per 30 min
+                        </div>
+                      </div>
+                    </div>
+
+                    {listing.description && (
+                      <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px', lineHeight: 1.5 }}>
+                        {listing.description}
+                      </p>
+                    )}
+
+                    {listing.categories && listing.categories.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        {listing.categories.map(cat => {
+                          const catInfo = CATEGORIES.find(c => c.value === cat)
+                          return (
+                            <span
+                              key={cat}
+                              style={{
+                                padding: '4px 10px',
+                                background: colors.bgSecondary,
+                                borderRadius: '12px',
+                                fontSize: '0.75rem',
+                                color: colors.textSecondary
+                              }}
+                            >
+                              {catInfo?.label || cat}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           )}
 
