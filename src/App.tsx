@@ -1466,9 +1466,9 @@ function App() {
             <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
             <button
               style={btnSecondaryStyle}
-              onClick={() => setScreen(user && myGiverProfile ? 'myGiverProfile' : 'giverIntro')}
+              onClick={() => setScreen('giverIntro')}
             >
-              {user && myGiverProfile ? 'My Giver Profile' : 'Offer Presence'}
+              Offer Presence
             </button>
             {!user && (
               <button 
@@ -2242,12 +2242,6 @@ function App() {
   }
 
   if (screen === 'give') {
-    // If user already has a giver profile, redirect to their dashboard
-    if (user && myGiverProfile) {
-      setScreen('myGiverProfile')
-      return null
-    }
-
     if (!user) {
       return (
         <div style={containerStyle}>
@@ -3846,7 +3840,7 @@ function App() {
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('myGiverProfile')}
+                  onClick={() => setScreen('give')}
                 >
                   Edit Video & Availability
                 </button>
