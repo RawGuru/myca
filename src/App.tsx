@@ -395,6 +395,212 @@ function ImageUpload({
   )
 }
 
+// ============================================
+// Reusable VideoUpload Component
+// ============================================
+
+interface VideoUploadProps {
+  onUpload: (publicUrl: string) => Promise<void>
+  currentVideoUrl?: string
+  bucketName: string
+  maxSizeMB: number
+  minDurationSeconds?: number
+  maxDurationSeconds?: number
+  buttonText?: string
+}
+
+function VideoUpload({
+  onUpload,
+  currentVideoUrl,
+  bucketName,
+  maxSizeMB,
+  minDurationSeconds,
+  maxDurationSeconds,
+  buttonText
+}: VideoUploadProps) {
+  const { user } = useAuth()
+  const uploadId = `video-upload-${bucketName}-${Date.now()}`
+
+  const buttonStyle: React.CSSProperties = {
+    padding: '12px 24px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.border}`,
+    fontSize: '1rem',
+    fontFamily: 'Georgia, serif',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    background: 'transparent',
+    color: colors.textPrimary,
+  }
+
+  const handleFileUpload = async (file: File) => {
+    console.log('🔄 Starting video upload process...')
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      alert('Please select a video file')
+      return
+    }
+
+    // Validate file size
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`Video must be less than ${maxSizeMB}MB`)
+      return
+    }
+
+    // Create temporary URL to check duration
+    const tempUrl = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    video.src = tempUrl
+
+    video.onloadedmetadata = async () => {
+      const duration = video.duration
+      console.log('📹 Video duration:', duration, 'seconds')
+
+      // Validate duration if specified
+      if (minDurationSeconds !== undefined && maxDurationSeconds !== undefined) {
+        if (duration < minDurationSeconds || duration > maxDurationSeconds) {
+          const targetDuration = Math.round((minDurationSeconds + maxDurationSeconds) / 2)
+          alert(`Video must be ${targetDuration} seconds (${minDurationSeconds}-${maxDurationSeconds} allowed)`)
+          URL.revokeObjectURL(tempUrl)
+          return
+        }
+      }
+
+      try {
+        // Create unique filename
+        const fileExt = file.name.split('.').pop()
+        const fileName = `${user?.id}-${Date.now()}.${fileExt}`
+        console.log('📝 Generated filename:', fileName)
+
+        // Upload to Supabase Storage
+        console.log(`☁️ Uploading to Supabase storage bucket: ${bucketName}`)
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from(bucketName)
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          console.error('❌ Upload error:', uploadError)
+          throw uploadError
+        }
+        console.log('✅ Upload successful:', uploadData)
+
+        // Get public URL
+        console.log('🔗 Getting public URL...')
+        const { data: urlData } = supabase.storage
+          .from(bucketName)
+          .getPublicUrl(fileName)
+
+        const publicUrl = urlData.publicUrl
+        console.log('✅ Public URL:', publicUrl)
+
+        // Call onUpload callback
+        console.log('💾 Calling onUpload callback...')
+        await onUpload(publicUrl)
+        console.log('✅ Video upload complete!')
+        alert('Video uploaded successfully!')
+      } catch (err) {
+        console.error('❌ ERROR in video upload:', err)
+        alert(`Failed to upload video: ${err instanceof Error ? err.message : 'Please try again'}`)
+      } finally {
+        URL.revokeObjectURL(tempUrl)
+      }
+    }
+  }
+
+  return (
+    <div
+      style={{
+        border: `2px dashed ${colors.border}`,
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        transition: 'all 0.2s',
+        background: colors.bgSecondary
+      }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        console.log('🎯 Drag over detected')
+        e.currentTarget.style.borderColor = colors.accent
+        e.currentTarget.style.background = colors.accentSoft
+      }}
+      onDragLeave={(e) => {
+        console.log('🚫 Drag leave detected')
+        e.currentTarget.style.borderColor = colors.border
+        e.currentTarget.style.background = colors.bgSecondary
+      }}
+      onDrop={async (e) => {
+        e.preventDefault()
+        console.log('📁 Drop detected!', e.dataTransfer.files)
+        e.currentTarget.style.borderColor = colors.border
+        e.currentTarget.style.background = colors.bgSecondary
+
+        const file = e.dataTransfer.files?.[0]
+        if (!file) {
+          console.log('❌ No file found in drop')
+          return
+        }
+        console.log('✅ File found:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`)
+
+        await handleFileUpload(file)
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+        {/* Video Preview */}
+        {currentVideoUrl && (
+          <video
+            src={currentVideoUrl}
+            controls
+            style={{
+              width: '100%',
+              maxWidth: '300px',
+              borderRadius: '8px',
+              border: `2px solid ${colors.accent}`
+            }}
+          />
+        )}
+
+        {/* Upload Controls */}
+        <div>
+          <input
+            type="file"
+            id={uploadId}
+            accept="video/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+
+              await handleFileUpload(file)
+
+              // Reset input
+              e.target.value = ''
+            }}
+          />
+          <button
+            style={{ ...buttonStyle, margin: 0 }}
+            onClick={() => document.getElementById(uploadId)?.click()}
+          >
+            {buttonText || (currentVideoUrl ? 'Change Video' : 'Upload Video')}
+          </button>
+          <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
+            or drag and drop
+          </p>
+          <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+            Max {maxSizeMB}MB
+            {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && (
+              <> • {Math.round((minDurationSeconds + maxDurationSeconds) / 2)} seconds ({minDurationSeconds}-{maxDurationSeconds} allowed)</>
+            )}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
@@ -7291,82 +7497,17 @@ function App() {
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
                 Show seekers exactly what they'll get. Must be 28-32 seconds. Falls back to your profile video if not provided.
               </p>
-              <input
-                type="file"
-                id="listing-video-upload"
-                accept="video/*"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-
-                  console.log('📹 Video file selected:', file.name)
-
-                  // Validate file type
-                  if (!file.type.startsWith('video/')) {
-                    alert('Please select a video file')
-                    return
-                  }
-
-                  // Create temporary URL to check duration
-                  const tempUrl = URL.createObjectURL(file)
-                  const video = document.createElement('video')
-                  video.src = tempUrl
-
-                  video.onloadedmetadata = async () => {
-                    const duration = video.duration
-                    console.log('📹 Video duration:', duration, 'seconds')
-
-                    // Validate duration (28-32 seconds)
-                    if (duration < 28 || duration > 32) {
-                      alert('Video must be 30 seconds (28-32 allowed)')
-                      URL.revokeObjectURL(tempUrl)
-                      e.target.value = ''
-                      return
-                    }
-
-                    try {
-                      // Create unique filename
-                      const fileExt = file.name.split('.').pop()
-                      const fileName = `listing-${user.id}-${Date.now()}.${fileExt}`
-
-                      // Upload to Supabase Storage
-                      const { error: uploadError } = await supabase.storage
-                        .from('listing-videos')
-                        .upload(fileName, file, {
-                          cacheControl: '3600',
-                          upsert: false
-                        })
-
-                      if (uploadError) throw uploadError
-
-                      // Get public URL
-                      const { data: urlData } = supabase.storage
-                        .from('listing-videos')
-                        .getPublicUrl(fileName)
-
-                      const publicUrl = urlData.publicUrl
-
-                      // Update form data
-                      setListingFormData({ ...listingFormData, listing_video_url: publicUrl })
-                      alert('Video uploaded!')
-                    } catch (err) {
-                      console.error('Error uploading video:', err)
-                      alert('Failed to upload video. Please try again.')
-                    } finally {
-                      URL.revokeObjectURL(tempUrl)
-                      e.target.value = ''
-                    }
-                  }
+              <VideoUpload
+                onUpload={async (publicUrl) => {
+                  setListingFormData({ ...listingFormData, listing_video_url: publicUrl })
                 }}
+                currentVideoUrl={listingFormData.listing_video_url || undefined}
+                bucketName="listing-videos"
+                maxSizeMB={100}
+                minDurationSeconds={28}
+                maxDurationSeconds={32}
+                buttonText={listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (30 sec)'}
               />
-              <button
-                type="button"
-                style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
-                onClick={() => document.getElementById('listing-video-upload')?.click()}
-              >
-                {listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (30 sec)'}
-              </button>
               {listingFormData.listing_video_url && (
                 <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
               )}
