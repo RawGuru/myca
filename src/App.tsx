@@ -239,6 +239,13 @@ function App() {
   const [otherPartyExtensionResponse, setOtherPartyExtensionResponse] = useState<'yes' | 'no' | null>(null)
   const [extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // 60-second window
   const [extensionProcessing, setExtensionProcessing] = useState(false)
+
+  // Feedback system state (Phase 8)
+  const [feedbackBooking, setFeedbackBooking] = useState<Booking | null>(null)
+  const [wouldBookAgain, setWouldBookAgain] = useState<boolean | null>(null)
+  const [matchedMode, setMatchedMode] = useState<boolean | null>(null)
+  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
+
   const dailyCallRef = useRef<DailyCall | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
@@ -856,6 +863,48 @@ function App() {
       console.error('Extension payment failed:', err)
       // Show error message to user
       alert(`Extension payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    }
+  }
+
+  // Submit post-session feedback (Phase 8)
+  const submitFeedback = async () => {
+    if (!feedbackBooking || !user || wouldBookAgain === null || matchedMode === null) {
+      alert('Please answer both feedback questions')
+      return
+    }
+
+    setFeedbackSubmitting(true)
+
+    try {
+      // Insert feedback into database
+      const { error } = await supabase
+        .from('feedback')
+        .insert({
+          booking_id: feedbackBooking.id,
+          seeker_id: user.id,
+          giver_id: feedbackBooking.giver_id,
+          would_book_again: wouldBookAgain,
+          matched_mode: matchedMode,
+        })
+
+      if (error) throw error
+
+      // Reset feedback state
+      setFeedbackBooking(null)
+      setWouldBookAgain(null)
+      setMatchedMode(null)
+
+      // Show success message and return to sessions
+      alert('Thank you for your feedback!')
+      setScreen('sessions')
+
+      // Refresh bookings to update feedback status
+      fetchUserBookings()
+    } catch (err) {
+      console.error('Feedback submission error:', err)
+      alert(`Failed to submit feedback: ${err instanceof Error ? err.message : 'Unknown error'}`)
+    } finally {
+      setFeedbackSubmitting(false)
     }
   }
 
@@ -1630,6 +1679,9 @@ function App() {
       dailyCallRef.current = null
     }
 
+    // Store session for potential feedback
+    const completedSession = activeSession
+
     // Mark session as completed if time expired
     if (markComplete && activeSession) {
       await supabase
@@ -1658,6 +1710,24 @@ function App() {
     setOtherPartyExtensionResponse(null)
     setExtensionTimeRemaining(60)
     setExtensionProcessing(false)
+
+    // Phase 8: Show feedback prompt if session completed and user is seeker
+    if (markComplete && completedSession && user && user.id === completedSession.seeker_id) {
+      // Check if feedback already exists
+      const { data: existingFeedback } = await supabase
+        .from('feedback')
+        .select('id')
+        .eq('booking_id', completedSession.id)
+        .eq('seeker_id', user.id)
+        .single()
+
+      if (!existingFeedback) {
+        // Show feedback screen
+        setFeedbackBooking(completedSession)
+        setScreen('feedback')
+        return
+      }
+    }
 
     setScreen('sessions')
   }
@@ -5269,6 +5339,152 @@ function App() {
     )
   }
 
+  // Feedback screen (Phase 8)
+  if (screen === 'feedback') {
+    return (
+      <div style={containerStyle}>
+        <div style={screenStyle}>
+          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '15px' }}>
+            Session Feedback
+          </h2>
+
+          <p style={{
+            textAlign: 'center',
+            color: colors.textSecondary,
+            marginBottom: '40px',
+            fontSize: '0.9rem',
+            lineHeight: 1.6,
+          }}>
+            Your feedback helps improve the MYCA experience.<br />
+            Responses are binary signals only—no text reviews.
+          </p>
+
+          {/* Question 1: Would book again */}
+          <div style={{ marginBottom: '35px' }}>
+            <h3 style={{
+              fontSize: '1.1rem',
+              marginBottom: '20px',
+              color: colors.textPrimary,
+            }}>
+              Would you book this giver again?
+            </h3>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <button
+                onClick={() => setWouldBookAgain(true)}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  background: wouldBookAgain === true ? colors.success : colors.bgSecondary,
+                  color: wouldBookAgain === true ? '#fff' : colors.textPrimary,
+                  border: wouldBookAgain === true ? `2px solid ${colors.success}` : `1px solid ${colors.border}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: wouldBookAgain === true ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setWouldBookAgain(false)}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  background: wouldBookAgain === false ? 'rgba(201, 107, 107, 0.9)' : colors.bgSecondary,
+                  color: wouldBookAgain === false ? '#fff' : colors.textPrimary,
+                  border: wouldBookAgain === false ? '2px solid rgba(201, 107, 107, 0.9)' : `1px solid ${colors.border}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: wouldBookAgain === false ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                No
+              </button>
+            </div>
+          </div>
+
+          {/* Question 2: Matched mode */}
+          <div style={{ marginBottom: '40px' }}>
+            <h3 style={{
+              fontSize: '1.1rem',
+              marginBottom: '20px',
+              color: colors.textPrimary,
+            }}>
+              Did the session match the advertised mode?
+            </h3>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <button
+                onClick={() => setMatchedMode(true)}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  background: matchedMode === true ? colors.success : colors.bgSecondary,
+                  color: matchedMode === true ? '#fff' : colors.textPrimary,
+                  border: matchedMode === true ? `2px solid ${colors.success}` : `1px solid ${colors.border}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: matchedMode === true ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => setMatchedMode(false)}
+                style={{
+                  flex: 1,
+                  padding: '16px',
+                  background: matchedMode === false ? 'rgba(201, 107, 107, 0.9)' : colors.bgSecondary,
+                  color: matchedMode === false ? '#fff' : colors.textPrimary,
+                  border: matchedMode === false ? '2px solid rgba(201, 107, 107, 0.9)' : `1px solid ${colors.border}`,
+                  borderRadius: '10px',
+                  fontSize: '1rem',
+                  fontWeight: matchedMode === false ? 600 : 400,
+                  cursor: 'pointer',
+                }}
+              >
+                No
+              </button>
+            </div>
+          </div>
+
+          {/* Submit button */}
+          <button
+            onClick={submitFeedback}
+            disabled={feedbackSubmitting || wouldBookAgain === null || matchedMode === null}
+            style={{
+              ...btnStyle,
+              opacity: wouldBookAgain === null || matchedMode === null ? 0.5 : 1,
+              cursor: wouldBookAgain === null || matchedMode === null ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {feedbackSubmitting ? 'Submitting...' : 'Submit Feedback'}
+          </button>
+
+          {/* Skip button */}
+          <button
+            onClick={() => {
+              setFeedbackBooking(null)
+              setWouldBookAgain(null)
+              setMatchedMode(null)
+              setScreen('sessions')
+            }}
+            style={{
+              ...btnStyle,
+              background: 'transparent',
+              color: colors.textSecondary,
+              border: 'none',
+              marginTop: '10px',
+            }}
+          >
+            Skip for now
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'sessions') {
     return (
       <div style={containerStyle}>
@@ -5513,6 +5729,43 @@ function App() {
                         Cancel Session
                       </button>
                       </>
+                    )}
+
+                    {/* Feedback status for completed sessions (Phase 8) */}
+                    {booking.status === 'completed' && !isGiver && (
+                      <div style={{
+                        marginTop: '15px',
+                        padding: '12px',
+                        background: colors.bgSecondary,
+                        borderRadius: '10px',
+                        fontSize: '0.85rem',
+                        color: colors.textSecondary,
+                      }}>
+                        <div style={{ marginBottom: '8px', fontWeight: 500, color: colors.textPrimary }}>
+                          📊 Session Feedback
+                        </div>
+                        <button
+                          onClick={() => {
+                            setFeedbackBooking(booking)
+                            setWouldBookAgain(null)
+                            setMatchedMode(null)
+                            setScreen('feedback')
+                          }}
+                          style={{
+                            width: '100%',
+                            padding: '10px',
+                            background: colors.accent,
+                            color: colors.bgPrimary,
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          Leave Feedback
+                        </button>
+                      </div>
                     )}
                   </div>
                 )
