@@ -47,6 +47,8 @@ export interface Listing {
     twitter_handle: string | null
     instagram_handle: string | null
     linkedin_handle: string | null
+    available?: boolean
+    total_sessions_completed?: number
   }
 }
 
@@ -2537,12 +2539,15 @@ function App() {
                             qualities_offered,
                             twitter_handle,
                             instagram_handle,
-                            linkedin_handle
+                            linkedin_handle,
+                            available,
+                            total_sessions_completed
                           )
                         `)
                         .eq('is_active', true)
                         .eq('mode', discoveryFilters.attentionType!)
                         .eq('profiles.is_giver', true)
+                        .eq('profiles.available', true)
 
                       let filtered = allListings || []
 
@@ -2552,6 +2557,22 @@ function App() {
                           listing.categories?.includes(discoveryFilters.category!)
                         )
                       }
+
+                      // Sort by: availability (already filtered), repeat rate, recency, then randomize
+                      filtered.sort((a, b) => {
+                        // Sort by total sessions (repeat rate) - descending
+                        const sessionsA = a.profiles?.total_sessions_completed ?? 0
+                        const sessionsB = b.profiles?.total_sessions_completed ?? 0
+                        if (sessionsB !== sessionsA) return sessionsB - sessionsA
+
+                        // Then by recency (updated_at) - descending
+                        const dateA = new Date(a.updated_at).getTime()
+                        const dateB = new Date(b.updated_at).getTime()
+                        if (dateB !== dateA) return dateB - dateA
+
+                        // Then randomize for variety
+                        return Math.random() - 0.5
+                      })
 
                       setFilteredListings(filtered)
                       setCurrentFeedIndex(0)
