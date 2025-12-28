@@ -1887,10 +1887,6 @@ function App() {
       setProfileError('Please enter your name')
       return
     }
-    if (giverRate < 15) {
-      setProfileError('Minimum rate is $15 per 30 minutes')
-      return
-    }
     if (getTotalSlots() === 0) {
       setProfileError('Please select at least one availability time slot')
       return
@@ -1927,7 +1923,6 @@ function App() {
           tagline: giverTagline.trim() || null,
           bio: giverBio.trim() || null,
           video_url: videoUrl,
-          rate_per_30: giverRate,
           is_giver: true,
           available: true,
           qualities_offered: giverQualities,
@@ -1957,13 +1952,12 @@ function App() {
       await fetchGivers()
       await fetchMyGiverProfile()
 
-      // Go to payout setup (Stripe Connect)
-      setScreen('payoutSetup')
+      // Go to create first listing
+      setScreen('createListing')
 
       // Reset form
       setGiverName('')
       setGiverTagline('')
-      setGiverRate(15)
       setGiverBio('')
       setGiverQualities([])
       setRecordedBlob(null)
@@ -3952,39 +3946,6 @@ function App() {
               style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }}
               placeholder="One sentence about your presence..."
             />
-          </div>
-
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Rate per 30 minutes *</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={giverRate}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/[^0-9]/g, '')
-                  setGiverRate(val === '' ? 0 : parseInt(val))
-                }}
-                onBlur={(e) => {
-                  const val = parseInt(e.target.value)
-                  if (!val || val < 15) {
-                    setGiverRate(15)
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  padding: '15px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '12px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>Minimum $15</p>
           </div>
 
           <div style={{ marginBottom: '30px' }}>
