@@ -175,22 +175,6 @@ const TIMEZONES = [
   { value: 'Pacific/Honolulu', label: 'Hawaii Time (HT)' },
 ]
 
-// Predefined qualities for giver profiles
-const QUALITIES = [
-  'Present',
-  'Warm',
-  'Patient',
-  'Calming',
-  'Insightful',
-  'Honest',
-  'Encouraging',
-  'Compassionate',
-  'Non-judgmental',
-  'Empathetic',
-  'Grounded',
-  'Wise',
-]
-
 // Modes of interaction
 export const MODES: { value: Mode; label: string; description: string }[] = [
   { value: 'vault', label: 'Pure listening. No advice given.', description: '' },
