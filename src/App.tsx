@@ -2337,12 +2337,8 @@ function App() {
             }}
           />
 
-          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '15px' }}>
-            People with a gift for presence. Prepared, grounded, and committed to the craft of being there.
-          </p>
-
-          <p style={{ fontSize: '0.95rem', color: colors.accent, maxWidth: '340px', lineHeight: 1.5, marginBottom: '40px', fontStyle: 'italic' }}>
-            The marketplace for intentional attention.
+          <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
+            Experts, listeners, coaches, and creators—paid for their time.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => {
@@ -6030,6 +6026,39 @@ function App() {
     )
   }
 
+  if (screen === 'manageAvailability') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <SignOutButton />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+            <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Manage Availability</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center', padding: '60px 20px' }}>
+            <p style={{ fontSize: '1.1rem', color: colors.textSecondary, marginBottom: '20px' }}>
+              Availability management is coming soon.
+            </p>
+            <p style={{ fontSize: '0.95rem', color: colors.textMuted, marginBottom: '30px' }}>
+              For now, update your availability during profile creation.
+            </p>
+            <button
+              style={btnStyle}
+              onClick={() => setScreen('userProfile')}
+            >
+              Back to Profile
+            </button>
+          </div>
+
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'userProfile') {
     if (!user) {
       return (
@@ -6421,35 +6450,43 @@ function App() {
                 </button>
               </div>
 
-              {/* Manage Listings */}
+              {/* Your Listings */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>My Listings</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Your Listings</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Create and manage your offerings ({myListings.filter(l => l.is_active).length} active)
+                  {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'listing' : 'listings'}
                 </p>
-                <button
-                  style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('manageListings')}
-                >
-                  Manage Listings
-                </button>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    style={{ ...btnStyle, flex: 1, margin: 0 }}
+                    onClick={() => setScreen('createListing')}
+                  >
+                    Create New Listing
+                  </button>
+                  <button
+                    style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
+                    onClick={() => setScreen('manageListings')}
+                  >
+                    Manage Listings
+                  </button>
+                </div>
               </div>
 
               {/* Share Profile */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Share Your Profile</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Copy your unique profile link to share with potential seekers
+                  Share this on Instagram, Twitter, or anywhere you want people to find you.
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
                   onClick={() => {
                     const shareUrl = `${window.location.origin}?giver=${user.id}`
                     navigator.clipboard.writeText(shareUrl)
-                    alert('Link copied to clipboard!')
+                    alert('Link copied! Paste it in your bio.')
                   }}
                 >
-                  Copy Share Link
+                  Copy Your Profile Link
                 </button>
               </div>
 
@@ -6883,7 +6920,7 @@ function App() {
               <textarea
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, divorce recovery, website building"
+                placeholder="Separate with commas, e.g., judo, divorce recovery, website building"
                 maxLength={200}
                 style={{
                   width: '100%',
@@ -6900,7 +6937,7 @@ function App() {
                 }}
               />
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                Add micro-specialties for future filtering ({listingFormData.topic.length}/200)
+                Stay within your selected category ({listingFormData.topic.length}/200)
               </p>
             </div>
 
@@ -7120,7 +7157,7 @@ function App() {
               <textarea
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, divorce recovery, website building"
+                placeholder="Separate with commas, e.g., judo, divorce recovery, website building"
                 maxLength={200}
                 style={{
                   width: '100%',
@@ -7137,7 +7174,7 @@ function App() {
                 }}
               />
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                Add micro-specialties for future filtering ({listingFormData.topic.length}/200)
+                Stay within your selected category ({listingFormData.topic.length}/200)
               </p>
             </div>
 
