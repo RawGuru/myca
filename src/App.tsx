@@ -36,6 +36,8 @@ export interface Listing {
   is_active: boolean
   created_at: string
   updated_at: string
+  listing_video_url?: string | null  // Per-listing video (30 seconds)
+  listing_image_url?: string | null  // Per-listing image
   categories?: Category[]
   profiles?: {
     id: string
@@ -309,7 +311,9 @@ function App() {
     mode: 'mirror' as Mode,
     price_cents: 2500,
     description: '',
-    selectedCategories: [] as Category[]
+    selectedCategories: [] as Category[],
+    listing_video_url: '' as string,
+    listing_image_url: '' as string
   })
 
   // Seeker discovery flow state (Part 5)
@@ -1273,6 +1277,8 @@ function App() {
     price_cents: number
     description: string
     categories: Category[]
+    listing_video_url?: string
+    listing_image_url?: string
   }) => {
     if (!user) return { success: false, error: 'Not authenticated' }
 
@@ -1286,6 +1292,8 @@ function App() {
           mode: listingData.mode,
           price_cents: listingData.price_cents,
           description: listingData.description,
+          listing_video_url: listingData.listing_video_url || null,
+          listing_image_url: listingData.listing_image_url || null,
           is_active: true
         })
         .select()
@@ -2705,7 +2713,7 @@ function App() {
                     }}
                   >
                     {/* TikTok-style Video Container */}
-                    {giver.video_url ? (
+                    {(currentListing.listing_video_url || giver.video_url) ? (
                       <div
                         style={{
                           position: 'relative',
@@ -2722,7 +2730,7 @@ function App() {
                         }}
                       >
                         <video
-                          src={giver.video_url}
+                          src={currentListing.listing_video_url || giver.video_url || ''}
                           autoPlay
                           loop
                           muted
@@ -2762,7 +2770,7 @@ function App() {
                               fontFamily: 'Georgia, serif',
                               flexShrink: 0
                             }}>
-                              {!giver.profile_picture_url && giver.name[0].toUpperCase()}
+                              {!(currentListing.listing_image_url || giver.profile_picture_url) && giver.name[0].toUpperCase()}
                             </div>
 
                             <div style={{ flex: 1 }}>
@@ -6201,20 +6209,27 @@ function App() {
               }}
               onDragOver={(e) => {
                 e.preventDefault()
+                console.log('🎯 Drag over detected')
                 e.currentTarget.style.borderColor = colors.accent
                 e.currentTarget.style.background = colors.accentSoft
               }}
               onDragLeave={(e) => {
+                console.log('🚫 Drag leave detected')
                 e.currentTarget.style.borderColor = colors.border
                 e.currentTarget.style.background = colors.bgSecondary
               }}
               onDrop={async (e) => {
                 e.preventDefault()
+                console.log('📁 Drop detected!', e.dataTransfer.files)
                 e.currentTarget.style.borderColor = colors.border
                 e.currentTarget.style.background = colors.bgSecondary
 
                 const file = e.dataTransfer.files?.[0]
-                if (!file) return
+                if (!file) {
+                  console.log('❌ No file found in drop')
+                  return
+                }
+                console.log('✅ File found:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`)
 
                 // Validate file size (5MB max)
                 if (file.size > 5 * 1024 * 1024) {
@@ -6846,7 +6861,9 @@ function App() {
                     mode: 'mirror',
                     price_cents: 2500,
                     description: '',
-                    selectedCategories: []
+                    selectedCategories: [],
+                    listing_video_url: '',
+                    listing_image_url: ''
                   })
                   setSelectedListing(null)
                   setScreen('createListing')
@@ -6946,7 +6963,9 @@ function App() {
                                 mode: listing.mode,
                                 price_cents: listing.price_cents,
                                 description: listing.description || '',
-                                selectedCategories: listing.categories || []
+                                selectedCategories: listing.categories || [],
+                                listing_video_url: listing.listing_video_url || '',
+                                listing_image_url: listing.listing_image_url || ''
                               })
                               setScreen('editListing')
                             }}
@@ -7051,7 +7070,9 @@ function App() {
                 mode: listingFormData.mode,
                 price_cents: listingFormData.price_cents,
                 description: listingFormData.description.trim(),
-                categories: listingFormData.selectedCategories
+                categories: listingFormData.selectedCategories,
+                listing_video_url: listingFormData.listing_video_url,
+                listing_image_url: listingFormData.listing_image_url
               })
 
               if (result.success) {
@@ -7234,6 +7255,170 @@ function App() {
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
                 {listingFormData.description.length}/500 characters
               </p>
+            </div>
+
+            {/* STEP 6 - Listing Video (Optional) */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Add a video for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(30 seconds, optional)</span>
+              </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                Show seekers exactly what they'll get. Must be 28-32 seconds. Falls back to your profile video if not provided.
+              </p>
+              <input
+                type="file"
+                id="listing-video-upload"
+                accept="video/*"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+
+                  console.log('📹 Video file selected:', file.name)
+
+                  // Validate file type
+                  if (!file.type.startsWith('video/')) {
+                    alert('Please select a video file')
+                    return
+                  }
+
+                  // Create temporary URL to check duration
+                  const tempUrl = URL.createObjectURL(file)
+                  const video = document.createElement('video')
+                  video.src = tempUrl
+
+                  video.onloadedmetadata = async () => {
+                    const duration = video.duration
+                    console.log('📹 Video duration:', duration, 'seconds')
+
+                    // Validate duration (28-32 seconds)
+                    if (duration < 28 || duration > 32) {
+                      alert('Video must be 30 seconds (28-32 allowed)')
+                      URL.revokeObjectURL(tempUrl)
+                      e.target.value = ''
+                      return
+                    }
+
+                    try {
+                      // Create unique filename
+                      const fileExt = file.name.split('.').pop()
+                      const fileName = `listing-${user.id}-${Date.now()}.${fileExt}`
+
+                      // Upload to Supabase Storage
+                      const { error: uploadError } = await supabase.storage
+                        .from('listing-videos')
+                        .upload(fileName, file, {
+                          cacheControl: '3600',
+                          upsert: false
+                        })
+
+                      if (uploadError) throw uploadError
+
+                      // Get public URL
+                      const { data: urlData } = supabase.storage
+                        .from('listing-videos')
+                        .getPublicUrl(fileName)
+
+                      const publicUrl = urlData.publicUrl
+
+                      // Update form data
+                      setListingFormData({ ...listingFormData, listing_video_url: publicUrl })
+                      alert('Video uploaded!')
+                    } catch (err) {
+                      console.error('Error uploading video:', err)
+                      alert('Failed to upload video. Please try again.')
+                    } finally {
+                      URL.revokeObjectURL(tempUrl)
+                      e.target.value = ''
+                    }
+                  }
+                }}
+              />
+              <button
+                type="button"
+                style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
+                onClick={() => document.getElementById('listing-video-upload')?.click()}
+              >
+                {listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (30 sec)'}
+              </button>
+              {listingFormData.listing_video_url && (
+                <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
+              )}
+            </div>
+
+            {/* STEP 7 - Listing Photo (Optional) */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Add a photo for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+              </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                A photo specific to this offering. Falls back to your profile picture if not provided.
+              </p>
+              <input
+                type="file"
+                id="listing-image-upload"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+
+                  // Validate file size (5MB max)
+                  if (file.size > 5 * 1024 * 1024) {
+                    alert('Image must be less than 5MB')
+                    return
+                  }
+
+                  // Validate file type
+                  if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file')
+                    return
+                  }
+
+                  try {
+                    // Create unique filename
+                    const fileExt = file.name.split('.').pop()
+                    const fileName = `listing-${user.id}-${Date.now()}.${fileExt}`
+
+                    // Upload to Supabase Storage
+                    const { error: uploadError } = await supabase.storage
+                      .from('listing-images')
+                      .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                      })
+
+                    if (uploadError) throw uploadError
+
+                    // Get public URL
+                    const { data: urlData } = supabase.storage
+                      .from('listing-images')
+                      .getPublicUrl(fileName)
+
+                    const publicUrl = urlData.publicUrl
+
+                    // Update form data
+                    setListingFormData({ ...listingFormData, listing_image_url: publicUrl })
+                    alert('Photo uploaded!')
+                  } catch (err) {
+                    console.error('Error uploading photo:', err)
+                    alert('Failed to upload photo. Please try again.')
+                  }
+
+                  // Reset input
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
+                onClick={() => document.getElementById('listing-image-upload')?.click()}
+              >
+                {listingFormData.listing_image_url ? '✓ Photo Uploaded - Change' : 'Upload Photo'}
+              </button>
+              {listingFormData.listing_image_url && (
+                <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Photo ready</p>
+              )}
             </div>
 
             {/* Submit */}
