@@ -3,9 +3,21 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { supabase } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
+import { loadStripe, Stripe } from '@stripe/stripe-js'
 import Auth from './components/Auth'
 
 const SUPABASE_URL = 'https://ksramckuggspsqymcjpo.supabase.co'
+
+// Initialize Stripe (Phase 7: Real Stripe Integration)
+// TODO: Replace with your actual Stripe publishable key
+const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder'
+let stripePromise: Promise<Stripe | null> | null = null
+const getStripe = () => {
+  if (!stripePromise) {
+    stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY)
+  }
+  return stripePromise
+}
 
 // Mode types
 type Mode = 'vault' | 'mirror' | 'strategist' | 'teacher' | 'challenger' | 'vibe_check'
@@ -644,7 +656,7 @@ function App() {
 
   // Process payment and confirm booking
   const processPayment = async () => {
-    if (!currentBooking || !user) return
+    if (!currentBooking || !user || !userProfile) return
 
     setBookingLoading(true)
     setBookingError('')
@@ -661,19 +673,54 @@ function App() {
         throw new Error('Please enter a valid CVC')
       }
 
-      // In production, this would:
-      // 1. Create a PaymentIntent on the backend
-      // 2. Confirm payment with Stripe
-      // 3. Update booking with payment ID
-      // For now, we simulate the payment and update booking status
+      // Phase 7: Real Stripe Integration
+      // Step 1: Create PaymentIntent on backend
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No active session')
 
-      // Simulate payment processing
+      const paymentIntentResponse = await fetch(`${SUPABASE_URL}/functions/v1/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          amount_cents: currentBooking.total_amount_cents,
+          booking_id: currentBooking.id,
+          type: 'booking',
+          seeker_email: user.email,
+        })
+      })
+
+      if (!paymentIntentResponse.ok) {
+        const errorData = await paymentIntentResponse.json()
+        throw new Error(errorData.error || 'Failed to create payment intent')
+      }
+
+      const { client_secret: _clientSecret, payment_intent_id } = await paymentIntentResponse.json()
+
+      // Step 2: Confirm payment with Stripe
+      // TODO: Production - Use Stripe Elements for PCI compliance
+      // For now, simulating payment confirmation
+      // In production, you would:
+      // 1. Use Stripe Elements to securely collect card details
+      // 2. Call stripe.confirmCardPayment(_clientSecret, { payment_method: elementId })
+      // 3. Or use Stripe Checkout for a hosted payment page
+
+      const stripe = await getStripe()
+      if (!stripe) throw new Error('Stripe failed to load')
+
+      // Simulate payment success for demo
       await new Promise(resolve => setTimeout(resolve, 1500))
 
-      // Generate a mock payment ID for demo
-      const mockPaymentId = `pi_demo_${Date.now()}`
+      // In production, this would be the result from stripe.confirmCardPayment()
+      const paymentSucceeded = true
 
-      // Create Daily.co room for the video session
+      if (!paymentSucceeded) {
+        throw new Error('Payment was not successful')
+      }
+
+      // Step 3: Create Daily.co room for the video session
       let videoRoomUrl: string | null = null
       try {
         videoRoomUrl = await createDailyRoom()
@@ -682,12 +729,13 @@ function App() {
         // Continue without room - can be created later
       }
 
-      // Update booking to confirmed with video room URL
+      // Step 4: Update booking to confirmed with video room URL
+      // Note: Webhook will also update with payment_intent_id
       const { error } = await supabase
         .from('bookings')
         .update({
           status: 'confirmed',
-          stripe_payment_id: mockPaymentId,
+          stripe_payment_intent_id: payment_intent_id,
           video_room_url: videoRoomUrl,
         })
         .eq('id', currentBooking.id)
@@ -701,7 +749,7 @@ function App() {
       setCurrentBooking({
         ...currentBooking,
         status: 'confirmed',
-        stripe_payment_id: mockPaymentId,
+        stripe_payment_intent_id: payment_intent_id,
         video_room_url: videoRoomUrl,
       })
 
@@ -713,13 +761,14 @@ function App() {
       // Go to confirmation
       setScreen('confirmation')
     } catch (err) {
+      console.error('Payment error:', err)
       setBookingError(err instanceof Error ? err.message : 'Payment failed')
     } finally {
       setBookingLoading(false)
     }
   }
 
-  // Process extension payment and add time (Phase 6)
+  // Process extension payment and add time (Phase 6 + Phase 7)
   const processExtensionPayment = async () => {
     if (!activeSession || !user) return
 
@@ -731,16 +780,41 @@ function App() {
 
       console.log(`Processing extension payment: $${(totalAmountCents / 100).toFixed(2)}`)
 
-      // TODO: Production - Process real payment via Stripe
-      // 1. Create PaymentIntent for extension amount
-      // 2. Confirm payment
-      // 3. Handle payment errors
+      // Phase 7: Real Stripe Integration
+      // Step 1: Create PaymentIntent on backend
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) throw new Error('No active session')
 
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      const paymentIntentResponse = await fetch(`${SUPABASE_URL}/functions/v1/create-payment-intent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          amount_cents: totalAmountCents,
+          booking_id: activeSession.id,
+          type: 'extension',
+          seeker_email: user.email,
+        })
+      })
 
-      // Generate mock payment ID
-      const mockPaymentId = `pi_ext_demo_${Date.now()}`
+      if (!paymentIntentResponse.ok) {
+        const errorData = await paymentIntentResponse.json()
+        throw new Error(errorData.error || 'Failed to create payment intent')
+      }
+
+      const { payment_intent_id } = await paymentIntentResponse.json()
+
+      // Step 2: In production, payment would be auto-confirmed using saved payment method
+      // For now, we create the extension record with payment intent ID
+      // The webhook will update when payment is confirmed
+
+      // TODO: Production - Use stored payment method to auto-confirm
+      // const stripe = await getStripe()
+      // await stripe.confirmCardPayment(client_secret, {
+      //   payment_method: savedPaymentMethodId
+      // })
 
       // Create extension record in database
       const { error: extensionError } = await supabase
@@ -748,7 +822,7 @@ function App() {
         .insert({
           booking_id: activeSession.id,
           amount_cents: extensionPriceCents,
-          stripe_payment_intent_id: mockPaymentId,
+          stripe_payment_intent_id: payment_intent_id,
           giver_confirmed: true,
           seeker_confirmed: true,
         })
@@ -780,7 +854,8 @@ function App() {
       console.log('Extension payment processed! Added 30 minutes to session.')
     } catch (err) {
       console.error('Extension payment failed:', err)
-      // TODO: Show error to user
+      // Show error message to user
+      alert(`Extension payment failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     }
   }
 
