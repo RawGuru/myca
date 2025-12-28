@@ -137,6 +137,9 @@ interface Giver {
   total_sessions_completed?: number
   times_joined_late?: number
   listings?: Listing[] // Multi-listing architecture
+  twitter_handle?: string | null
+  instagram_handle?: string | null
+  linkedin_handle?: string | null
 }
 
 interface UserProfile {
@@ -257,6 +260,9 @@ function App() {
   const [giverTimezone, setGiverTimezone] = useState('America/New_York')
   const [giverBio, setGiverBio] = useState('')
   const [giverQualities, setGiverQualities] = useState<string[]>([])
+  const [twitterHandle, setTwitterHandle] = useState('')
+  const [instagramHandle, setInstagramHandle] = useState('')
+  const [linkedinHandle, setLinkedinHandle] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
 
@@ -264,7 +270,7 @@ function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
   // Video recording state
-  const [videoStep, setVideoStep] = useState<'prompt' | 'recording' | 'preview' | 'done'>('prompt')
+  const [videoStep, setVideoStep] = useState<'prompt' | 'recording' | 'preview' | 'done'>('done')
   const [isRecording, setIsRecording] = useState(false)
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null)
@@ -289,7 +295,6 @@ function App() {
     weekFromNow.setDate(weekFromNow.getDate() + 6)
     return weekFromNow.toISOString().split('T')[0]
   })
-  const [weekViewDate, setWeekViewDate] = useState(new Date().toISOString().split('T')[0]) // Current week view
 
   // Saved givers state (private saves for seekers)
   const [savedGiverIds, setSavedGiverIds] = useState<Set<string>>(new Set())
@@ -326,7 +331,6 @@ function App() {
       if (error) throw error
 
       setAvailabilitySlots(prev => [...prev, data])
-      setWeekViewDate(newSlotDate) // Show the week containing this slot
       setNewSlotDate('')
       setNewSlotTime('9:00')
     } catch (err) {
@@ -436,11 +440,6 @@ function App() {
 
       setAvailabilitySlots(prev => [...prev, ...data])
 
-      // Set week view to show the first added slot
-      if (data.length > 0) {
-        setWeekViewDate(data[0].date)
-      }
-
       // Show detailed success message
       const startDateObj = new Date(bulkStartDate + 'T00:00:00')
       const endDateObj = new Date(bulkEndDate + 'T00:00:00')
@@ -472,40 +471,6 @@ function App() {
       }
       return newSet
     })
-  }
-
-  // Toggle a specific slot in week view
-  const toggleWeekViewSlot = async (date: string, time: string) => {
-    if (!user) return
-
-    // Check if slot already exists
-    const existingSlot = availabilitySlots.find(
-      slot => slot.date === date && slot.time === time
-    )
-
-    if (existingSlot) {
-      // Remove it
-      await removeAvailabilitySlot(existingSlot.id)
-    } else {
-      // Add it
-      try {
-        const { data, error } = await supabase
-          .from('giver_availability')
-          .insert({
-            giver_id: user.id,
-            date,
-            time,
-            is_booked: false
-          })
-          .select()
-          .single()
-
-        if (error) throw error
-        setAvailabilitySlots(prev => [...prev, data])
-      } catch (err) {
-        console.error('Error toggling slot:', err)
-      }
-    }
   }
 
   // Get total slots selected
@@ -1967,6 +1932,9 @@ function App() {
           available: true,
           qualities_offered: giverQualities,
           timezone: giverTimezone,
+          twitter_handle: twitterHandle.trim() || null,
+          instagram_handle: instagramHandle.trim() || null,
+          linkedin_handle: linkedinHandle.trim() || null,
         }, { onConflict: 'id' })
 
       if (profileError) throw profileError
@@ -2343,7 +2311,7 @@ function App() {
 
           {/* MYCA Logo */}
           <img
-            src="/myca-logo.png"
+            src="/myca-logo.webp"
             alt="Myca"
             style={{
               width: '180px',
@@ -2507,7 +2475,19 @@ function App() {
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: '5px', fontFamily: 'Georgia, serif' }}>{giver.name}</h3>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '5px', fontFamily: 'Georgia, serif' }}>
+                    {giver.name}
+                    {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
+                      <span style={{
+                        marginLeft: '8px',
+                        fontSize: '0.9rem',
+                        color: colors.accent,
+                        fontWeight: 500
+                      }}>
+                        ✓
+                      </span>
+                    )}
+                  </h3>
                   <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>{giver.tagline}</p>
                 </div>
               </div>
@@ -3585,13 +3565,15 @@ function App() {
           }}>
             <span style={{ fontSize: '2.5rem' }}>🌱</span>
           </div>
-          
-          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '20px' }}>
-            You might be the person others come to when they need to talk. The one who listens without making it about yourself. The one who stays steady.
-          </p>
-          
-          <p style={{ fontSize: '1.1rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.6, marginBottom: '60px' }}>
-            If that sounds like you, there's a place for you here.
+
+          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', marginBottom: '30px' }}>
+            You have something to offer.
+          </h2>
+
+          <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
+            Maybe it's expertise you've earned. Maybe it's the ability to stay steady when someone needs to be heard. Maybe it's the gift of honest challenge. Maybe it's all of these at different moments.
+            <br /><br />
+            <span style={{ color: colors.textPrimary, fontWeight: 500 }}>MYCA is where you set the terms.</span>
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
@@ -3611,36 +3593,53 @@ function App() {
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>What kind of attention do you offer?</h2>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>What This Is</h2>
             <div style={{ width: '40px' }} />
           </div>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              You're about to define what kinds of attention you're willing to give—and what that's worth.
+            </p>
+          </div>
+
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
             <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '15px' }}>
-              People come here needing different things. Some need to be heard. Some need to be challenged. Some need to learn. You get to decide what you offer—and charge accordingly.
+              Some people will book you to listen. Some will book you to strategize. Some will book you to teach, or to challenge, or just to talk. You decide which you offer, in what categories, at what price.
             </p>
-            <p style={{ color: colors.textPrimary, fontWeight: 500, marginBottom: '10px' }}>
-              You might offer:
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              Every session has a contract. They know what they're getting. You know what you're giving. The system handles the rest—timing, payment, endings.
             </p>
+          </div>
+
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px', background: `linear-gradient(135deg, rgba(201, 166, 107, 0.05), ${colors.bgCard})` }}>
+            <h3 style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '15px', fontWeight: 600 }}>
+              What Makes This Work
+            </h3>
             <ul style={{ color: colors.textSecondary, lineHeight: 1.8, marginLeft: '20px', marginBottom: '0' }}>
-              <li>Listening without fixing</li>
-              <li>Brainstorming and strategy</li>
-              <li>Teaching a skill</li>
-              <li>Honest feedback and challenge</li>
-              <li>Casual conversation</li>
+              <li>You show up fully for the time you've agreed to.</li>
+              <li>You stay inside the contract. If they booked listening, you listen. If they booked strategy, you strategize. The mode is the promise.</li>
+              <li>You let the system be the boundary. You don't negotiate time. You don't chase payment. You don't owe anything beyond the session.</li>
+              <li>You release it when it ends. You gave your attention. That was the gift. Now it's done.</li>
             </ul>
           </div>
 
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px', background: `linear-gradient(135deg, rgba(201, 166, 107, 0.05), ${colors.bgCard})` }}>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              <span style={{ color: colors.accent, fontWeight: 500 }}>Each offering you create has its own price.</span> Someone might pay $30 for you to listen, $150 for you to teach.
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px' }}>
+            <h3 style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '15px', fontWeight: 600 }}>
+              Why People Do This
+            </h3>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '15px', fontStyle: 'italic' }}>
+              "Some want to monetize expertise they already have. Some want to be useful in ways their job doesn't allow. Some want to learn what it's like inside other people's lives. Some want structure around something they've been doing for free.
+            </p>
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0', fontStyle: 'italic' }}>
+              Whatever your reason, that's the right one."
             </p>
           </div>
 
           {!user ? (
             <Auth onBack={() => setScreen('giverIntro')} />
           ) : (
-            <button style={btnStyle} onClick={() => setScreen('give')}>Create Profile</button>
+            <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Listing</button>
           )}
           
           <Nav />
@@ -4043,6 +4042,85 @@ function App() {
             <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', textAlign: 'right' }}>
               {giverBio.length}/500
             </p>
+          </div>
+
+          {/* Social Verification */}
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+              Social Verification <span style={{ color: colors.textMuted }}>(optional)</span>
+            </label>
+            <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.6 }}>
+              Link your social profiles to build trust. You'll receive a "Verified ✓" badge when at least one is added.
+            </p>
+
+            {/* Twitter */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+                Twitter / X
+              </label>
+              <input
+                type="text"
+                value={twitterHandle}
+                onChange={(e) => setTwitterHandle(e.target.value)}
+                placeholder="@username"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Instagram */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+                Instagram
+              </label>
+              <input
+                type="text"
+                value={instagramHandle}
+                onChange={(e) => setInstagramHandle(e.target.value)}
+                placeholder="@username"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* LinkedIn */}
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+                LinkedIn
+              </label>
+              <input
+                type="text"
+                value={linkedinHandle}
+                onChange={(e) => setLinkedinHandle(e.target.value)}
+                placeholder="linkedin.com/in/yourprofile"
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '0.95rem',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
           </div>
 
           {/* Qualities Offered */}
@@ -4611,158 +4689,6 @@ function App() {
                   Add
                 </button>
               </div>
-              </div>
-
-              {/* Week View */}
-              <div style={{
-                marginTop: '25px',
-                paddingTop: '20px',
-                borderTop: `2px solid ${colors.border}`
-              }}>
-                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>
-                  Week View
-                </h4>
-                <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '15px' }}>
-                  Click cells to add or remove availability
-                </p>
-
-                <div style={{ overflowX: 'auto' }}>
-                  <div style={{ minWidth: '600px' }}>
-                    {/* Week header with dates */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '80px repeat(7, 1fr)', gap: '2px', marginBottom: '8px' }}>
-                      <div style={{ fontSize: '0.75rem', color: colors.textMuted }}></div>
-                      {[
-                        { label: 'Sun', index: 0 },
-                        { label: 'Mon', index: 1 },
-                        { label: 'Tue', index: 2 },
-                        { label: 'Wed', index: 3 },
-                        { label: 'Thu', index: 4 },
-                        { label: 'Fri', index: 5 },
-                        { label: 'Sat', index: 6 }
-                      ].map(day => {
-                        // Get Sunday of the week containing weekViewDate
-                        const viewDate = new Date(weekViewDate + 'T00:00:00')
-                        const dayOfWeek = viewDate.getDay()
-                        const weekStartDate = new Date(viewDate)
-                        weekStartDate.setDate(viewDate.getDate() - dayOfWeek)
-                        const date = new Date(weekStartDate)
-                        date.setDate(weekStartDate.getDate() + day.index)
-                        return (
-                          <div key={day.index} style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: colors.textPrimary }}>{day.label}</div>
-                            <div style={{ fontSize: '0.65rem', color: colors.textMuted }}>
-                              {date.getMonth() + 1}/{date.getDate()}
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {/* Time slots grid */}
-                    <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                      {Array.from({ length: 32 }, (_, i) => {
-                        // Generate time slots from 6:00 AM to 9:30 PM (6:00 to 21:30)
-                        const totalMinutes = 360 + (i * 30) // Start at 6:00 AM (360 minutes)
-                        const hours = Math.floor(totalMinutes / 60)
-                        const minutes = totalMinutes % 60
-                        const time24 = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`
-
-                        return (
-                          <div key={time24} style={{ display: 'grid', gridTemplateColumns: '80px repeat(7, 1fr)', gap: '2px', marginBottom: '2px' }}>
-                            {/* Time label */}
-                            <div style={{
-                              fontSize: '0.7rem',
-                              color: colors.textMuted,
-                              padding: '6px 4px',
-                              textAlign: 'right',
-                              paddingRight: '8px'
-                            }}>
-                              {formatTimeTo12Hour(time24)}
-                            </div>
-
-                            {/* Day cells */}
-                            {[0, 1, 2, 3, 4, 5, 6].map(dayIndex => {
-                              // Get Sunday of the week containing weekViewDate
-                              const viewDate = new Date(weekViewDate + 'T00:00:00')
-                              const dayOfWeek = viewDate.getDay()
-                              const weekStartDate = new Date(viewDate)
-                              weekStartDate.setDate(viewDate.getDate() - dayOfWeek)
-                              const date = new Date(weekStartDate)
-                              date.setDate(weekStartDate.getDate() + dayIndex)
-                              const dateStr = formatDateLocal(date)
-
-                              const hasSlot = availabilitySlots.some(
-                                slot => slot.date === dateStr && slot.time === time24
-                              )
-
-                              return (
-                                <div
-                                  key={dayIndex}
-                                  onClick={() => toggleWeekViewSlot(dateStr, time24)}
-                                  style={{
-                                    padding: '6px',
-                                    background: hasSlot ? colors.accent : colors.bgSecondary,
-                                    border: `1px solid ${hasSlot ? colors.accent : colors.border}`,
-                                    borderRadius: '4px',
-                                    cursor: 'pointer',
-                                    transition: 'all 0.15s',
-                                    minHeight: '28px'
-                                  }}
-                                  onMouseEnter={(e) => {
-                                    e.currentTarget.style.opacity = '0.8'
-                                  }}
-                                  onMouseLeave={(e) => {
-                                    e.currentTarget.style.opacity = '1'
-                                  }}
-                                />
-                              )
-                            })}
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Week navigation */}
-                <div style={{ display: 'flex', gap: '10px', marginTop: '15px', justifyContent: 'center' }}>
-                  <button
-                    onClick={() => {
-                      const currentWeek = new Date(weekViewDate + 'T00:00:00')
-                      currentWeek.setDate(currentWeek.getDate() - 7)
-                      setWeekViewDate(currentWeek.toISOString().split('T')[0])
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: `1px solid ${colors.border}`,
-                      background: colors.bgSecondary,
-                      color: colors.textPrimary,
-                      cursor: 'pointer',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    ← Previous Week
-                  </button>
-                  <button
-                    onClick={() => {
-                      const currentWeek = new Date(weekViewDate + 'T00:00:00')
-                      currentWeek.setDate(currentWeek.getDate() + 7)
-                      setWeekViewDate(currentWeek.toISOString().split('T')[0])
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      border: `1px solid ${colors.border}`,
-                      background: colors.bgSecondary,
-                      color: colors.textPrimary,
-                      cursor: 'pointer',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    Next Week →
-                  </button>
-                </div>
               </div>
 
               {/* List of added slots */}
