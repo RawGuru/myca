@@ -2694,7 +2694,7 @@ function App() {
                     )}
 
                     {listing.categories && listing.categories.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                         {listing.categories.map(cat => {
                           const catInfo = CATEGORIES.find(c => c.value === cat)
                           return (
@@ -2714,6 +2714,21 @@ function App() {
                         })}
                       </div>
                     )}
+
+                    <button
+                      style={{ ...btnStyle, width: '100%', marginTop: '10px', padding: '10px' }}
+                      onClick={() => {
+                        if (!user) {
+                          setScreen('welcome')
+                          alert('Please sign in to book a session')
+                        } else {
+                          setSelectedListing(listing)
+                          setScreen('profile')
+                        }
+                      }}
+                    >
+                      Book This Offering
+                    </button>
                   </div>
                 )
               })}
@@ -2733,16 +2748,6 @@ function App() {
               )}
             </div>
           )}
-
-          {/* Rate */}
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: colors.textSecondary }}>30-minute session</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>
-                ${selectedGiver.rate_per_30}
-              </span>
-            </div>
-          </div>
 
           {/* Available slots */}
           {selectedGiverSlots.length > 0 ? (
@@ -2780,23 +2785,8 @@ function App() {
             </div>
           )}
 
-          {/* Book button */}
           <button
-            style={{ ...btnStyle, width: '100%' }}
-            onClick={() => {
-              if (!user) {
-                setScreen('welcome')
-                alert('Please sign in to book a session')
-              } else {
-                setScreen('profile')
-              }
-            }}
-          >
-            Book Session with {selectedGiver.name}
-          </button>
-
-          <button
-            style={{ ...btnSecondaryStyle, width: '100%', marginTop: '10px' }}
+            style={{ ...btnSecondaryStyle, width: '100%' }}
             onClick={() => setScreen('welcome')}
           >
             Back to Home
@@ -3013,7 +3003,7 @@ function App() {
                     )}
 
                     {listing.categories && listing.categories.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '12px' }}>
                         {listing.categories.map(cat => {
                           const catInfo = CATEGORIES.find(c => c.value === cat)
                           return (
@@ -3033,6 +3023,21 @@ function App() {
                         })}
                       </div>
                     )}
+
+                    <button
+                      style={{ ...btnStyle, width: '100%', marginTop: '10px', padding: '10px' }}
+                      onClick={() => {
+                        if (!user) {
+                          setScreen('welcome')
+                          alert('Please sign in to book a session')
+                        } else {
+                          setSelectedListing(listing)
+                          setScreen('profile')
+                        }
+                      }}
+                    >
+                      Book This Offering
+                    </button>
                   </div>
                 )
               })}
@@ -3813,7 +3818,7 @@ function App() {
                 </div>
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '6px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
                       <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 4px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
                         {day}
