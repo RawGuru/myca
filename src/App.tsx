@@ -2359,7 +2359,15 @@ function App() {
             <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
             <button
               style={btnSecondaryStyle}
-              onClick={() => setScreen('giverIntro')}
+              onClick={() => {
+                // If user already has a giver profile, go to manage listings
+                // Otherwise, start the onboarding flow
+                if (myGiverProfile) {
+                  setScreen('manageListings')
+                } else {
+                  setScreen('giverIntro')
+                }
+              }}
             >
               Offer Presence
             </button>
