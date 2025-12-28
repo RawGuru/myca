@@ -203,6 +203,198 @@ export const ACTIVE_MINUTES_PER_BLOCK = 25
 export const BUFFER_MINUTES = 5
 export const TOTAL_BLOCK_MINUTES = 30
 
+// ============================================
+// Reusable ImageUpload Component
+// ============================================
+
+interface ImageUploadProps {
+  onUpload: (publicUrl: string) => Promise<void>
+  currentImageUrl?: string
+  bucketName: string
+  maxSizeMB: number
+  aspectRatio?: 'circle' | 'square' | 'wide'
+  initials?: string
+  buttonText?: string
+}
+
+function ImageUpload({
+  onUpload,
+  currentImageUrl,
+  bucketName,
+  maxSizeMB,
+  aspectRatio = 'circle',
+  initials = '?',
+  buttonText
+}: ImageUploadProps) {
+  const { user } = useAuth()
+  const uploadId = `image-upload-${bucketName}-${Date.now()}`
+
+  const buttonStyle: React.CSSProperties = {
+    padding: '12px 24px',
+    borderRadius: '8px',
+    border: `1px solid ${colors.border}`,
+    fontSize: '1rem',
+    fontFamily: 'Georgia, serif',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    background: 'transparent',
+    color: colors.textPrimary,
+  }
+
+  const handleFileUpload = async (file: File) => {
+    console.log('🔄 Starting image upload process...')
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file')
+      return
+    }
+
+    // Validate file size
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`Image must be less than ${maxSizeMB}MB`)
+      return
+    }
+
+    try {
+      // Create unique filename
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${user?.id}-${Date.now()}.${fileExt}`
+      console.log('📝 Generated filename:', fileName)
+
+      // Upload to Supabase Storage
+      console.log(`☁️ Uploading to Supabase storage bucket: ${bucketName}`)
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        console.error('❌ Upload error:', uploadError)
+        throw uploadError
+      }
+      console.log('✅ Upload successful:', uploadData)
+
+      // Get public URL
+      console.log('🔗 Getting public URL...')
+      const { data: urlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName)
+
+      const publicUrl = urlData.publicUrl
+      console.log('✅ Public URL:', publicUrl)
+
+      // Call onUpload callback
+      console.log('💾 Calling onUpload callback...')
+      await onUpload(publicUrl)
+      console.log('✅ Image upload complete!')
+      alert('Image uploaded successfully!')
+    } catch (err) {
+      console.error('❌ ERROR in image upload:', err)
+      alert(`Failed to upload image: ${err instanceof Error ? err.message : 'Please try again'}`)
+    }
+  }
+
+  // Preview dimensions based on aspect ratio
+  const previewStyle = {
+    circle: { width: '80px', height: '80px', borderRadius: '50%' },
+    square: { width: '120px', height: '120px', borderRadius: '8px' },
+    wide: { width: '200px', height: '112px', borderRadius: '8px' }
+  }[aspectRatio]
+
+  return (
+    <div
+      style={{
+        border: `2px dashed ${colors.border}`,
+        borderRadius: '12px',
+        padding: '20px',
+        textAlign: 'center',
+        transition: 'all 0.2s',
+        background: colors.bgSecondary
+      }}
+      onDragOver={(e) => {
+        e.preventDefault()
+        console.log('🎯 Drag over detected')
+        e.currentTarget.style.borderColor = colors.accent
+        e.currentTarget.style.background = colors.accentSoft
+      }}
+      onDragLeave={(e) => {
+        console.log('🚫 Drag leave detected')
+        e.currentTarget.style.borderColor = colors.border
+        e.currentTarget.style.background = colors.bgSecondary
+      }}
+      onDrop={async (e) => {
+        e.preventDefault()
+        console.log('📁 Drop detected!', e.dataTransfer.files)
+        e.currentTarget.style.borderColor = colors.border
+        e.currentTarget.style.background = colors.bgSecondary
+
+        const file = e.dataTransfer.files?.[0]
+        if (!file) {
+          console.log('❌ No file found in drop')
+          return
+        }
+        console.log('✅ File found:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`)
+
+        await handleFileUpload(file)
+      }}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+        {/* Image Preview */}
+        <div style={{
+          ...previewStyle,
+          background: currentImageUrl
+            ? `url(${currentImageUrl}) center/cover`
+            : colors.accentSoft,
+          border: `2px solid ${colors.accent}`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '2rem',
+          fontWeight: 600,
+          color: colors.accent,
+          fontFamily: 'Georgia, serif'
+        }}>
+          {!currentImageUrl && initials}
+        </div>
+
+        {/* Upload Controls */}
+        <div>
+          <input
+            type="file"
+            id={uploadId}
+            accept="image/*"
+            style={{ display: 'none' }}
+            onChange={async (e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+
+              await handleFileUpload(file)
+
+              // Reset input
+              e.target.value = ''
+            }}
+          />
+          <button
+            style={{ ...buttonStyle, margin: 0 }}
+            onClick={() => document.getElementById(uploadId)?.click()}
+          >
+            {buttonText || (currentImageUrl ? 'Change Photo' : 'Upload Photo')}
+          </button>
+          <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
+            or drag and drop
+          </p>
+          <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+            Max {maxSizeMB}MB • JPG, PNG, or GIF
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
@@ -6198,208 +6390,25 @@ function App() {
           {/* Profile Picture */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Picture</h3>
-            <div
-              style={{
-                border: `2px dashed ${colors.border}`,
-                borderRadius: '12px',
-                padding: '20px',
-                textAlign: 'center',
-                transition: 'all 0.2s',
-                background: colors.bgSecondary
+            <ImageUpload
+              onUpload={async (publicUrl) => {
+                // Update profile with new picture URL
+                const { error: updateError } = await supabase
+                  .from('profiles')
+                  .update({ profile_picture_url: publicUrl })
+                  .eq('id', user.id)
+
+                if (updateError) throw updateError
+
+                // Refresh profile
+                await fetchMyGiverProfile()
               }}
-              onDragOver={(e) => {
-                e.preventDefault()
-                console.log('🎯 Drag over detected')
-                e.currentTarget.style.borderColor = colors.accent
-                e.currentTarget.style.background = colors.accentSoft
-              }}
-              onDragLeave={(e) => {
-                console.log('🚫 Drag leave detected')
-                e.currentTarget.style.borderColor = colors.border
-                e.currentTarget.style.background = colors.bgSecondary
-              }}
-              onDrop={async (e) => {
-                e.preventDefault()
-                console.log('📁 Drop detected!', e.dataTransfer.files)
-                e.currentTarget.style.borderColor = colors.border
-                e.currentTarget.style.background = colors.bgSecondary
-
-                const file = e.dataTransfer.files?.[0]
-                if (!file) {
-                  console.log('❌ No file found in drop')
-                  return
-                }
-                console.log('✅ File found:', file.name, file.type, `${(file.size / 1024 / 1024).toFixed(2)}MB`)
-
-                // Validate file size (5MB max)
-                if (file.size > 5 * 1024 * 1024) {
-                  alert('Image must be less than 5MB')
-                  return
-                }
-
-                // Validate file type
-                if (!file.type.startsWith('image/')) {
-                  alert('Please select an image file')
-                  return
-                }
-
-                try {
-                  console.log('🔄 Starting upload process...')
-
-                  // Create unique filename
-                  const fileExt = file.name.split('.').pop()
-                  const fileName = `${user.id}-${Date.now()}.${fileExt}`
-                  console.log('📝 Generated filename:', fileName)
-
-                  // Upload to Supabase Storage
-                  console.log('☁️ Uploading to Supabase storage bucket: profile-pictures')
-                  const { data: uploadData, error: uploadError } = await supabase.storage
-                    .from('profile-pictures')
-                    .upload(fileName, file, {
-                      cacheControl: '3600',
-                      upsert: false
-                    })
-
-                  if (uploadError) {
-                    console.error('❌ Upload error:', uploadError)
-                    throw uploadError
-                  }
-                  console.log('✅ Upload successful:', uploadData)
-
-                  // Get public URL
-                  console.log('🔗 Getting public URL...')
-                  const { data: urlData } = supabase.storage
-                    .from('profile-pictures')
-                    .getPublicUrl(fileName)
-
-                  const publicUrl = urlData.publicUrl
-                  console.log('✅ Public URL:', publicUrl)
-
-                  // Update profile with new picture URL
-                  console.log('💾 Updating profile database...')
-                  const { error: updateError } = await supabase
-                    .from('profiles')
-                    .update({ profile_picture_url: publicUrl })
-                    .eq('id', user.id)
-
-                  if (updateError) {
-                    console.error('❌ Database update error:', updateError)
-                    throw updateError
-                  }
-                  console.log('✅ Profile updated in database')
-
-                  // Refresh profile
-                  console.log('🔄 Refreshing profile data...')
-                  await fetchMyGiverProfile()
-                  console.log('✅ Profile picture update complete!')
-                  alert('Profile picture updated!')
-                } catch (err) {
-                  console.error('❌ ERROR in profile picture upload:', err)
-                  alert(`Failed to upload profile picture: ${err instanceof Error ? err.message : 'Please try again'}`)
-                }
-              }}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-                {/* Profile Picture Preview */}
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: myGiverProfile?.profile_picture_url
-                    ? `url(${myGiverProfile.profile_picture_url}) center/cover`
-                    : colors.accentSoft,
-                  border: `2px solid ${colors.accent}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  fontWeight: 600,
-                  color: colors.accent,
-                  fontFamily: 'Georgia, serif'
-                }}>
-                  {!myGiverProfile?.profile_picture_url && (myGiverProfile?.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-                </div>
-
-                {/* Upload Instructions */}
-                <div>
-                  <input
-                    type="file"
-                    id="profile-picture-upload"
-                    accept="image/*"
-                    style={{ display: 'none' }}
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0]
-                      if (!file) return
-
-                      // Validate file size (5MB max)
-                      if (file.size > 5 * 1024 * 1024) {
-                        alert('Image must be less than 5MB')
-                        return
-                      }
-
-                      // Validate file type
-                      if (!file.type.startsWith('image/')) {
-                        alert('Please select an image file')
-                        return
-                      }
-
-                      try {
-                        // Create unique filename
-                        const fileExt = file.name.split('.').pop()
-                        const fileName = `${user.id}-${Date.now()}.${fileExt}`
-
-                        // Upload to Supabase Storage
-                        const { error: uploadError } = await supabase.storage
-                          .from('profile-pictures')
-                          .upload(fileName, file, {
-                            cacheControl: '3600',
-                            upsert: false
-                          })
-
-                        if (uploadError) throw uploadError
-
-                        // Get public URL
-                        const { data: urlData } = supabase.storage
-                          .from('profile-pictures')
-                          .getPublicUrl(fileName)
-
-                        const publicUrl = urlData.publicUrl
-
-                        // Update profile with new picture URL
-                        const { error: updateError } = await supabase
-                          .from('profiles')
-                          .update({ profile_picture_url: publicUrl })
-                          .eq('id', user.id)
-
-                        if (updateError) throw updateError
-
-                        // Refresh profile
-                        await fetchMyGiverProfile()
-                        alert('Profile picture updated!')
-                      } catch (err) {
-                        console.error('Error uploading profile picture:', err)
-                        alert('Failed to upload profile picture. Please try again.')
-                      }
-
-                      // Reset input
-                      e.target.value = ''
-                    }}
-                  />
-                  <button
-                    style={{ ...btnSecondaryStyle, margin: 0 }}
-                    onClick={() => document.getElementById('profile-picture-upload')?.click()}
-                  >
-                    {myGiverProfile?.profile_picture_url ? 'Change Photo' : 'Upload Photo'}
-                  </button>
-                  <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
-                    or drag and drop
-                  </p>
-                  <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
-                    Max 5MB • JPG, PNG, or GIF
-                  </p>
-                </div>
-              </div>
-            </div>
+              currentImageUrl={myGiverProfile?.profile_picture_url || undefined}
+              bucketName="profile-pictures"
+              maxSizeMB={5}
+              aspectRatio="circle"
+              initials={(myGiverProfile?.name?.[0] || user.email?.[0] || '?').toUpperCase()}
+            />
           </div>
 
           {/* Timezone Setting */}
