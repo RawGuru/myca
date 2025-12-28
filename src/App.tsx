@@ -6795,13 +6795,13 @@ function App() {
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Become a Giver</h3>
               <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                Share your presence with those who need it
+                Get paid for your time and expertise
               </p>
               <button
                 style={{ ...btnStyle, margin: 0, width: '100%' }}
                 onClick={() => setScreen('giverIntro')}
               >
-                Offer Presence
+                Offer Your Time
               </button>
             </div>
           )}
