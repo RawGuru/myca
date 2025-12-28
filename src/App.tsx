@@ -37,6 +37,17 @@ export interface Listing {
   created_at: string
   updated_at: string
   categories?: Category[]
+  profiles?: {
+    id: string
+    name: string
+    tagline: string | null
+    bio: string | null
+    video_url: string | null
+    qualities_offered: string[]
+    twitter_handle: string | null
+    instagram_handle: string | null
+    linkedin_handle: string | null
+  }
 }
 
 // Extension type
@@ -126,7 +137,7 @@ interface Giver {
   id: string
   name: string
   tagline: string | null
-  rate_per_30: number
+  rate_per_30?: number  // Optional - deprecated in multi-listing architecture
   qualities_offered?: string[]
   bio?: string | null
   video_url?: string | null
@@ -311,6 +322,16 @@ function App() {
     description: '',
     selectedCategories: [] as Category[]
   })
+
+  // Seeker discovery flow state (Part 5)
+  const [discoveryStep, setDiscoveryStep] = useState<'attention' | 'category' | 'availability' | 'feed'>('attention')
+  const [discoveryFilters, setDiscoveryFilters] = useState({
+    attentionType: null as Mode | null,
+    category: null as Category | null,
+    availability: null as 'now' | 'today' | 'week' | 'anytime' | null
+  })
+  const [filteredListings, setFilteredListings] = useState<Listing[]>([])
+  const [currentFeedIndex, setCurrentFeedIndex] = useState(0)
 
   // Add availability slot (specific date + time)
   const addAvailabilitySlot = async () => {
@@ -586,7 +607,7 @@ function App() {
       // Multi-listing price calculation (Phase 4)
       const basePrice = selectedListingForBooking
         ? selectedListingForBooking.price_cents / 100
-        : selectedGiver.rate_per_30
+        : (selectedGiver.rate_per_30 ?? 0)
       const totalPrice = basePrice * blocksBooked
       const durationMinutes = blocksBooked * TOTAL_BLOCK_MINUTES
       const amountCents = Math.round(basePrice * 100)
@@ -2318,7 +2339,11 @@ function App() {
             People with a gift for presence. Prepared, grounded, and committed to the craft of being there.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>Find Presence</button>
+            <button style={btnStyle} onClick={() => {
+              setDiscoveryStep('attention')
+              setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+              setScreen('discovery')
+            }}>Find Presence</button>
             <button
               style={btnSecondaryStyle}
               onClick={() => {
@@ -2353,12 +2378,363 @@ function App() {
     )
   }
 
+  // Seeker Discovery Flow (Part 5)
+  if (screen === 'discovery') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
+          <SignOutButton />
+
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+            <button
+              onClick={() => {
+                if (discoveryStep === 'attention') {
+                  setScreen('welcome')
+                } else if (discoveryStep === 'category') {
+                  setDiscoveryStep('attention')
+                } else if (discoveryStep === 'availability') {
+                  setDiscoveryStep('category')
+                } else if (discoveryStep === 'feed') {
+                  setDiscoveryStep('availability')
+                }
+              }}
+              style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}
+            >
+              ←
+            </button>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
+            <div style={{ width: '40px' }} />
+          </div>
+
+          {/* STEP 1: Type of Attention */}
+          {discoveryStep === 'attention' && (
+            <div>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                What kind of attention do you need right now?
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
+                {[
+                  { mode: 'vault' as Mode, label: 'Someone to listen', description: 'Pure listening. No advice.' },
+                  { mode: 'mirror' as Mode, label: 'Someone to reflect', description: 'Help you see yourself clearly.' },
+                  { mode: 'strategist' as Mode, label: 'Someone to strategize with', description: 'Brainstorming and problem-solving.' },
+                  { mode: 'teacher' as Mode, label: 'Someone to teach me', description: 'Instruction and skill transfer.' },
+                  { mode: 'challenger' as Mode, label: 'Someone to challenge me', description: 'Debate and stress-test ideas.' },
+                  { mode: 'vibe_check' as Mode, label: 'Someone to talk to', description: 'Casual conversation, no agenda.' },
+                ].map(option => (
+                  <button
+                    key={option.mode}
+                    onClick={() => {
+                      setDiscoveryFilters({ ...discoveryFilters, attentionType: option.mode })
+                      setDiscoveryStep('category')
+                    }}
+                    style={{
+                      padding: '16px',
+                      background: colors.bgCard,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = colors.accent
+                      e.currentTarget.style.background = colors.accentSoft
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.background = colors.bgCard
+                    }}
+                  >
+                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '6px' }}>
+                      {option.label}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                      {option.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: Category */}
+          {discoveryStep === 'category' && (
+            <div>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                What do you want to talk about?
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
+                {[
+                  ...CATEGORIES.map(cat => ({ value: cat.value, label: cat.label })),
+                  { value: null as Category | null, label: 'Anything / I\'ll figure it out' }
+                ].map(option => (
+                  <button
+                    key={option.value || 'any'}
+                    onClick={() => {
+                      setDiscoveryFilters({ ...discoveryFilters, category: option.value })
+                      setDiscoveryStep('availability')
+                    }}
+                    style={{
+                      padding: '16px',
+                      background: colors.bgCard,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      fontSize: '1.05rem',
+                      fontWeight: 500,
+                      color: colors.textPrimary,
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = colors.accent
+                      e.currentTarget.style.background = colors.accentSoft
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.background = colors.bgCard
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3: Availability */}
+          {discoveryStep === 'availability' && (
+            <div>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                When do you need someone?
+              </h3>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
+                {[
+                  { value: 'now' as const, label: 'Available now', description: 'Next 2 hours' },
+                  { value: 'today' as const, label: 'Available today', description: 'Rest of today' },
+                  { value: 'week' as const, label: 'Available this week', description: 'Next 7 days' },
+                  { value: 'anytime' as const, label: 'Any time', description: 'Show all available' }
+                ].map(option => (
+                  <button
+                    key={option.value}
+                    onClick={async () => {
+                      setDiscoveryFilters({ ...discoveryFilters, availability: option.value })
+
+                      // Filter listings based on selections
+                      const { data: allListings } = await supabase
+                        .from('listings')
+                        .select(`
+                          *,
+                          profiles!inner (
+                            id,
+                            name,
+                            tagline,
+                            bio,
+                            video_url,
+                            qualities_offered,
+                            twitter_handle,
+                            instagram_handle,
+                            linkedin_handle
+                          )
+                        `)
+                        .eq('is_active', true)
+                        .eq('mode', discoveryFilters.attentionType!)
+                        .eq('profiles.is_giver', true)
+
+                      let filtered = allListings || []
+
+                      // Filter by category if selected
+                      if (discoveryFilters.category) {
+                        filtered = filtered.filter(listing =>
+                          listing.categories?.includes(discoveryFilters.category!)
+                        )
+                      }
+
+                      setFilteredListings(filtered)
+                      setCurrentFeedIndex(0)
+                      setDiscoveryStep('feed')
+                    }}
+                    style={{
+                      padding: '16px',
+                      background: colors.bgCard,
+                      border: `1px solid ${colors.border}`,
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      textAlign: 'left',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = colors.accent
+                      e.currentTarget.style.background = colors.accentSoft
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.background = colors.bgCard
+                    }}
+                  >
+                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '6px' }}>
+                      {option.label}
+                    </div>
+                    <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                      {option.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4: Video Feed */}
+          {discoveryStep === 'feed' && filteredListings.length > 0 && (
+            <div>
+              {(() => {
+                const currentListing = filteredListings[currentFeedIndex]
+                const giver = currentListing.profiles
+
+                if (!giver) {
+                  return (
+                    <div style={{ ...cardStyle, textAlign: 'center' }}>
+                      <p style={{ color: colors.textSecondary }}>Profile data not available</p>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div style={{ position: 'relative' }}>
+                    {/* Video */}
+                    {giver.video_url && (
+                      <div style={{ marginBottom: '20px', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                        <video
+                          src={giver.video_url}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          style={{
+                            width: '100%',
+                            maxHeight: '500px',
+                            objectFit: 'cover'
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Overlay Info */}
+                    <div style={{ ...cardStyle, cursor: 'default', marginBottom: '15px' }}>
+                      <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', fontFamily: 'Georgia, serif' }}>
+                        {giver.name}
+                        {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
+                          <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: colors.accent, fontWeight: 500 }}>✓</span>
+                        )}
+                      </h3>
+                      {currentListing.topic && (
+                        <p style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 500 }}>
+                          {currentListing.topic}
+                        </p>
+                      )}
+                      <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
+                        ${(currentListing.price_cents / 100).toFixed(0)} per 30 min
+                      </p>
+                    </div>
+
+                    {giver.bio && (
+                      <div style={{ ...cardStyle, cursor: 'default', marginBottom: '15px' }}>
+                        <p style={{ color: colors.textSecondary, lineHeight: 1.6 }}>
+                          {giver.bio}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Actions */}
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                      <button
+                        onClick={() => {
+                          setSelectedGiver(giver)
+                          setSelectedListing(currentListing)
+                          setScreen('publicGiverProfile')
+                        }}
+                        style={{ ...btnSecondaryStyle, flex: 1 }}
+                      >
+                        View Full Profile
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!user) {
+                            alert('Please sign in to book')
+                            setScreen('welcome')
+                          } else {
+                            setSelectedListing(currentListing)
+                            setSelectedGiver(giver)
+                            setScreen('profile')
+                          }
+                        }}
+                        style={{ ...btnStyle, flex: 1 }}
+                      >
+                        Book Now
+                      </button>
+                    </div>
+
+                    {/* Navigation */}
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                      <button
+                        onClick={() => {
+                          if (currentFeedIndex < filteredListings.length - 1) {
+                            setCurrentFeedIndex(currentFeedIndex + 1)
+                          }
+                        }}
+                        disabled={currentFeedIndex >= filteredListings.length - 1}
+                        style={{
+                          padding: '12px 24px',
+                          background: currentFeedIndex < filteredListings.length - 1 ? colors.accent : colors.bgSecondary,
+                          border: 'none',
+                          borderRadius: '8px',
+                          color: currentFeedIndex < filteredListings.length - 1 ? colors.bgPrimary : colors.textMuted,
+                          cursor: currentFeedIndex < filteredListings.length - 1 ? 'pointer' : 'not-allowed',
+                          fontSize: '1rem',
+                          fontWeight: 600
+                        }}
+                      >
+                        Next →
+                      </button>
+                      <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '10px' }}>
+                        {currentFeedIndex + 1} of {filteredListings.length}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          )}
+
+          {discoveryStep === 'feed' && filteredListings.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px', fontSize: '1.1rem' }}>
+                No givers found with those filters.
+              </p>
+              <button
+                style={btnStyle}
+                onClick={() => setDiscoveryStep('attention')}
+              >
+                Start Over
+              </button>
+            </div>
+          )}
+
+          <Nav />
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'browse') {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
-          
+
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
             <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
@@ -2835,7 +3211,7 @@ function App() {
     // Multi-listing price calculation (Phase 4)
     const basePrice = selectedListingForBooking
       ? selectedListingForBooking.price_cents / 100
-      : selectedGiver.rate_per_30
+      : (selectedGiver.rate_per_30 ?? 0)
     const totalPrice = basePrice * blocksBooked
     const activeMinutes = blocksBooked * ACTIVE_MINUTES_PER_BLOCK
     const totalAmountCents = Math.round(totalPrice * 100)
@@ -2914,9 +3290,9 @@ function App() {
                 <div style={{ fontSize: '1.1rem', color: colors.accent }}>
                   {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'offering' : 'offerings'} available
                 </div>
-              ) : (
+              ) : selectedGiver.rate_per_30 ? (
                 <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -3294,6 +3670,13 @@ function App() {
   }
 
   if (screen === 'payment' && currentBooking && selectedGiver && selectedBookingDate) {
+    // Calculate price from listing or fallback to giver rate
+    const sessionPrice = selectedListingForBooking
+      ? selectedListingForBooking.price_cents / 100
+      : (selectedGiver.rate_per_30 ?? 0)
+    const platformFee = Math.round(sessionPrice * 0.15)
+    const totalPayment = sessionPrice + platformFee
+
     const inputStyle: React.CSSProperties = {
       width: '100%',
       padding: '15px',
@@ -3351,15 +3734,15 @@ function App() {
             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                 <span style={{ color: colors.textSecondary }}>30-minute session</span>
-                <span>${selectedGiver.rate_per_30}</span>
+                <span>${sessionPrice}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
                 <span style={{ color: colors.textMuted }}>Platform fee</span>
-                <span style={{ color: colors.textMuted }}>${Math.round(selectedGiver.rate_per_30 * 0.15)}</span>
+                <span style={{ color: colors.textMuted }}>${platformFee}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '8px', borderTop: `1px solid ${colors.border}` }}>
                 <span>Total</span>
-                <span>${selectedGiver.rate_per_30 + Math.round(selectedGiver.rate_per_30 * 0.15)}</span>
+                <span>${totalPayment}</span>
               </div>
             </div>
           </div>
@@ -3454,7 +3837,7 @@ function App() {
               onClick={processPayment}
               disabled={bookingLoading}
             >
-              {bookingLoading ? 'Processing...' : `Pay $${selectedGiver.rate_per_30 + Math.round(selectedGiver.rate_per_30 * 0.15)}`}
+              {bookingLoading ? 'Processing...' : `Pay $${totalPayment}`}
             </button>
 
             <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '15px', textAlign: 'center' }}>
