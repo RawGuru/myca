@@ -3603,52 +3603,29 @@ function App() {
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Before You Begin</h2>
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>What kind of attention do you offer?</h2>
             <div style={{ width: '40px' }} />
           </div>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
-              What happens when you do this:
-            </h3>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              For this session, your role is simply to be present. Your life pauses. You get to witness someone's actual experience. You learn how other people carry what they carry. You discover that you don't need to fix anything to be valuable. You finish a little more connected and a little less stuck in your own loop.
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '15px' }}>
+              People come here needing different things. Some need to be heard. Some need to be challenged. Some need to learn. You get to decide what you offer—and charge accordingly.
             </p>
+            <p style={{ color: colors.textPrimary, fontWeight: 500, marginBottom: '10px' }}>
+              You might offer:
+            </p>
+            <ul style={{ color: colors.textSecondary, lineHeight: 1.8, marginLeft: '20px', marginBottom: '0' }}>
+              <li>Listening without fixing</li>
+              <li>Brainstorming and strategy</li>
+              <li>Teaching a skill</li>
+              <li>Honest feedback and challenge</li>
+              <li>Casual conversation</li>
+            </ul>
           </div>
 
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
-              What makes that possible:
-            </h3>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              You listen. Fully. Without planning what to say next.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              You stay steady. If they're overwhelmed, you remain grounded. They can feel that.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              You make it safe. Whatever they bring, you can hold it. They can say the thing they haven't said anywhere else.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              You reflect back what you hear. Their words. Their feeling. So they see themselves more clearly.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              You keep yourself out of the way. For this session, your needs stay outside the room.
-            </p>
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px', background: `linear-gradient(135deg, rgba(201, 166, 107, 0.05), ${colors.bgCard})` }}>
             <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              You let go when it ends. You show up fully, and when it's over, you release it. You serve their strength.
-            </p>
-          </div>
-
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '30px' }}>
-            <h3 style={{ fontSize: '1.2rem', marginBottom: '15px', fontFamily: 'Georgia, serif', color: colors.accent }}>
-              What draws you to this?
-            </h3>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '12px' }}>
-              Some want the stillness it brings. Some want to learn from lives different than theirs. Some want to be reminded that presence itself has value. Some want to step outside themselves for an hour.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              Whatever your reason, that's the right one.
+              <span style={{ color: colors.accent, fontWeight: 500 }}>Each offering you create has its own price.</span> Someone might pay $30 for you to listen, $150 for you to teach.
             </p>
           </div>
 
@@ -6485,11 +6462,6 @@ function App() {
               e.preventDefault()
 
               // Validation
-              if (!listingFormData.topic.trim()) {
-                alert('Please enter a topic for your listing')
-                return
-              }
-
               if (listingFormData.price_cents < 1500) {
                 alert('Minimum price is $15 per 30 minutes')
                 return
@@ -6510,16 +6482,16 @@ function App() {
               }
             }}
           >
-            {/* Topic */}
+            {/* Specific Topics (optional) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Topic / What you offer <span style={{ color: colors.accent }}>*</span>
+                Specific Topics (optional)
               </label>
               <input
                 type="text"
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., Career Transitions, Relationship Advice, Creative Block"
+                placeholder="e.g., judo, website building, divorce recovery"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -6530,7 +6502,6 @@ function App() {
                   fontSize: '1rem',
                   boxSizing: 'border-box'
                 }}
-                required
               />
             </div>
 
@@ -6722,11 +6693,6 @@ function App() {
               e.preventDefault()
 
               // Validation
-              if (!listingFormData.topic.trim()) {
-                alert('Please enter a topic for your listing')
-                return
-              }
-
               if (listingFormData.price_cents < 1500) {
                 alert('Minimum price is $15 per 30 minutes')
                 return
@@ -6747,16 +6713,16 @@ function App() {
               }
             }}
           >
-            {/* Topic */}
+            {/* Specific Topics (optional) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Topic / What you offer <span style={{ color: colors.accent }}>*</span>
+                Specific Topics (optional)
               </label>
               <input
                 type="text"
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., Career Transitions, Relationship Advice, Creative Block"
+                placeholder="e.g., judo, website building, divorce recovery"
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -6767,7 +6733,6 @@ function App() {
                   fontSize: '1rem',
                   boxSizing: 'border-box'
                 }}
-                required
               />
             </div>
 
