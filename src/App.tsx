@@ -179,11 +179,11 @@ const QUALITIES = [
 // Modes of interaction
 export const MODES: { value: Mode; label: string; description: string }[] = [
   { value: 'vault', label: 'The Vault', description: 'Pure listening. No advice.' },
-  { value: 'mirror', label: 'The Mirror', description: 'Reflective listening to help you see yourself.' },
-  { value: 'strategist', label: 'The Strategist', description: 'Active problem solving and brainstorming.' },
-  { value: 'teacher', label: 'The Teacher', description: 'Instruction and skill transfer.' },
-  { value: 'challenger', label: 'The Challenger', description: 'Debate and challenge assumptions.' },
-  { value: 'vibe_check', label: 'The Vibe Check', description: 'Casual conversation and chemistry test.' },
+  { value: 'mirror', label: 'The Mirror', description: 'Reflective listening. Help them see themselves.' },
+  { value: 'strategist', label: 'The Strategist', description: 'Brainstorming and problem-solving together.' },
+  { value: 'teacher', label: 'The Teacher', description: 'Instruction, demonstration, skill transfer.' },
+  { value: 'challenger', label: 'The Challenger', description: 'Debate, pushback, stress-testing ideas.' },
+  { value: 'vibe_check', label: 'The Vibe Check', description: 'Casual conversation, no agenda.' },
 ]
 
 // Categories for listings
@@ -194,7 +194,7 @@ export const CATEGORIES: { value: Category; label: string }[] = [
   { value: 'career_money', label: 'Career & Money' },
   { value: 'life_transitions', label: 'Life Transitions' },
   { value: 'spirituality', label: 'Spirituality' },
-  { value: 'general', label: 'General' },
+  { value: 'general', label: 'General / Open' },
 ]
 
 // Time physics constants
@@ -6416,33 +6416,10 @@ function App() {
               }
             }}
           >
-            {/* Specific Topics (optional) */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific Topics (optional)
-              </label>
-              <input
-                type="text"
-                value={listingFormData.topic}
-                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, website building, divorce recovery"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Mode */}
+            {/* STEP A - Type of Attention (Mode) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Mode of Attention <span style={{ color: colors.accent }}>*</span>
+                Type of Attention (How you engage) <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {MODES.map(mode => (
@@ -6480,44 +6457,10 @@ function App() {
               </div>
             </div>
 
-            {/* Price */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
-                <input
-                  type="number"
-                  min="15"
-                  step="1"
-                  value={listingFormData.price_cents / 100}
-                  onChange={(e) => {
-                    const dollars = parseFloat(e.target.value) || 15
-                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    background: colors.bgSecondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    color: colors.textPrimary,
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  required
-                />
-              </div>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Minimum: $15 • You'll receive 85% (${((listingFormData.price_cents / 100) * 0.85).toFixed(2)}) after platform fee
-              </p>
-            </div>
-
-            {/* Categories */}
+            {/* STEP B - Category (What you talk about) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Categories (select up to 3)
+                Category (What you talk about) — Select 1-3
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {CATEGORIES.map(cat => {
@@ -6556,15 +6499,78 @@ function App() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* STEP C - Specific Topics (Optional) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description (optional)
+                Specific Topics (Optional)
+              </label>
+              <textarea
+                value={listingFormData.topic}
+                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                placeholder="e.g., judo, divorce recovery, website building, startup fundraising"
+                maxLength={200}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  minHeight: '80px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
+                Add micro-specialties for future filtering ({listingFormData.topic.length}/200)
+              </p>
+            </div>
+
+            {/* STEP D - Price per 30 minutes */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
+                <input
+                  type="number"
+                  min="15"
+                  step="1"
+                  value={listingFormData.price_cents / 100}
+                  onChange={(e) => {
+                    const dollars = parseFloat(e.target.value) || 15
+                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    color: colors.textPrimary,
+                    fontSize: '1rem',
+                    boxSizing: 'border-box'
+                  }}
+                  required
+                />
+              </div>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
+                You receive: ${((listingFormData.price_cents / 100) * 0.85).toFixed(2)} (85%)
+              </p>
+            </div>
+
+            {/* STEP E - Description */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Description (Optional)
               </label>
               <textarea
                 value={listingFormData.description}
                 onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="Add more detail about this specific offering..."
+                placeholder="What should someone expect when they book this?"
                 maxLength={500}
                 style={{
                   width: '100%',
@@ -6647,33 +6653,10 @@ function App() {
               }
             }}
           >
-            {/* Specific Topics (optional) */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific Topics (optional)
-              </label>
-              <input
-                type="text"
-                value={listingFormData.topic}
-                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, website building, divorce recovery"
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-
-            {/* Mode */}
+            {/* STEP A - Type of Attention (Mode) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Mode of Attention <span style={{ color: colors.accent }}>*</span>
+                Type of Attention (How you engage) <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {MODES.map(mode => (
@@ -6711,44 +6694,10 @@ function App() {
               </div>
             </div>
 
-            {/* Price */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
-                <input
-                  type="number"
-                  min="15"
-                  step="1"
-                  value={listingFormData.price_cents / 100}
-                  onChange={(e) => {
-                    const dollars = parseFloat(e.target.value) || 15
-                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    background: colors.bgSecondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
-                    color: colors.textPrimary,
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  required
-                />
-              </div>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Minimum: $15 • You'll receive 85% (${((listingFormData.price_cents / 100) * 0.85).toFixed(2)}) after platform fee
-              </p>
-            </div>
-
-            {/* Categories */}
+            {/* STEP B - Category (What you talk about) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Categories (select up to 3)
+                Category (What you talk about) — Select 1-3
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {CATEGORIES.map(cat => {
@@ -6787,15 +6736,78 @@ function App() {
               </div>
             </div>
 
-            {/* Description */}
+            {/* STEP C - Specific Topics (Optional) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description (optional)
+                Specific Topics (Optional)
+              </label>
+              <textarea
+                value={listingFormData.topic}
+                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                placeholder="e.g., judo, divorce recovery, website building, startup fundraising"
+                maxLength={200}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '8px',
+                  color: colors.textPrimary,
+                  fontSize: '1rem',
+                  boxSizing: 'border-box',
+                  minHeight: '80px',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
+                Add micro-specialties for future filtering ({listingFormData.topic.length}/200)
+              </p>
+            </div>
+
+            {/* STEP D - Price per 30 minutes */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
+                <input
+                  type="number"
+                  min="15"
+                  step="1"
+                  value={listingFormData.price_cents / 100}
+                  onChange={(e) => {
+                    const dollars = parseFloat(e.target.value) || 15
+                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px',
+                    background: colors.bgSecondary,
+                    border: `1px solid ${colors.border}`,
+                    borderRadius: '8px',
+                    color: colors.textPrimary,
+                    fontSize: '1rem',
+                    boxSizing: 'border-box'
+                  }}
+                  required
+                />
+              </div>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
+                You receive: ${((listingFormData.price_cents / 100) * 0.85).toFixed(2)} (85%)
+              </p>
+            </div>
+
+            {/* STEP E - Description */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Description (Optional)
               </label>
               <textarea
                 value={listingFormData.description}
                 onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="Add more detail about this specific offering..."
+                placeholder="What should someone expect when they book this?"
                 maxLength={500}
                 style={{
                   width: '100%',
