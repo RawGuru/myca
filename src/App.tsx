@@ -2340,25 +2340,18 @@ function App() {
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
           <SignOutButton />
-          
-          <div style={{
-            width: '80px',
-            height: '80px',
-            border: `2px solid ${colors.accent}`,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '30px',
-          }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: `radial-gradient(circle, ${colors.accent} 0%, transparent 70%)`,
-              borderRadius: '50%',
-            }} />
-          </div>
-          <h1 style={{ fontSize: '3rem', marginBottom: '15px', fontFamily: 'Georgia, serif', fontWeight: 400 }}>Myca</h1>
+
+          {/* MYCA Logo */}
+          <img
+            src="/myca-logo.png"
+            alt="Myca"
+            style={{
+              width: '180px',
+              height: 'auto',
+              marginBottom: '30px'
+            }}
+          />
+
           <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
             People with a gift for presence. Prepared, grounded, and committed to the craft of being there.
           </p>
