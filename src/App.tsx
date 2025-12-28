@@ -202,14 +202,14 @@ export const MODES: { value: Mode; label: string; description: string }[] = [
 ]
 
 // Categories for listings
-export const CATEGORIES: { value: Category; label: string }[] = [
-  { value: 'health', label: 'Health & Wellness' },
-  { value: 'relationships', label: 'Relationships' },
-  { value: 'creativity', label: 'Creativity' },
-  { value: 'career_money', label: 'Career & Money' },
-  { value: 'life_transitions', label: 'Life Transitions' },
-  { value: 'spirituality', label: 'Spirituality' },
-  { value: 'general', label: 'General / Open' },
+export const CATEGORIES: { value: Category; label: string; examples: string }[] = [
+  { value: 'health', label: 'Health & Wellness', examples: 'Fitness, nutrition, mental health, sleep' },
+  { value: 'relationships', label: 'Relationships', examples: 'Dating, family, friendships, boundaries' },
+  { value: 'creativity', label: 'Creativity', examples: 'Writing, music, art, creative blocks' },
+  { value: 'career_money', label: 'Career & Money', examples: 'Job search, entrepreneurship, investing, salary negotiation' },
+  { value: 'life_transitions', label: 'Life Transitions', examples: 'Moving, career change, breakups, parenthood' },
+  { value: 'spirituality', label: 'Spirituality', examples: 'Meditation, faith, purpose, meaning' },
+  { value: 'general', label: 'General / Open', examples: 'Whatever\'s on your mind' },
 ]
 
 // Time physics constants
@@ -220,6 +220,7 @@ export const TOTAL_BLOCK_MINUTES = 30
 function App() {
   const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
+  const [userMode, setUserMode] = useState<'seeking' | 'giving'>('seeking') // Toggle between seeking and giving modes
   const [needsAuth, setNeedsAuth] = useState(false)
   const [returnToScreen, setReturnToScreen] = useState('')
   const [selectedGiver, setSelectedGiver] = useState<Giver | null>(null)
@@ -2273,33 +2274,93 @@ function App() {
     justifyContent: 'space-around',
   }
 
-  const Nav = () => (
-    <nav style={navStyle}>
-      {[
-        { id: 'browse', icon: '🔍', label: 'Find' },
-        ...(myGiverProfile ? [] : [{ id: 'giverIntro', icon: '🌱', label: 'Offer' }]),
-        { id: 'sessions', icon: '📅', label: 'Sessions' },
-        { id: 'userProfile', icon: '⚙️', label: 'Profile' },
-      ].map(item => (
+  const ModeToggle = () => myGiverProfile ? (
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      padding: '15px 20px',
+      borderTop: `1px solid ${colors.border}`,
+      background: colors.bgPrimary
+    }}>
+      <div style={{
+        display: 'inline-flex',
+        background: colors.bgSecondary,
+        borderRadius: '8px',
+        padding: '4px',
+        gap: '4px'
+      }}>
         <button
-          key={item.id}
-          onClick={() => setScreen(item.id)}
+          onClick={() => {
+            setUserMode('seeking')
+            setScreen('browse')
+          }}
           style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '5px',
-            color: screen === item.id || screen === 'giverCode' ? colors.accent : colors.textMuted,
-            background: 'none',
+            padding: '8px 20px',
+            background: userMode === 'seeking' ? colors.accent : 'transparent',
+            color: userMode === 'seeking' ? colors.bgPrimary : colors.textSecondary,
             border: 'none',
+            borderRadius: '6px',
             cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: userMode === 'seeking' ? 600 : 400,
+            transition: 'all 0.2s'
           }}
         >
-          <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
-          <span style={{ fontSize: '0.75rem' }}>{item.label}</span>
+          Find Sessions
         </button>
-      ))}
-    </nav>
+        <button
+          onClick={() => {
+            setUserMode('giving')
+            setScreen('manageListings')
+          }}
+          style={{
+            padding: '8px 20px',
+            background: userMode === 'giving' ? colors.accent : 'transparent',
+            color: userMode === 'giving' ? colors.bgPrimary : colors.textSecondary,
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: userMode === 'giving' ? 600 : 400,
+            transition: 'all 0.2s'
+          }}
+        >
+          Manage Offerings
+        </button>
+      </div>
+    </div>
+  ) : null
+
+  const Nav = () => (
+    <>
+      <ModeToggle />
+      <nav style={navStyle}>
+        {[
+          { id: 'browse', icon: '🔍', label: 'Find' },
+          ...(myGiverProfile ? [] : [{ id: 'giverIntro', icon: '🌱', label: 'Offer' }]),
+          { id: 'sessions', icon: '📅', label: 'Sessions' },
+          { id: 'userProfile', icon: '⚙️', label: 'Profile' },
+        ].map(item => (
+          <button
+            key={item.id}
+            onClick={() => setScreen(item.id)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '5px',
+              color: screen === item.id || screen === 'giverCode' ? colors.accent : colors.textMuted,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: '1.3rem' }}>{item.icon}</span>
+            <span style={{ fontSize: '0.75rem' }}>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+    </>
   )
 
   const SignOutButton = () => user ? (
@@ -2339,17 +2400,29 @@ function App() {
             }}
           />
 
-          <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
-            Experts, listeners, coaches, and creators—paid for their time.
+          <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.3, marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+            Undivided attention. Live. On you.
+          </h1>
+          <p style={{ fontSize: '0.95rem', color: colors.textMuted, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
+            Unique minds ready to listen, strategize, teach, or challenge.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => {
               setDiscoveryStep('attention')
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
-            }}>Find Presence</button>
+            }}>Book Live Video</button>
             <button
-              style={btnSecondaryStyle}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: colors.textMuted,
+                fontSize: '0.85rem',
+                cursor: 'pointer',
+                marginTop: '15px',
+                textDecoration: 'underline',
+                width: '100%'
+              }}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
                 // Otherwise, start the onboarding flow
@@ -2360,7 +2433,7 @@ function App() {
                 }
               }}
             >
-              Offer Presence
+              Offer your time
             </button>
             {!user && (
               <button 
@@ -2419,12 +2492,12 @@ function App() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
                 {[
-                  { mode: 'vault' as Mode, label: 'Someone to listen', description: 'Pure listening. No advice.' },
-                  { mode: 'mirror' as Mode, label: 'Someone to reflect', description: 'Help you see yourself clearly.' },
-                  { mode: 'strategist' as Mode, label: 'Someone to strategize with', description: 'Brainstorming and problem-solving.' },
-                  { mode: 'teacher' as Mode, label: 'Someone to teach me', description: 'Instruction and skill transfer.' },
-                  { mode: 'challenger' as Mode, label: 'Someone to challenge me', description: 'Debate and stress-test ideas.' },
-                  { mode: 'vibe_check' as Mode, label: 'Someone to talk to', description: 'Casual conversation, no agenda.' },
+                  { mode: 'vault' as Mode, label: 'I need to be heard', description: 'Pure listening. No advice.' },
+                  { mode: 'mirror' as Mode, label: 'I need to be reflected back', description: 'Help me see myself clearly.' },
+                  { mode: 'strategist' as Mode, label: 'I need to strategize', description: 'Brainstorming and problem-solving.' },
+                  { mode: 'teacher' as Mode, label: 'I need to learn', description: 'Instruction and skill transfer.' },
+                  { mode: 'challenger' as Mode, label: 'I need to be challenged', description: 'Debate and stress-test ideas.' },
+                  { mode: 'vibe_check' as Mode, label: 'I just need to talk', description: 'Casual conversation, no agenda.' },
                 ].map(option => (
                   <button
                     key={option.mode}
@@ -2471,8 +2544,8 @@ function App() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
                 {[
-                  ...CATEGORIES.map(cat => ({ value: cat.value, label: cat.label })),
-                  { value: null as Category | null, label: 'Anything / I\'ll figure it out' }
+                  ...CATEGORIES.map(cat => ({ value: cat.value, label: cat.label, examples: cat.examples })),
+                  { value: null as Category | null, label: 'Anything / I\'ll figure it out', examples: '' }
                 ].map(option => (
                   <button
                     key={option.value || 'any'}
@@ -2487,9 +2560,6 @@ function App() {
                       borderRadius: '12px',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      fontSize: '1.05rem',
-                      fontWeight: 500,
-                      color: colors.textPrimary,
                       transition: 'all 0.2s'
                     }}
                     onMouseEnter={(e) => {
@@ -2501,7 +2571,14 @@ function App() {
                       e.currentTarget.style.background = colors.bgCard
                     }}
                   >
-                    {option.label}
+                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: option.examples ? '6px' : 0 }}>
+                      {option.label}
+                    </div>
+                    {option.examples && (
+                      <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                        {option.examples}
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -6378,54 +6455,6 @@ function App() {
                   </p>
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                    Qualities you offer <span style={{ color: colors.textMuted }}>(select up to 5)</span>
-                  </label>
-                  <div style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '6px'
-                  }}>
-                    {QUALITIES.map(quality => {
-                      const isSelected = giverQualities.includes(quality)
-                      return (
-                        <button
-                          key={quality}
-                          type="button"
-                          onClick={() => {
-                            if (isSelected) {
-                              setGiverQualities(prev => prev.filter(q => q !== quality))
-                            } else if (giverQualities.length < 5) {
-                              setGiverQualities(prev => [...prev, quality])
-                            }
-                          }}
-                          style={{
-                            padding: '6px 12px',
-                            background: isSelected ? colors.accent : colors.bgSecondary,
-                            border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                            borderRadius: '16px',
-                            color: isSelected ? colors.bgPrimary : colors.textPrimary,
-                            cursor: giverQualities.length >= 5 && !isSelected ? 'not-allowed' : 'pointer',
-                            fontSize: '0.8rem',
-                            fontWeight: isSelected ? 600 : 400,
-                            opacity: giverQualities.length >= 5 && !isSelected ? 0.5 : 1,
-                            transition: 'all 0.2s'
-                          }}
-                          disabled={giverQualities.length >= 5 && !isSelected}
-                        >
-                          {quality}
-                        </button>
-                      )
-                    })}
-                  </div>
-                  {giverQualities.length > 0 && (
-                    <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '8px' }}>
-                      Selected: {giverQualities.join(', ')}
-                    </p>
-                  )}
-                </div>
-
                 <button
                   onClick={async () => {
                     if (!giverName.trim()) {
@@ -6591,7 +6620,7 @@ function App() {
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Manage Availability</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Add, remove, and manage your available time slots
+                  Control when you're available for bookings. This applies to all your offerings.
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
@@ -6601,10 +6630,13 @@ function App() {
                 </button>
               </div>
 
-              {/* Your Listings */}
+              {/* What You Offer */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Your Listings</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>What You Offer</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                  Each listing is a different type of session you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
+                </p>
+                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>
                   {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'listing' : 'listings'}
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
@@ -7129,12 +7161,15 @@ function App() {
             {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+                Make your listing irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
               </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
+              </p>
               <textarea
                 value={listingFormData.description}
                 onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="What should someone expect when they book this?"
+                placeholder="Example: Former Google PM. I'll help you debug your product strategy and ask the hard questions your team won't."
                 maxLength={500}
                 style={{
                   width: '100%',
@@ -7366,12 +7401,15 @@ function App() {
             {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+                Make your listing irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
               </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
+              </p>
               <textarea
                 value={listingFormData.description}
                 onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="What should someone expect when they book this?"
+                placeholder="Example: Former Google PM. I'll help you debug your product strategy and ask the hard questions your team won't."
                 maxLength={500}
                 style={{
                   width: '100%',
