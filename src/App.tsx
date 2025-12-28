@@ -6244,41 +6244,58 @@ function App() {
                 }
 
                 try {
+                  console.log('🔄 Starting upload process...')
+
                   // Create unique filename
                   const fileExt = file.name.split('.').pop()
                   const fileName = `${user.id}-${Date.now()}.${fileExt}`
+                  console.log('📝 Generated filename:', fileName)
 
                   // Upload to Supabase Storage
-                  const { error: uploadError } = await supabase.storage
+                  console.log('☁️ Uploading to Supabase storage bucket: profile-pictures')
+                  const { data: uploadData, error: uploadError } = await supabase.storage
                     .from('profile-pictures')
                     .upload(fileName, file, {
                       cacheControl: '3600',
                       upsert: false
                     })
 
-                  if (uploadError) throw uploadError
+                  if (uploadError) {
+                    console.error('❌ Upload error:', uploadError)
+                    throw uploadError
+                  }
+                  console.log('✅ Upload successful:', uploadData)
 
                   // Get public URL
+                  console.log('🔗 Getting public URL...')
                   const { data: urlData } = supabase.storage
                     .from('profile-pictures')
                     .getPublicUrl(fileName)
 
                   const publicUrl = urlData.publicUrl
+                  console.log('✅ Public URL:', publicUrl)
 
                   // Update profile with new picture URL
+                  console.log('💾 Updating profile database...')
                   const { error: updateError } = await supabase
                     .from('profiles')
                     .update({ profile_picture_url: publicUrl })
                     .eq('id', user.id)
 
-                  if (updateError) throw updateError
+                  if (updateError) {
+                    console.error('❌ Database update error:', updateError)
+                    throw updateError
+                  }
+                  console.log('✅ Profile updated in database')
 
                   // Refresh profile
+                  console.log('🔄 Refreshing profile data...')
                   await fetchMyGiverProfile()
+                  console.log('✅ Profile picture update complete!')
                   alert('Profile picture updated!')
                 } catch (err) {
-                  console.error('Error uploading profile picture:', err)
-                  alert('Failed to upload profile picture. Please try again.')
+                  console.error('❌ ERROR in profile picture upload:', err)
+                  alert(`Failed to upload profile picture: ${err instanceof Error ? err.message : 'Please try again'}`)
                 }
               }}
             >
