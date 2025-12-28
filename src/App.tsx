@@ -2337,8 +2337,12 @@ function App() {
             }}
           />
 
-          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
+          <p style={{ fontSize: '1.05rem', color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.5, marginBottom: '15px' }}>
             People with a gift for presence. Prepared, grounded, and committed to the craft of being there.
+          </p>
+
+          <p style={{ fontSize: '0.95rem', color: colors.accent, maxWidth: '340px', lineHeight: 1.5, marginBottom: '40px', fontStyle: 'italic' }}>
+            The marketplace for intentional attention.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => {
@@ -3955,19 +3959,16 @@ function App() {
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
           <SignOutButton />
-          
-          <div style={{
-            width: '80px',
-            height: '80px',
-            border: `2px solid ${colors.accent}`,
-            borderRadius: '50%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: '40px',
-          }}>
-            <span style={{ fontSize: '2.5rem' }}>🌱</span>
-          </div>
+
+          <img
+            src="/myca-logo.webp"
+            alt="Myca"
+            style={{
+              width: '120px',
+              height: 'auto',
+              marginBottom: '40px'
+            }}
+          />
 
           <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', marginBottom: '30px' }}>
             You have something to offer.
@@ -3991,35 +3992,39 @@ function App() {
   if (screen === 'giverCode') {
     return (
       <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative' }}>
+        <div style={{ ...screenStyle, position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <SignOutButton />
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-            <button onClick={() => setScreen('giverIntro')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>What This Is</h2>
-            <div style={{ width: '40px' }} />
+
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <img
+              src="/myca-logo.webp"
+              alt="Myca"
+              style={{
+                width: '100px',
+                height: 'auto',
+                margin: '0 auto 25px'
+              }}
+            />
+            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', marginBottom: 0 }}>What This Is</h2>
           </div>
 
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              You're about to define what kinds of attention you're willing to give—and what that's worth.
-            </p>
-          </div>
+          <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '25px' }}>
+            You're about to define what kinds of attention you're willing to give—and what that's worth.
+          </p>
 
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px' }}>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '15px' }}>
-              Some people will book you to listen. Some will book you to strategize. Some will book you to teach, or to challenge, or just to talk. You decide which you offer, in what categories, at what price.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
-              Every session has a contract. They know what they're getting. You know what you're giving. The system handles the rest—timing, payment, endings.
-            </p>
-          </div>
+          <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '25px' }}>
+            Some people will book you to listen. Some will book you to strategize. Some will book you to teach, or to challenge, or just to talk. You decide which you offer, in what categories, at what price.
+          </p>
+
+          <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '30px' }}>
+            Every session has a contract. They know what they're getting. You know what you're giving. The system handles the rest—timing, payment, endings.
+          </p>
 
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '25px', background: `linear-gradient(135deg, rgba(201, 166, 107, 0.05), ${colors.bgCard})` }}>
             <h3 style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '15px', fontWeight: 600 }}>
               What Makes This Work
             </h3>
-            <ul style={{ color: colors.textSecondary, lineHeight: 1.8, marginLeft: '20px', marginBottom: '0' }}>
+            <ul style={{ color: colors.textSecondary, lineHeight: 1.8, margin: '0 0 0 20px', padding: 0 }}>
               <li>You show up fully for the time you've agreed to.</li>
               <li>You stay inside the contract. If they booked listening, you listen. If they booked strategy, you strategize. The mode is the promise.</li>
               <li>You let the system be the boundary. You don't negotiate time. You don't chase payment. You don't owe anything beyond the session.</li>
@@ -4031,20 +4036,35 @@ function App() {
             <h3 style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '15px', fontWeight: 600 }}>
               Why People Do This
             </h3>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '15px', fontStyle: 'italic' }}>
-              "Some want to monetize expertise they already have. Some want to be useful in ways their job doesn't allow. Some want to learn what it's like inside other people's lives. Some want structure around something they've been doing for free.
-            </p>
-            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0', fontStyle: 'italic' }}>
-              Whatever your reason, that's the right one."
+            <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '0' }}>
+              Some want to monetize expertise they already have. Some want to be useful in ways their job doesn't allow. Some want to learn what it's like inside other people's lives. Some want structure around something they've been doing for free.
+              <br /><br />
+              Whatever your reason, that's the right one.
             </p>
           </div>
 
           {!user ? (
             <Auth onBack={() => setScreen('giverIntro')} />
           ) : (
-            <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Listing</button>
+            <>
+              <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Listing</button>
+              <button
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: colors.textSecondary,
+                  fontSize: '0.95rem',
+                  cursor: 'pointer',
+                  marginTop: '15px',
+                  textDecoration: 'underline'
+                }}
+                onClick={() => setScreen('giverIntro')}
+              >
+                Back
+              </button>
+            </>
           )}
-          
+
           <Nav />
         </div>
       </div>
@@ -4491,55 +4511,6 @@ function App() {
                 }}
               />
             </div>
-          </div>
-
-          {/* Qualities Offered */}
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Qualities you offer <span style={{ color: colors.textMuted }}>(select up to 5)</span>
-            </label>
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '8px'
-            }}>
-              {QUALITIES.map(quality => {
-                const isSelected = giverQualities.includes(quality)
-                return (
-                  <button
-                    key={quality}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setGiverQualities(prev => prev.filter(q => q !== quality))
-                      } else if (giverQualities.length < 5) {
-                        setGiverQualities(prev => [...prev, quality])
-                      }
-                    }}
-                    style={{
-                      padding: '8px 16px',
-                      background: isSelected ? colors.accent : colors.bgSecondary,
-                      border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                      borderRadius: '20px',
-                      color: isSelected ? colors.bgPrimary : colors.textPrimary,
-                      cursor: giverQualities.length >= 5 && !isSelected ? 'not-allowed' : 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: isSelected ? 600 : 400,
-                      opacity: giverQualities.length >= 5 && !isSelected ? 0.5 : 1,
-                      transition: 'all 0.2s'
-                    }}
-                    disabled={giverQualities.length >= 5 && !isSelected}
-                  >
-                    {quality}
-                  </button>
-                )
-              })}
-            </div>
-            {giverQualities.length > 0 && (
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '8px' }}>
-                Selected: {giverQualities.join(', ')}
-              </p>
-            )}
           </div>
 
           {/* Video Recording Section */}
@@ -6377,18 +6348,63 @@ function App() {
                 </button>
               </div>
 
-              {/* Update Video */}
+              {/* Introduction Video */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Update Video</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Record or update your introduction video
-                </p>
-                <button
-                  style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('editVideo')}
-                >
-                  Update Video
-                </button>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Introduction Video</h3>
+                {myGiverProfile?.video_url ? (
+                  <>
+                    <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '15px' }}>
+                      <video src={myGiverProfile.video_url} controls playsInline style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <button
+                        style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
+                        onClick={() => setScreen('editVideo')}
+                      >
+                        Replace Video
+                      </button>
+                      <button
+                        style={{
+                          flex: 1,
+                          padding: '15px',
+                          background: 'rgba(220, 38, 38, 0.1)',
+                          border: '1px solid rgba(220, 38, 38, 0.3)',
+                          borderRadius: '12px',
+                          color: '#f87171',
+                          cursor: 'pointer',
+                          fontSize: '1rem',
+                          fontWeight: 500
+                        }}
+                        onClick={async () => {
+                          if (confirm('Delete your introduction video?')) {
+                            const { error } = await supabase
+                              .from('profiles')
+                              .update({ video_url: null })
+                              .eq('id', user.id)
+
+                            if (!error) {
+                              setMyGiverProfile({ ...myGiverProfile, video_url: null })
+                            }
+                          }
+                        }}
+                      >
+                        Delete Video
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
+                      Record your introduction video (30-90 seconds)
+                    </p>
+                    <button
+                      style={{ ...btnStyle, margin: 0, width: '100%' }}
+                      onClick={() => setScreen('editVideo')}
+                    >
+                      Record Video
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Manage Availability */}
@@ -6436,16 +6452,6 @@ function App() {
                   Copy Share Link
                 </button>
               </div>
-
-              {/* Current Video Preview */}
-              {myGiverProfile?.video_url && (
-                <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Your Intro Video</h3>
-                  <div style={{ borderRadius: '12px', overflow: 'hidden' }}>
-                    <video src={myGiverProfile.video_url} controls playsInline style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
-                  </div>
-                </div>
-              )}
 
               {/* Upcoming Availability */}
               {myGiverProfile && availabilitySlots.length > 0 && (
@@ -6786,10 +6792,10 @@ function App() {
               }
             }}
           >
-            {/* STEP A - Type of Attention (Mode) */}
+            {/* STEP 1 - What type of attention is this? */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Type of Attention (How you engage) <span style={{ color: colors.accent }}>*</span>
+                What type of attention is this? <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {MODES.map(mode => (
@@ -6827,10 +6833,10 @@ function App() {
               </div>
             </div>
 
-            {/* STEP B - Category (What you talk about) */}
+            {/* STEP 2 - What category? */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Category (What you talk about) — Select 1-3
+                What category? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(Select 1-3)</span>
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {CATEGORIES.map(cat => {
@@ -6869,15 +6875,15 @@ function App() {
               </div>
             </div>
 
-            {/* STEP C - Specific Topics (Optional) */}
+            {/* STEP 3 - Specific topics */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific Topics (Optional)
+                Specific topics <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, divorce recovery, website building, startup fundraising"
+                placeholder="e.g., judo, divorce recovery, website building"
                 maxLength={200}
                 style={{
                   width: '100%',
@@ -6898,10 +6904,10 @@ function App() {
               </p>
             </div>
 
-            {/* STEP D - Price per 30 minutes */}
+            {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+                Price for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -6932,10 +6938,10 @@ function App() {
               </p>
             </div>
 
-            {/* STEP E - Description */}
+            {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description (Optional)
+                Description <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 value={listingFormData.description}
@@ -7064,10 +7070,10 @@ function App() {
               </div>
             </div>
 
-            {/* STEP B - Category (What you talk about) */}
+            {/* STEP 2 - What category? */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Category (What you talk about) — Select 1-3
+                What category? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(Select 1-3)</span>
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {CATEGORIES.map(cat => {
@@ -7106,15 +7112,15 @@ function App() {
               </div>
             </div>
 
-            {/* STEP C - Specific Topics (Optional) */}
+            {/* STEP 3 - Specific topics */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific Topics (Optional)
+                Specific topics <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 value={listingFormData.topic}
                 onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="e.g., judo, divorce recovery, website building, startup fundraising"
+                placeholder="e.g., judo, divorce recovery, website building"
                 maxLength={200}
                 style={{
                   width: '100%',
@@ -7135,10 +7141,10 @@ function App() {
               </p>
             </div>
 
-            {/* STEP D - Price per 30 minutes */}
+            {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price per 30 minutes <span style={{ color: colors.accent }}>*</span>
+                Price for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -7169,10 +7175,10 @@ function App() {
               </p>
             </div>
 
-            {/* STEP E - Description */}
+            {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Description (Optional)
+                Description <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
                 value={listingFormData.description}
