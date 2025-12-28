@@ -7380,68 +7380,15 @@ function App() {
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
                 A photo specific to this offering. Falls back to your profile picture if not provided.
               </p>
-              <input
-                type="file"
-                id="listing-image-upload"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-
-                  // Validate file size (5MB max)
-                  if (file.size > 5 * 1024 * 1024) {
-                    alert('Image must be less than 5MB')
-                    return
-                  }
-
-                  // Validate file type
-                  if (!file.type.startsWith('image/')) {
-                    alert('Please select an image file')
-                    return
-                  }
-
-                  try {
-                    // Create unique filename
-                    const fileExt = file.name.split('.').pop()
-                    const fileName = `listing-${user.id}-${Date.now()}.${fileExt}`
-
-                    // Upload to Supabase Storage
-                    const { error: uploadError } = await supabase.storage
-                      .from('listing-images')
-                      .upload(fileName, file, {
-                        cacheControl: '3600',
-                        upsert: false
-                      })
-
-                    if (uploadError) throw uploadError
-
-                    // Get public URL
-                    const { data: urlData } = supabase.storage
-                      .from('listing-images')
-                      .getPublicUrl(fileName)
-
-                    const publicUrl = urlData.publicUrl
-
-                    // Update form data
-                    setListingFormData({ ...listingFormData, listing_image_url: publicUrl })
-                    alert('Photo uploaded!')
-                  } catch (err) {
-                    console.error('Error uploading photo:', err)
-                    alert('Failed to upload photo. Please try again.')
-                  }
-
-                  // Reset input
-                  e.target.value = ''
+              <ImageUpload
+                onUpload={async (publicUrl) => {
+                  setListingFormData({ ...listingFormData, listing_image_url: publicUrl })
                 }}
+                currentImageUrl={listingFormData.listing_image_url || undefined}
+                bucketName="listing-images"
+                maxSizeMB={5}
+                aspectRatio="square"
               />
-              <button
-                type="button"
-                style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
-                onClick={() => document.getElementById('listing-image-upload')?.click()}
-              >
-                {listingFormData.listing_image_url ? '✓ Photo Uploaded - Change' : 'Upload Photo'}
-              </button>
               {listingFormData.listing_image_url && (
                 <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Photo ready</p>
               )}
