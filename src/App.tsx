@@ -193,12 +193,12 @@ const QUALITIES = [
 
 // Modes of interaction
 export const MODES: { value: Mode; label: string; description: string }[] = [
-  { value: 'vault', label: 'The Vault', description: 'Pure listening. No advice.' },
-  { value: 'mirror', label: 'The Mirror', description: 'Reflective listening. Help them see themselves.' },
-  { value: 'strategist', label: 'The Strategist', description: 'Brainstorming and problem-solving together.' },
-  { value: 'teacher', label: 'The Teacher', description: 'Instruction, demonstration, skill transfer.' },
-  { value: 'challenger', label: 'The Challenger', description: 'Debate, pushback, stress-testing ideas.' },
-  { value: 'vibe_check', label: 'The Vibe Check', description: 'Casual conversation, no agenda.' },
+  { value: 'vault', label: 'Pure listening. No advice given.', description: '' },
+  { value: 'mirror', label: 'Reflective listening. Help them see themselves.', description: '' },
+  { value: 'strategist', label: 'Brainstorming and problem-solving together.', description: '' },
+  { value: 'teacher', label: 'Instruction, demonstration, skill transfer.', description: '' },
+  { value: 'challenger', label: 'Debate, pushback, stress-testing ideas.', description: '' },
+  { value: 'vibe_check', label: 'Casual conversation. No agenda.', description: '' },
 ]
 
 // Categories for listings
@@ -2401,7 +2401,7 @@ function App() {
           />
 
           <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.3, marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
-            Undivided attention. Live. On you.
+            Undivided attention. Focused entirely on you.
           </h1>
           <p style={{ fontSize: '0.95rem', color: colors.textMuted, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
             Unique minds ready to listen, strategize, teach, or challenge.
@@ -2411,7 +2411,7 @@ function App() {
               setDiscoveryStep('attention')
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
-            }}>Book Live Video</button>
+            }}>Book Private Video</button>
             <button
               style={{
                 background: 'transparent',
@@ -2479,7 +2479,6 @@ function App() {
             >
               ←
             </button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -2704,10 +2703,40 @@ function App() {
                 }
 
                 return (
-                  <div style={{ position: 'relative' }}>
-                    {/* Video */}
-                    {giver.video_url && (
-                      <div style={{ marginBottom: '20px', borderRadius: '16px', overflow: 'hidden', background: '#000' }}>
+                  <div
+                    style={{ position: 'relative', marginBottom: '20px' }}
+                    onTouchStart={(e) => {
+                      const touch = e.touches[0]
+                      e.currentTarget.dataset.startY = String(touch.clientY)
+                    }}
+                    onTouchEnd={(e) => {
+                      const startY = parseFloat(e.currentTarget.dataset.startY || '0')
+                      const endY = e.changedTouches[0].clientY
+                      const deltaY = startY - endY
+
+                      // Swipe up = next video (deltaY > 50)
+                      if (deltaY > 50 && currentFeedIndex < filteredListings.length - 1) {
+                        setCurrentFeedIndex(currentFeedIndex + 1)
+                      }
+                    }}
+                  >
+                    {/* TikTok-style Video Container */}
+                    {giver.video_url ? (
+                      <div
+                        style={{
+                          position: 'relative',
+                          borderRadius: '16px',
+                          overflow: 'hidden',
+                          background: '#000',
+                          cursor: 'pointer',
+                          minHeight: '500px'
+                        }}
+                        onClick={() => {
+                          setSelectedGiver(giver)
+                          setSelectedListing(currentListing)
+                          setScreen('publicGiverProfile')
+                        }}
+                      >
                         <video
                           src={giver.video_url}
                           autoPlay
@@ -2716,74 +2745,97 @@ function App() {
                           playsInline
                           style={{
                             width: '100%',
-                            maxHeight: '500px',
+                            height: '500px',
                             objectFit: 'cover'
                           }}
                         />
-                      </div>
-                    )}
 
-                    {/* Overlay Info */}
-                    <div style={{ ...cardStyle, cursor: 'default', marginBottom: '15px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                        {/* Profile Picture */}
+                        {/* Overlay Info - TikTok Style */}
                         <div style={{
-                          width: '40px',
-                          height: '40px',
-                          borderRadius: '50%',
-                          background: giver.profile_picture_url
-                            ? `url(${giver.profile_picture_url}) center/cover`
-                            : colors.accentSoft,
-                          border: `2px solid ${colors.accent}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '1rem',
-                          fontWeight: 600,
-                          color: colors.accent,
-                          fontFamily: 'Georgia, serif',
-                          flexShrink: 0
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          padding: '20px',
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                          color: '#fff'
                         }}>
-                          {!giver.profile_picture_url && giver.name[0].toUpperCase()}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                            {/* Profile Picture */}
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              background: giver.profile_picture_url
+                                ? `url(${giver.profile_picture_url}) center/cover`
+                                : 'rgba(255,255,255,0.3)',
+                              border: `2px solid #fff`,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1rem',
+                              fontWeight: 600,
+                              fontFamily: 'Georgia, serif',
+                              flexShrink: 0
+                            }}>
+                              {!giver.profile_picture_url && giver.name[0].toUpperCase()}
+                            </div>
+
+                            <div style={{ flex: 1 }}>
+                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontFamily: 'Georgia, serif', fontWeight: 600 }}>
+                                {giver.name}
+                                {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
+                                  <span style={{ marginLeft: '8px', fontSize: '0.9rem' }}>✓</span>
+                                )}
+                              </h3>
+                              <p style={{ fontSize: '0.95rem', margin: '4px 0 0 0', opacity: 0.9 }}>
+                                {currentListing.description || currentListing.topic || giver.bio?.slice(0, 60) + '...' || 'Available now'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0 0 0' }}>
+                            ${(currentListing.price_cents / 100).toFixed(0)}/30min
+                          </p>
                         </div>
 
-                        <h3 style={{ fontSize: '1.5rem', margin: 0, fontFamily: 'Georgia, serif' }}>
-                          {giver.name}
-                          {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
-                            <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: colors.accent, fontWeight: 500 }}>✓</span>
-                          )}
-                        </h3>
+                        {/* Tap hint */}
+                        <div style={{
+                          position: 'absolute',
+                          top: '20px',
+                          right: '20px',
+                          padding: '8px 12px',
+                          background: 'rgba(0,0,0,0.6)',
+                          borderRadius: '20px',
+                          fontSize: '0.85rem',
+                          color: '#fff'
+                        }}>
+                          Tap for full profile
+                        </div>
                       </div>
-                      {currentListing.topic && (
-                        <p style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 500 }}>
-                          {currentListing.topic}
-                        </p>
-                      )}
-                      <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
-                        ${(currentListing.price_cents / 100).toFixed(0)} per 30 min
-                      </p>
-                    </div>
-
-                    {giver.bio && (
-                      <div style={{ ...cardStyle, cursor: 'default', marginBottom: '15px' }}>
-                        <p style={{ color: colors.textSecondary, lineHeight: 1.6 }}>
-                          {giver.bio}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-                      <button
+                    ) : (
+                      <div style={{ ...cardStyle, textAlign: 'center', padding: '60px 20px', cursor: 'pointer' }}
                         onClick={() => {
                           setSelectedGiver(giver)
                           setSelectedListing(currentListing)
                           setScreen('publicGiverProfile')
                         }}
-                        style={{ ...btnSecondaryStyle, flex: 1 }}
                       >
-                        View Full Profile
-                      </button>
+                        <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{giver.name}</h3>
+                        <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
+                          {currentListing.description || currentListing.topic || giver.bio || 'Available now'}
+                        </p>
+                        <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
+                          ${(currentListing.price_cents / 100).toFixed(0)} per 30 min
+                        </p>
+                        <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '15px' }}>
+                          Tap to view profile
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                       <button
                         onClick={() => {
                           if (!user) {
@@ -2801,32 +2853,14 @@ function App() {
                       </button>
                     </div>
 
-                    {/* Navigation */}
-                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                      <button
-                        onClick={() => {
-                          if (currentFeedIndex < filteredListings.length - 1) {
-                            setCurrentFeedIndex(currentFeedIndex + 1)
-                          }
-                        }}
-                        disabled={currentFeedIndex >= filteredListings.length - 1}
-                        style={{
-                          padding: '12px 24px',
-                          background: currentFeedIndex < filteredListings.length - 1 ? colors.accent : colors.bgSecondary,
-                          border: 'none',
-                          borderRadius: '8px',
-                          color: currentFeedIndex < filteredListings.length - 1 ? colors.bgPrimary : colors.textMuted,
-                          cursor: currentFeedIndex < filteredListings.length - 1 ? 'pointer' : 'not-allowed',
-                          fontSize: '1rem',
-                          fontWeight: 600
-                        }}
-                      >
-                        Next →
-                      </button>
-                      <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '10px' }}>
-                        {currentFeedIndex + 1} of {filteredListings.length}
-                      </p>
-                    </div>
+                    {/* Swipe indicator */}
+                    {currentFeedIndex < filteredListings.length - 1 && (
+                      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                        <p style={{ color: colors.textMuted, fontSize: '0.85rem' }}>
+                          ↑ Swipe up for next ({currentFeedIndex + 1} of {filteredListings.length})
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )
               })()}
@@ -2836,7 +2870,7 @@ function App() {
           {discoveryStep === 'feed' && filteredListings.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <p style={{ color: colors.textSecondary, marginBottom: '20px', fontSize: '1.1rem' }}>
-                No givers found with those filters.
+                No one available with these filters. Try broadening your search.
               </p>
               <button
                 style={btnStyle}
@@ -2861,7 +2895,6 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('welcome')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Find Presence</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -3119,30 +3152,6 @@ function App() {
                   background: '#000'
                 }}
               />
-            </div>
-          )}
-
-          {/* Qualities */}
-          {selectedGiver.qualities_offered && selectedGiver.qualities_offered.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {selectedGiver.qualities_offered.map((quality, i) => (
-                  <span
-                    key={quality}
-                    style={{
-                      padding: '8px 16px',
-                      background: i < 3 ? colors.accentSoft : colors.bgCard,
-                      border: `1px solid ${i < 3 ? colors.accent : colors.border}`,
-                      borderRadius: '20px',
-                      fontSize: '0.85rem',
-                      color: i < 3 ? colors.accent : colors.textSecondary,
-                      fontWeight: i < 3 ? 600 : 400
-                    }}
-                  >
-                    {quality}
-                  </span>
-                ))}
-              </div>
             </div>
           )}
 
@@ -3441,30 +3450,6 @@ function App() {
               ) : null}
             </div>
           </div>
-
-          {/* Qualities */}
-          {selectedGiver.qualities_offered && selectedGiver.qualities_offered.length > 0 && (
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
-                {selectedGiver.qualities_offered.map((quality, i) => (
-                  <span
-                    key={quality}
-                    style={{
-                      padding: '8px 16px',
-                      background: i < 3 ? colors.accentSoft : colors.bgCard,
-                      border: `1px solid ${i < 3 ? colors.accent : colors.border}`,
-                      borderRadius: '20px',
-                      fontSize: '0.85rem',
-                      color: i < 3 ? colors.accent : colors.textSecondary,
-                      fontWeight: i < 3 ? 600 : 400
-                    }}
-                  >
-                    {quality}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Bio */}
           {selectedGiver.bio && (
@@ -6221,102 +6206,182 @@ function App() {
           {/* Profile Picture */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Picture</h3>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '15px' }}>
-              {/* Profile Picture Preview */}
-              <div style={{
-                width: '80px',
-                height: '80px',
-                borderRadius: '50%',
-                background: myGiverProfile?.profile_picture_url
-                  ? `url(${myGiverProfile.profile_picture_url}) center/cover`
-                  : colors.accentSoft,
-                border: `2px solid ${colors.accent}`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '2rem',
-                fontWeight: 600,
-                color: colors.accent,
-                fontFamily: 'Georgia, serif',
-                flexShrink: 0
-              }}>
-                {!myGiverProfile?.profile_picture_url && (myGiverProfile?.name?.[0] || user.email?.[0] || '?').toUpperCase()}
-              </div>
+            <div
+              style={{
+                border: `2px dashed ${colors.border}`,
+                borderRadius: '12px',
+                padding: '20px',
+                textAlign: 'center',
+                transition: 'all 0.2s',
+                background: colors.bgSecondary
+              }}
+              onDragOver={(e) => {
+                e.preventDefault()
+                e.currentTarget.style.borderColor = colors.accent
+                e.currentTarget.style.background = colors.accentSoft
+              }}
+              onDragLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.background = colors.bgSecondary
+              }}
+              onDrop={async (e) => {
+                e.preventDefault()
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.background = colors.bgSecondary
 
-              {/* Upload Button */}
-              <div style={{ flex: 1 }}>
-                <input
-                  type="file"
-                  id="profile-picture-upload"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0]
-                    if (!file) return
+                const file = e.dataTransfer.files?.[0]
+                if (!file) return
 
-                    // Validate file size (5MB max)
-                    if (file.size > 5 * 1024 * 1024) {
-                      alert('Image must be less than 5MB')
-                      return
-                    }
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                  alert('Image must be less than 5MB')
+                  return
+                }
 
-                    // Validate file type
-                    if (!file.type.startsWith('image/')) {
-                      alert('Please select an image file')
-                      return
-                    }
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                  alert('Please select an image file')
+                  return
+                }
 
-                    try {
-                      // Create unique filename
-                      const fileExt = file.name.split('.').pop()
-                      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+                try {
+                  // Create unique filename
+                  const fileExt = file.name.split('.').pop()
+                  const fileName = `${user.id}-${Date.now()}.${fileExt}`
 
-                      // Upload to Supabase Storage
-                      const { error: uploadError } = await supabase.storage
-                        .from('profile-pictures')
-                        .upload(fileName, file, {
-                          cacheControl: '3600',
-                          upsert: false
-                        })
+                  // Upload to Supabase Storage
+                  const { error: uploadError } = await supabase.storage
+                    .from('profile-pictures')
+                    .upload(fileName, file, {
+                      cacheControl: '3600',
+                      upsert: false
+                    })
 
-                      if (uploadError) throw uploadError
+                  if (uploadError) throw uploadError
 
-                      // Get public URL
-                      const { data: urlData } = supabase.storage
-                        .from('profile-pictures')
-                        .getPublicUrl(fileName)
+                  // Get public URL
+                  const { data: urlData } = supabase.storage
+                    .from('profile-pictures')
+                    .getPublicUrl(fileName)
 
-                      const publicUrl = urlData.publicUrl
+                  const publicUrl = urlData.publicUrl
 
-                      // Update profile with new picture URL
-                      const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ profile_picture_url: publicUrl })
-                        .eq('id', user.id)
+                  // Update profile with new picture URL
+                  const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ profile_picture_url: publicUrl })
+                    .eq('id', user.id)
 
-                      if (updateError) throw updateError
+                  if (updateError) throw updateError
 
-                      // Refresh profile
-                      await fetchMyGiverProfile()
-                      alert('Profile picture updated!')
-                    } catch (err) {
-                      console.error('Error uploading profile picture:', err)
-                      alert('Failed to upload profile picture. Please try again.')
-                    }
+                  // Refresh profile
+                  await fetchMyGiverProfile()
+                  alert('Profile picture updated!')
+                } catch (err) {
+                  console.error('Error uploading profile picture:', err)
+                  alert('Failed to upload profile picture. Please try again.')
+                }
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                {/* Profile Picture Preview */}
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: myGiverProfile?.profile_picture_url
+                    ? `url(${myGiverProfile.profile_picture_url}) center/cover`
+                    : colors.accentSoft,
+                  border: `2px solid ${colors.accent}`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '2rem',
+                  fontWeight: 600,
+                  color: colors.accent,
+                  fontFamily: 'Georgia, serif'
+                }}>
+                  {!myGiverProfile?.profile_picture_url && (myGiverProfile?.name?.[0] || user.email?.[0] || '?').toUpperCase()}
+                </div>
 
-                    // Reset input
-                    e.target.value = ''
-                  }}
-                />
-                <button
-                  style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
-                  onClick={() => document.getElementById('profile-picture-upload')?.click()}
-                >
-                  {myGiverProfile?.profile_picture_url ? 'Change Photo' : 'Upload Photo'}
-                </button>
-                <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
-                  Max 5MB • JPG, PNG, or GIF
-                </p>
+                {/* Upload Instructions */}
+                <div>
+                  <input
+                    type="file"
+                    id="profile-picture-upload"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+
+                      // Validate file size (5MB max)
+                      if (file.size > 5 * 1024 * 1024) {
+                        alert('Image must be less than 5MB')
+                        return
+                      }
+
+                      // Validate file type
+                      if (!file.type.startsWith('image/')) {
+                        alert('Please select an image file')
+                        return
+                      }
+
+                      try {
+                        // Create unique filename
+                        const fileExt = file.name.split('.').pop()
+                        const fileName = `${user.id}-${Date.now()}.${fileExt}`
+
+                        // Upload to Supabase Storage
+                        const { error: uploadError } = await supabase.storage
+                          .from('profile-pictures')
+                          .upload(fileName, file, {
+                            cacheControl: '3600',
+                            upsert: false
+                          })
+
+                        if (uploadError) throw uploadError
+
+                        // Get public URL
+                        const { data: urlData } = supabase.storage
+                          .from('profile-pictures')
+                          .getPublicUrl(fileName)
+
+                        const publicUrl = urlData.publicUrl
+
+                        // Update profile with new picture URL
+                        const { error: updateError } = await supabase
+                          .from('profiles')
+                          .update({ profile_picture_url: publicUrl })
+                          .eq('id', user.id)
+
+                        if (updateError) throw updateError
+
+                        // Refresh profile
+                        await fetchMyGiverProfile()
+                        alert('Profile picture updated!')
+                      } catch (err) {
+                        console.error('Error uploading profile picture:', err)
+                        alert('Failed to upload profile picture. Please try again.')
+                      }
+
+                      // Reset input
+                      e.target.value = ''
+                    }}
+                  />
+                  <button
+                    style={{ ...btnSecondaryStyle, margin: 0 }}
+                    onClick={() => document.getElementById('profile-picture-upload')?.click()}
+                  >
+                    {myGiverProfile?.profile_picture_url ? 'Change Photo' : 'Upload Photo'}
+                  </button>
+                  <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
+                    or drag and drop
+                  </p>
+                  <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+                    Max 5MB • JPG, PNG, or GIF
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -7041,11 +7106,8 @@ function App() {
                       style={{ marginTop: '3px' }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary, marginBottom: '4px' }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary }}>
                         {mode.label}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
-                        {mode.description}
                       </div>
                     </div>
                   </label>
@@ -7281,11 +7343,8 @@ function App() {
                       style={{ marginTop: '3px' }}
                     />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary, marginBottom: '4px' }}>
+                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary }}>
                         {mode.label}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
-                        {mode.description}
                       </div>
                     </div>
                   </label>
