@@ -49,6 +49,7 @@ export interface Listing {
     linkedin_handle: string | null
     available?: boolean
     total_sessions_completed?: number
+    profile_picture_url?: string | null
   }
 }
 
@@ -153,6 +154,7 @@ interface Giver {
   twitter_handle?: string | null
   instagram_handle?: string | null
   linkedin_handle?: string | null
+  profile_picture_url?: string | null
 }
 
 interface UserProfile {
@@ -2541,7 +2543,8 @@ function App() {
                             instagram_handle,
                             linkedin_handle,
                             available,
-                            total_sessions_completed
+                            total_sessions_completed,
+                            profile_picture_url
                           )
                         `)
                         .eq('is_active', true)
@@ -2645,12 +2648,35 @@ function App() {
 
                     {/* Overlay Info */}
                     <div style={{ ...cardStyle, cursor: 'default', marginBottom: '15px' }}>
-                      <h3 style={{ fontSize: '1.5rem', marginBottom: '8px', fontFamily: 'Georgia, serif' }}>
-                        {giver.name}
-                        {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
-                          <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: colors.accent, fontWeight: 500 }}>✓</span>
-                        )}
-                      </h3>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                        {/* Profile Picture */}
+                        <div style={{
+                          width: '40px',
+                          height: '40px',
+                          borderRadius: '50%',
+                          background: giver.profile_picture_url
+                            ? `url(${giver.profile_picture_url}) center/cover`
+                            : colors.accentSoft,
+                          border: `2px solid ${colors.accent}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                          color: colors.accent,
+                          fontFamily: 'Georgia, serif',
+                          flexShrink: 0
+                        }}>
+                          {!giver.profile_picture_url && giver.name[0].toUpperCase()}
+                        </div>
+
+                        <h3 style={{ fontSize: '1.5rem', margin: 0, fontFamily: 'Georgia, serif' }}>
+                          {giver.name}
+                          {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
+                            <span style={{ marginLeft: '8px', fontSize: '0.9rem', color: colors.accent, fontWeight: 500 }}>✓</span>
+                          )}
+                        </h3>
+                      </div>
                       {currentListing.topic && (
                         <p style={{ fontSize: '1.1rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 500 }}>
                           {currentListing.topic}
@@ -2982,6 +3008,17 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, paddingBottom: '100px' }}>
+          {/* Profile Picture */}
+          {selectedGiver.profile_picture_url && (
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: `url(${selectedGiver.profile_picture_url}) center/cover`,
+              border: `3px solid ${colors.accent}`,
+              margin: '0 auto 20px'
+            }} />
+          )}
           <h1 style={{ fontSize: '2rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '10px' }}>
             {selectedGiver.name}
           </h1>
@@ -3304,6 +3341,17 @@ function App() {
               </div>
             )}
             <div style={{ textAlign: 'center' }}>
+              {/* Profile Picture */}
+              {selectedGiver.profile_picture_url && (
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '50%',
+                  background: `url(${selectedGiver.profile_picture_url}) center/cover`,
+                  border: `3px solid ${colors.accent}`,
+                  margin: '0 auto 15px'
+                }} />
+              )}
               <h1 style={{ fontSize: '2rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{selectedGiver.name}</h1>
               <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>{selectedGiver.tagline}</p>
               {/* Show listing count or fallback to single rate */}
@@ -6090,6 +6138,109 @@ function App() {
             <div style={{ marginBottom: '12px' }}>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
               <p style={{ color: colors.textPrimary }}>{user.email}</p>
+            </div>
+          </div>
+
+          {/* Profile Picture */}
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Picture</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '15px' }}>
+              {/* Profile Picture Preview */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                borderRadius: '50%',
+                background: myGiverProfile?.profile_picture_url
+                  ? `url(${myGiverProfile.profile_picture_url}) center/cover`
+                  : colors.accentSoft,
+                border: `2px solid ${colors.accent}`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '2rem',
+                fontWeight: 600,
+                color: colors.accent,
+                fontFamily: 'Georgia, serif',
+                flexShrink: 0
+              }}>
+                {!myGiverProfile?.profile_picture_url && (myGiverProfile?.name?.[0] || user.email?.[0] || '?').toUpperCase()}
+              </div>
+
+              {/* Upload Button */}
+              <div style={{ flex: 1 }}>
+                <input
+                  type="file"
+                  id="profile-picture-upload"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    // Validate file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert('Image must be less than 5MB')
+                      return
+                    }
+
+                    // Validate file type
+                    if (!file.type.startsWith('image/')) {
+                      alert('Please select an image file')
+                      return
+                    }
+
+                    try {
+                      // Create unique filename
+                      const fileExt = file.name.split('.').pop()
+                      const fileName = `${user.id}-${Date.now()}.${fileExt}`
+
+                      // Upload to Supabase Storage
+                      const { error: uploadError } = await supabase.storage
+                        .from('profile-pictures')
+                        .upload(fileName, file, {
+                          cacheControl: '3600',
+                          upsert: false
+                        })
+
+                      if (uploadError) throw uploadError
+
+                      // Get public URL
+                      const { data: urlData } = supabase.storage
+                        .from('profile-pictures')
+                        .getPublicUrl(fileName)
+
+                      const publicUrl = urlData.publicUrl
+
+                      // Update profile with new picture URL
+                      const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ profile_picture_url: publicUrl })
+                        .eq('id', user.id)
+
+                      if (updateError) throw updateError
+
+                      // Refresh profile
+                      await fetchMyGiverProfile()
+                      alert('Profile picture updated!')
+                    } catch (err) {
+                      console.error('Error uploading profile picture:', err)
+                      alert('Failed to upload profile picture. Please try again.')
+                    }
+
+                    // Reset input
+                    e.target.value = ''
+                  }}
+                />
+                <button
+                  style={{ ...btnSecondaryStyle, margin: 0, width: '100%' }}
+                  onClick={() => document.getElementById('profile-picture-upload')?.click()}
+                >
+                  {myGiverProfile?.profile_picture_url ? 'Change Photo' : 'Upload Photo'}
+                </button>
+                <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
+                  Max 5MB • JPG, PNG, or GIF
+                </p>
+              </div>
             </div>
           </div>
 
