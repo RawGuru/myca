@@ -614,7 +614,7 @@ function App() {
   const [selectedBookingDate, setSelectedBookingDate] = useState<Date | null>(null)
   const [selectedBookingTime, setSelectedBookingTime] = useState<string>('')
   const [selectedListingForBooking, setSelectedListingForBooking] = useState<Listing | null>(null)
-  const [blocksBooked, setBlocksBooked] = useState<1 | 2 | 3>(1) // Multi-block booking (Phase 4)
+  const [blocksBooked] = useState<1>(1) // Single 30-min block only, extensions happen in-session
 
   // Booking/payment state
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null)
@@ -3776,42 +3776,7 @@ function App() {
               </>
             )}
 
-            {/* Block Selection (Multi-block booking) */}
-            <p style={{ color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Select duration
-            </p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
-              {([1, 2, 3] as const).map(blocks => {
-                const activeMinutes = blocks * ACTIVE_MINUTES_PER_BLOCK
-                const isSelected = blocksBooked === blocks
-                return (
-                  <div
-                    key={blocks}
-                    onClick={() => setBlocksBooked(blocks)}
-                    style={{
-                      padding: '15px 10px',
-                      background: isSelected ? colors.accentSoft : colors.bgSecondary,
-                      border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                      borderRadius: '12px',
-                      textAlign: 'center',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <div style={{
-                      fontSize: '1.1rem',
-                      fontWeight: 600,
-                      color: isSelected ? colors.accent : colors.textPrimary,
-                      marginBottom: '4px'
-                    }}>
-                      {activeMinutes} min
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                      {blocks} block{blocks > 1 ? 's' : ''}
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+            {/* Single 30-min block - extensions happen in-session */}
 
             {availableDates.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px 0', color: colors.textSecondary }}>
