@@ -2,6 +2,14 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import type { DailyCall } from '@daily-co/daily-js'
 import type { RealtimeChannel } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
+import {
+  PhaseIndicator,
+  TransmissionPhase,
+  ReflectionPhase,
+  ValidationPhase,
+  EmergencePhase,
+  SessionEndedSummary
+} from './components/session/PhaseComponents'
 
 // ============================================
 // TYPE DEFINITIONS
@@ -47,7 +55,9 @@ interface SessionStateMachineProps {
   dailyCall: DailyCall | null
   userRole: UserRole
   userId: string
+  sessionTimeRemaining: number
   onSessionEnd: () => void
+  onRequestExtension?: () => void
 }
 
 // ============================================
@@ -164,7 +174,9 @@ export function SessionStateMachine({
   dailyCall,
   userRole,
   userId,
-  onSessionEnd: _onSessionEnd // Will be used when session ends (prefixed with _ to avoid unused warning)
+  sessionTimeRemaining,
+  onSessionEnd: _onSessionEnd, // Will be used when session ends (prefixed with _ to avoid unused warning)
+  onRequestExtension
 }: SessionStateMachineProps) {
   const [sessionState, setSessionState] = useState<SessionState | null>(null)
   const [loading, setLoading] = useState(true)
@@ -537,27 +549,50 @@ export function SessionStateMachine({
       )}
 
       {/* Temporary placeholder - phase UI components will go here */}
-      <div style={{ padding: '20px' }}>
-        <h3>Session State Machine</h3>
-        <p>Current Phase: {sessionState.current_phase}</p>
-        <p>User Role: {userRole}</p>
-        <p>Validation Attempts: {sessionState.validation_attempts}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        {/* Phase Indicator - always visible */}
+        <PhaseIndicator currentPhase={sessionState.current_phase} />
 
-        {/* Test buttons */}
-        {userRole === 'receiver' && sessionState.current_phase === 'transmission' && (
-          <button onClick={handleReceiverDoneTransmission}>I'm done, reflect now</button>
-        )}
+        {/* Phase-specific UI */}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {sessionState.current_phase === 'transmission' && (
+            <TransmissionPhase
+              userRole={userRole}
+              onDone={handleReceiverDoneTransmission}
+            />
+          )}
 
-        {userRole === 'giver' && sessionState.current_phase === 'reflection' && (
-          <button onClick={handleGiverDoneReflection}>Done reflecting</button>
-        )}
+          {sessionState.current_phase === 'reflection' && (
+            <ReflectionPhase
+              userRole={userRole}
+              onDone={handleGiverDoneReflection}
+            />
+          )}
 
-        {userRole === 'receiver' && sessionState.current_phase === 'validation' && (
-          <div>
-            <button onClick={() => handleReceiverValidationYes('explore')}>Yes, you understood me</button>
-            <button onClick={handleReceiverValidationNo}>No, something is missing</button>
-          </div>
-        )}
+          {sessionState.current_phase === 'validation' && (
+            <ValidationPhase
+              userRole={userRole}
+              validationAttempts={sessionState.validation_attempts}
+              onYes={handleReceiverValidationYes}
+              onNo={handleReceiverValidationNo}
+            />
+          )}
+
+          {sessionState.current_phase === 'emergence' && (
+            <EmergencePhase
+              userRole={userRole}
+              emergenceVerb={sessionState.emergence_verb || 'explore'}
+              sessionTimeRemaining={sessionTimeRemaining}
+              onRequestExtension={onRequestExtension}
+            />
+          )}
+
+          {sessionState.current_phase === 'ended' && (
+            <SessionEndedSummary
+              endReason={sessionState.end_reason || 'completed'}
+            />
+          )}
+        </div>
       </div>
     </div>
   )

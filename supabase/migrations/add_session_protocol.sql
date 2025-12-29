@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS session_states (
 
   -- Extension tracking (for receiver-initiated extension flow)
   extension_pending BOOLEAN DEFAULT FALSE,
-  extension_id UUID REFERENCES extensions(id),
+  extension_id UUID, -- FK constraint removed to avoid migration order dependency; will be added when extension system is reworked
 
   -- Phase timestamps (for analytics and time tracking)
   started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
