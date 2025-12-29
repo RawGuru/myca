@@ -356,8 +356,7 @@ function ImageUpload({
           justifyContent: 'center',
           fontSize: '2rem',
           fontWeight: 600,
-          color: colors.accent,
-          fontWeight: 600
+          color: colors.accent
         }}>
           {!currentImageUrl && initials}
         </div>
@@ -2538,63 +2537,6 @@ function App() {
     display: 'flex',
     justifyContent: 'space-around',
   }
-
-  const ModeToggle = () => myGiverProfile ? (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      padding: '15px 20px',
-      borderTop: `1px solid ${colors.border}`,
-      background: colors.bgPrimary
-    }}>
-      <div style={{
-        display: 'inline-flex',
-        background: colors.bgSecondary,
-        borderRadius: '3px',
-        padding: '4px',
-        gap: '4px'
-      }}>
-        <button
-          onClick={() => {
-            setUserMode('seeking')
-            setScreen('browse')
-          }}
-          style={{
-            padding: '8px 20px',
-            background: userMode === 'seeking' ? colors.accent : 'transparent',
-            color: userMode === 'seeking' ? colors.bgPrimary : colors.textSecondary,
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: userMode === 'seeking' ? 600 : 400,
-            transition: 'all 0.2s'
-          }}
-        >
-          Find Sessions
-        </button>
-        <button
-          onClick={() => {
-            setUserMode('giving')
-            setScreen('manageListings')
-          }}
-          style={{
-            padding: '8px 20px',
-            background: userMode === 'giving' ? colors.accent : 'transparent',
-            color: userMode === 'giving' ? colors.bgPrimary : colors.textSecondary,
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: userMode === 'giving' ? 600 : 400,
-            transition: 'all 0.2s'
-          }}
-        >
-          Manage Offerings
-        </button>
-      </div>
-    </div>
-  ) : null
 
   const Nav = () => (
     <>
@@ -6901,7 +6843,7 @@ function App() {
                 description: '', // No longer used
                 categories: [], // No longer used - no category filtering
                 listing_video_url: listingFormData.listing_video_url,
-                listing_image_url: null // No longer supported
+                listing_image_url: undefined // No longer supported
               })
 
               if (result.success) {
