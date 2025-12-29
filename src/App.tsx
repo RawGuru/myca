@@ -2721,9 +2721,9 @@ function App() {
               setDiscoveryStep('availability') // Skip category and mode, go straight to availability
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
-            }}>Speak now</button>
+            }}>Find someone</button>
             <button
-              style={btnStyle}
+              style={{ ...btnSecondaryStyle, marginBottom: '20px' }}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
                 // Otherwise, start the onboarding flow
@@ -2734,29 +2734,33 @@ function App() {
                 }
               }}
             >
-              Listen now
+              Become available
             </button>
+            <p style={{
+              fontSize: '0.85rem',
+              color: colors.textSecondary,
+              marginBottom: '20px',
+              lineHeight: 1.7,
+              maxWidth: '340px'
+            }}>
+              You speak. They reflect. You confirm. Then you decide what happens next.
+            </p>
             {!user && (
               <button
                 style={{
-                  ...btnSecondaryStyle,
-                  marginBottom: '20px',
-                  fontSize: '0.95rem'
+                  background: 'none',
+                  border: 'none',
+                  color: colors.accent,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem',
+                  padding: 0
                 }}
                 onClick={() => setNeedsAuth(true)}
               >
                 Sign in
               </button>
             )}
-            <p style={{
-              fontSize: '0.8rem',
-              color: colors.textMuted,
-              marginTop: '80px',
-              lineHeight: 1.6,
-              maxWidth: '340px'
-            }}>
-              Most conversations don't enforce understanding. This one does.
-            </p>
           </div>
           {user && <Nav />}
         </div>
@@ -4229,18 +4233,16 @@ function App() {
           />
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '30px' }}>
-            You have something to offer.
+            Become available
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            Maybe it's expertise you've earned. Maybe it's the ability to stay steady when someone needs to be heard. Maybe it's the gift of honest challenge. Maybe it's all of these at different moments.
-            <br /><br />
-            <span style={{ color: colors.textPrimary, fontWeight: 500 }}>MYCA is where you set the terms.</span>
+            You'll be muted while they speak. Your job is to reflect what you heard until they confirm it's accurate. After that, you can consent to a next step or end the session.
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('giverCode')}>Tell me more</button>
-            <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('welcome')}>Back</button>
+            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create profile</button>
+            <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('giverCode')}>How it works</button>
           </div>
         </div>
       </div>
@@ -4502,7 +4504,7 @@ function App() {
                   <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 4px', borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
+                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 0', borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}`, minWidth: 0 }}>
                         {day}
                       </div>
                     ))}
@@ -6935,6 +6937,75 @@ function App() {
             }}
           >
             {/* Simplified: Giver offers themselves inside protocol, not expertise */}
+
+            {/* Profile Photo */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Profile photo <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+
+                  // Validate file type
+                  if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file')
+                    return
+                  }
+
+                  // Validate file size (max 5MB)
+                  if (file.size > 5 * 1024 * 1024) {
+                    alert('Image must be less than 5MB')
+                    return
+                  }
+
+                  try {
+                    // Upload to Supabase Storage
+                    const fileExt = file.name.split('.').pop()
+                    const fileName = `${user?.id}-profile-${Date.now()}.${fileExt}`
+
+                    const { data: uploadData, error: uploadError } = await supabase.storage
+                      .from('profile-pictures')
+                      .upload(fileName, file, {
+                        cacheControl: '3600',
+                        upsert: false
+                      })
+
+                    if (uploadError) throw uploadError
+
+                    // Get public URL
+                    const { data: urlData } = supabase.storage
+                      .from('profile-pictures')
+                      .getPublicUrl(fileName)
+
+                    const publicUrl = urlData.publicUrl
+
+                    // Update profile
+                    await supabase
+                      .from('profiles')
+                      .update({ profile_picture_url: publicUrl })
+                      .eq('id', user!.id)
+
+                    alert('Profile photo uploaded successfully!')
+                  } catch (err) {
+                    console.error('Error uploading photo:', err)
+                    alert('Failed to upload photo. Please try again.')
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '3px',
+                  color: colors.textPrimary,
+                  fontSize: '0.9rem'
+                }}
+              />
+            </div>
 
             {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
