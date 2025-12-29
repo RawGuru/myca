@@ -6931,13 +6931,13 @@ function App() {
               }
 
               const result = await createListing({
-                topic: listingFormData.topic.trim(),
-                mode: listingFormData.mode,
+                topic: '', // No longer used - giver offers themselves, not topics
+                mode: 'vault' as Mode, // Default mode - actual mode emerges after validation
                 price_cents: listingFormData.price_cents,
-                description: listingFormData.description.trim(),
-                categories: listingFormData.selectedCategories,
+                description: '', // No longer used
+                categories: [], // No longer used - no category filtering
                 listing_video_url: listingFormData.listing_video_url,
-                listing_image_url: listingFormData.listing_image_url
+                listing_image_url: null // No longer supported
               })
 
               if (result.success) {
@@ -6947,116 +6947,9 @@ function App() {
               }
             }}
           >
-            {/* STEP 1 - What type of attention is this? */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                What type of attention is this? <span style={{ color: colors.accent }}>*</span>
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {MODES.map(mode => (
-                  <label
-                    key={mode.value}
-                    style={{
-                      padding: '12px',
-                      background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
-                      border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
-                      borderRadius: '3px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'start',
-                      gap: '10px'
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="mode"
-                      value={mode.value}
-                      checked={listingFormData.mode === mode.value}
-                      onChange={(e) => setListingFormData({ ...listingFormData, mode: e.target.value as Mode })}
-                      style={{ marginTop: '3px' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary }}>
-                        {mode.label}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
+            {/* Simplified: Giver offers themselves inside protocol, not expertise */}
 
-            {/* STEP 2 - What category? */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                What category? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(Select 1-3)</span>
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {CATEGORIES.map(cat => {
-                  const isSelected = listingFormData.selectedCategories.includes(cat.value)
-                  return (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setListingFormData({
-                            ...listingFormData,
-                            selectedCategories: listingFormData.selectedCategories.filter(c => c !== cat.value)
-                          })
-                        } else if (listingFormData.selectedCategories.length < 3) {
-                          setListingFormData({
-                            ...listingFormData,
-                            selectedCategories: [...listingFormData.selectedCategories, cat.value]
-                          })
-                        }
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        background: isSelected ? colors.accentSoft : colors.bgSecondary,
-                        border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                        borderRadius: '3px',
-                        color: isSelected ? colors.accent : colors.textSecondary,
-                        cursor: 'pointer',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      {cat.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* STEP 3 - Specific topics */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific topics <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
-              </label>
-              <textarea
-                value={listingFormData.topic}
-                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="Separate with commas, e.g., judo, divorce recovery, website building"
-                maxLength={200}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '3px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                  minHeight: '80px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical'
-                }}
-              />
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                Stay within your selected category ({listingFormData.topic.length}/200)
-              </p>
-            </div>
-
-            {/* STEP 4 - Price for this offering */}
+            {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
                 Price for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
@@ -7090,45 +6983,13 @@ function App() {
               </p>
             </div>
 
-            {/* STEP 5 - Description */}
+            {/* Video (15-30 sec) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Make your listing irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
+                Short video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(15-30 seconds)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
-              </p>
-              <textarea
-                value={listingFormData.description}
-                onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="Example: Former Google PM. I'll help you debug your product strategy and ask the hard questions your team won't."
-                maxLength={500}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '3px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                  minHeight: '100px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical'
-                }}
-              />
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                {listingFormData.description.length}/500 characters
-              </p>
-            </div>
-
-            {/* STEP 6 - Listing Video (Optional) */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Add a video for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(30 seconds, optional)</span>
-              </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Show seekers exactly what they'll get. Must be 28-32 seconds. Falls back to your profile video if not provided.
+                A brief video showing yourself. Falls back to your profile video if not provided.
               </p>
               <VideoUpload
                 onUpload={async (publicUrl) => {
@@ -7137,34 +6998,12 @@ function App() {
                 currentVideoUrl={listingFormData.listing_video_url || undefined}
                 bucketName="listing-videos"
                 maxSizeMB={100}
-                minDurationSeconds={28}
-                maxDurationSeconds={32}
-                buttonText={listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (30 sec)'}
+                minDurationSeconds={15}
+                maxDurationSeconds={30}
+                buttonText={listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (15-30 sec)'}
               />
               {listingFormData.listing_video_url && (
                 <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
-              )}
-            </div>
-
-            {/* STEP 7 - Listing Photo (Optional) */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Add a photo for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
-              </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                A photo specific to this offering. Falls back to your profile picture if not provided.
-              </p>
-              <ImageUpload
-                onUpload={async (publicUrl) => {
-                  setListingFormData({ ...listingFormData, listing_image_url: publicUrl })
-                }}
-                currentImageUrl={listingFormData.listing_image_url || undefined}
-                bucketName="listing-images"
-                maxSizeMB={5}
-                aspectRatio="square"
-              />
-              {listingFormData.listing_image_url && (
-                <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Photo ready</p>
               )}
             </div>
 
