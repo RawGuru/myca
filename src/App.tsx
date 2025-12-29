@@ -6967,7 +6967,7 @@ function App() {
                     const fileExt = file.name.split('.').pop()
                     const fileName = `${user?.id}-profile-${Date.now()}.${fileExt}`
 
-                    const { data: uploadData, error: uploadError } = await supabase.storage
+                    const { error: uploadError } = await supabase.storage
                       .from('profile-pictures')
                       .upload(fileName, file, {
                         cacheControl: '3600',
