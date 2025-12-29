@@ -1530,7 +1530,7 @@ function App() {
           .single()
 
         if (profile) {
-          setMyGiverProfile(profile as GiverProfile)
+          setMyGiverProfile(profile as Giver)
         }
 
         return true
@@ -3521,10 +3521,6 @@ function App() {
     // Calculate GROSS amount (what receiver pays) - add 15% on top, round up
     const grossAmountCents = Math.ceil(netAmountCents / (1 - 0.15))
     const totalPrice = grossAmountCents / 100 // For display
-
-    const platformFeeCents = grossAmountCents - netAmountCents
-    const giverPayoutCents = netAmountCents
-    const totalAmountCents = grossAmountCents
 
     return (
       <div style={containerStyle}>
