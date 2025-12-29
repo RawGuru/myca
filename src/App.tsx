@@ -124,12 +124,6 @@ const colors = {
   success: '#b89d5f',
 }
 
-const demoGivers = [
-  { id: '1', name: 'Maria Santos', tagline: "I listen without agenda. Sometimes that's all we need.", rate_per_30: 25, qualities_offered: ['Present', 'Warm', 'Patient'] },
-  { id: '2', name: 'James Chen', tagline: 'Former monk. I hold space for whatever needs to surface.', rate_per_30: 40, qualities_offered: ['Calming', 'Present', 'Insightful'] },
-  { id: '3', name: 'Aisha Johnson', tagline: "Grandmother energy. I see you, and you're doing better than you think.", rate_per_30: 20, qualities_offered: ['Warm', 'Honest', 'Encouraging'] },
-]
-
 // Calendar-based availability: specific date + time
 interface AvailabilitySlot {
   id: string
@@ -608,7 +602,7 @@ function App() {
   const [needsAuth, setNeedsAuth] = useState(false)
   const [returnToScreen, setReturnToScreen] = useState('')
   const [selectedGiver, setSelectedGiver] = useState<Giver | null>(null)
-  const [givers, setGivers] = useState<Giver[]>(demoGivers)
+  const [givers, setGivers] = useState<Giver[]>([])
   const [selectedBookingDate, setSelectedBookingDate] = useState<Date | null>(null)
   const [selectedBookingTime, setSelectedBookingTime] = useState<string>('')
   const [selectedListingForBooking, setSelectedListingForBooking] = useState<Listing | null>(null)
@@ -1384,10 +1378,10 @@ function App() {
             listings: listingsWithCategories.filter(l => l.user_id === giver.id)
           }))
 
-          setGivers([...giversWithListings, ...demoGivers])
+          setGivers(giversWithListings)
         } else {
           // No listings yet, just use profiles
-          setGivers([...profilesData.map(g => ({ ...g, listings: [] })), ...demoGivers])
+          setGivers(profilesData.map(g => ({ ...g, listings: [] })))
         }
       }
     } catch (err) {
