@@ -1066,6 +1066,7 @@ function App() {
           booking_id: currentBooking.id,
           type: 'booking',
           seeker_email: user.email,
+          giver_id: currentBooking.giver_id,
         })
       })
 
@@ -1173,6 +1174,7 @@ function App() {
           booking_id: activeSession.id,
           type: 'extension',
           seeker_email: user.email,
+          giver_id: activeSession.giver_id,
         })
       })
 
@@ -1444,6 +1446,26 @@ function App() {
     }
   }, [])
 
+  // Check if returning from Stripe Connect onboarding
+  useEffect(() => {
+    const checkOnboardingReturn = async () => {
+      const path = window.location.pathname
+      if (path.includes('payout-setup-complete') && user) {
+        // Check Connect status
+        const complete = await checkStripeConnectStatus()
+        if (complete) {
+          setScreen('payoutSetupComplete')
+        } else {
+          // Onboarding not complete, redirect back to setup
+          setScreen('payoutSetup')
+        }
+        // Clean up URL
+        window.history.replaceState({}, '', '/')
+      }
+    }
+    checkOnboardingReturn()
+  }, [user])
+
   // Start Stripe Connect onboarding
   const startStripeConnect = async () => {
     if (!user || !myGiverProfile) return
@@ -1452,42 +1474,62 @@ function App() {
     setStripeConnectError('')
 
     try {
-      // In production, this would:
-      // 1. Call your backend to create a Stripe Connect account
-      // 2. Get an account link URL
-      // 3. Redirect user to Stripe for onboarding
-      // 4. Handle the return URL to verify completion
-
-      // For demo, we simulate the process
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // Generate a mock Stripe account ID
-      const mockAccountId = `acct_demo_${Date.now()}`
-
-      // Update the profile with Stripe account info
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          stripe_account_id: mockAccountId,
-          stripe_onboarding_complete: true,
-        })
-        .eq('id', user.id)
+      // Call edge function to create Stripe Connect account
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: {
+          email: user.email,
+          user_id: user.id,
+          refresh_url: `${window.location.origin}/giver-onboarding`,
+          return_url: `${window.location.origin}/payout-setup-complete`,
+        },
+      })
 
       if (error) throw error
 
-      // Update local state
-      setMyGiverProfile({
-        ...myGiverProfile,
-        stripe_account_id: mockAccountId,
-        stripe_onboarding_complete: true,
-      })
+      if (!data?.onboarding_url) {
+        throw new Error('No onboarding URL received')
+      }
 
-      // Go to confirmation
-      setScreen('payoutSetupComplete')
+      // Redirect to Stripe onboarding
+      window.location.href = data.onboarding_url
     } catch (err) {
       setStripeConnectError(err instanceof Error ? err.message : 'Failed to set up payouts')
-    } finally {
       setStripeConnectLoading(false)
+    }
+  }
+
+  // Check Stripe Connect status (called when returning from onboarding)
+  const checkStripeConnectStatus = async () => {
+    if (!user) return
+
+    try {
+      const { data, error } = await supabase.functions.invoke('check-connect-status', {
+        body: {
+          user_id: user.id,
+        },
+      })
+
+      if (error) throw error
+
+      if (data?.onboarding_complete) {
+        // Refresh profile to get updated status
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+
+        if (profile) {
+          setMyGiverProfile(profile as GiverProfile)
+        }
+
+        return true
+      }
+
+      return false
+    } catch (err) {
+      console.error('Error checking Connect status:', err)
+      return false
     }
   }
 

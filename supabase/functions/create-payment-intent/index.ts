@@ -1,7 +1,9 @@
 // Supabase Edge Function: Create Stripe PaymentIntent
 // Handles payment intents for both bookings and session extensions
+// Routes 85% to giver via Stripe Connect, keeps 15% as platform fee
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
@@ -14,6 +16,7 @@ interface PaymentRequest {
   booking_id: string
   type: 'booking' | 'extension'
   seeker_email?: string
+  giver_id?: string // User ID of the giver to get their Stripe account
 }
 
 serve(async (req) => {
@@ -29,7 +32,7 @@ serve(async (req) => {
   }
 
   try {
-    const { amount_cents, booking_id, type, seeker_email }: PaymentRequest = await req.json()
+    const { amount_cents, booking_id, type, seeker_email, giver_id }: PaymentRequest = await req.json()
 
     // Validate request
     if (!amount_cents || !booking_id || !type) {
@@ -52,13 +55,36 @@ serve(async (req) => {
       )
     }
 
-    // Create PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Get giver's Stripe Connect account ID if giver_id provided
+    let stripeAccountId: string | null = null
+    if (giver_id) {
+      const supabaseClient = createClient(
+        Deno.env.get('SUPABASE_URL') ?? '',
+        Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+      )
+
+      const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('stripe_account_id, stripe_onboarding_complete')
+        .eq('id', giver_id)
+        .single()
+
+      if (profile?.stripe_onboarding_complete && profile?.stripe_account_id) {
+        stripeAccountId = profile.stripe_account_id
+      }
+    }
+
+    // Calculate platform fee (15%)
+    const platformFeeAmount = Math.round(amount_cents * 0.15)
+
+    // Create PaymentIntent with Connect transfer if giver has account
+    const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
       amount: amount_cents,
       currency: 'usd',
       metadata: {
         booking_id,
         type,
+        giver_id: giver_id || '',
       },
       description: type === 'booking'
         ? `MYCA Session Booking - ${booking_id}`
@@ -67,7 +93,17 @@ serve(async (req) => {
       automatic_payment_methods: {
         enabled: true,
       },
-    })
+    }
+
+    // Add Connect transfer if giver has completed onboarding
+    if (stripeAccountId) {
+      paymentIntentParams.application_fee_amount = platformFeeAmount
+      paymentIntentParams.transfer_data = {
+        destination: stripeAccountId,
+      }
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create(paymentIntentParams)
 
     return new Response(
       JSON.stringify({
