@@ -605,7 +605,6 @@ function VideoUpload({
 function App() {
   const { user, loading, signOut } = useAuth()
   const [screen, setScreen] = useState('welcome')
-  const [userMode, setUserMode] = useState<'seeking' | 'giving'>('seeking') // Toggle between seeking and giving modes
   const [needsAuth, setNeedsAuth] = useState(false)
   const [returnToScreen, setReturnToScreen] = useState('')
   const [selectedGiver, setSelectedGiver] = useState<Giver | null>(null)
