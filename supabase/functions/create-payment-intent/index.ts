@@ -74,17 +74,23 @@ serve(async (req) => {
       }
     }
 
-    // Calculate platform fee (15%)
-    const platformFeeAmount = Math.round(amount_cents * 0.15)
+    // PRICING MODEL: Platform fee (15%) is ADDED ON TOP of giver's net price
+    // amount_cents = giver's NET price (what they receive)
+    // gross_amount = amount charged to receiver (net + platform fee)
+    const netAmount = amount_cents
+    const grossAmount = Math.ceil(netAmount / (1 - 0.15)) // Add 15% on top, round up
+    const platformFeeAmount = grossAmount - netAmount
 
     // Create PaymentIntent with Connect transfer if giver has account
     const paymentIntentParams: Stripe.PaymentIntentCreateParams = {
-      amount: amount_cents,
+      amount: grossAmount, // Charge receiver the GROSS amount
       currency: 'usd',
       metadata: {
         booking_id,
         type,
         giver_id: giver_id || '',
+        net_amount: netAmount.toString(), // What giver receives
+        platform_fee: platformFeeAmount.toString(),
       },
       description: type === 'booking'
         ? `MYCA Session Booking - ${booking_id}`

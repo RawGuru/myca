@@ -988,16 +988,25 @@ function App() {
     try {
       const scheduledTime = getScheduledTime(selectedBookingDate, selectedBookingTime)
 
-      // Multi-listing price calculation (Phase 4)
+      // PRICING MODEL: Platform fee (15%) is ADDED ON TOP of giver's net price
+      // Giver sets NET price (what they receive)
+      // Receiver pays GROSS price (net + 15% platform fee, rounded up)
       const basePrice = selectedListingForBooking
         ? selectedListingForBooking.price_cents / 100
         : (selectedGiver.rate_per_30 ?? 0)
-      const totalPrice = basePrice * blocksBooked
       const durationMinutes = blocksBooked * TOTAL_BLOCK_MINUTES
-      const amountCents = Math.round(basePrice * 100)
-      const totalAmountCents = Math.round(totalPrice * 100)
-      const platformFeeCents = Math.floor(totalAmountCents * 0.15)
-      const giverPayoutCents = totalAmountCents - platformFeeCents
+      const amountCents = Math.round(basePrice * 100) // Per-block net amount
+
+      // Calculate NET amount (what giver receives)
+      const netAmountCents = amountCents * blocksBooked
+
+      // Calculate GROSS amount (what receiver pays) - add 15% on top, round up
+      const grossAmountCents = Math.ceil(netAmountCents / (1 - 0.15))
+
+      // Platform fee is the difference
+      const platformFeeCents = grossAmountCents - netAmountCents
+      const giverPayoutCents = netAmountCents
+      const totalAmountCents = grossAmountCents // For backwards compatibility
 
       // Create booking record with multi-listing data
       const { data, error } = await supabase
@@ -1151,10 +1160,11 @@ function App() {
     if (!activeSession || !user) return
 
     try {
-      // Calculate extension amount (use booking's amount_cents as listing price)
-      const extensionPriceCents = activeSession.amount_cents || 0
-      const platformFeeCents = Math.floor(extensionPriceCents * 0.15)
-      const totalAmountCents = extensionPriceCents + platformFeeCents
+      // PRICING MODEL: Extension uses same NET price as original booking
+      const netAmountCents = activeSession.amount_cents || 0
+      const grossAmountCents = Math.ceil(netAmountCents / (1 - 0.15))
+      const platformFeeCents = grossAmountCents - netAmountCents
+      const totalAmountCents = grossAmountCents
 
       console.log(`Processing extension payment: $${(totalAmountCents / 100).toFixed(2)}`)
 
@@ -3499,15 +3509,22 @@ function App() {
     const selectedDateKey = selectedBookingDate?.toISOString().split('T')[0]
     const selectedDateSlots = selectedDateKey ? (slotsByDate[selectedDateKey] || []) : []
 
-    // Multi-listing price calculation (Phase 4)
+    // PRICING MODEL: Platform fee (15%) is ADDED ON TOP of giver's net price
     const basePrice = selectedListingForBooking
       ? selectedListingForBooking.price_cents / 100
       : (selectedGiver.rate_per_30 ?? 0)
-    const totalPrice = basePrice * blocksBooked
     const activeMinutes = blocksBooked * ACTIVE_MINUTES_PER_BLOCK
-    const totalAmountCents = Math.round(totalPrice * 100)
-    const platformFeeCents = Math.floor(totalAmountCents * 0.15)
-    const giverPayoutCents = totalAmountCents - platformFeeCents
+
+    // Calculate NET amount (what giver receives)
+    const netAmountCents = Math.round(basePrice * 100) * blocksBooked
+
+    // Calculate GROSS amount (what receiver pays) - add 15% on top, round up
+    const grossAmountCents = Math.ceil(netAmountCents / (1 - 0.15))
+    const totalPrice = grossAmountCents / 100 // For display
+
+    const platformFeeCents = grossAmountCents - netAmountCents
+    const giverPayoutCents = netAmountCents
+    const totalAmountCents = grossAmountCents
 
     return (
       <div style={containerStyle}>
@@ -3861,14 +3878,6 @@ function App() {
                     <span style={{ color: colors.textSecondary }}>Duration</span>
                     <span style={{ fontWeight: 600 }}>{activeMinutes} minutes active</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <span style={{ color: colors.textSecondary }}>Price per block</span>
-                    <span>${basePrice.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <span style={{ color: colors.textSecondary }}>Blocks</span>
-                    <span>× {blocksBooked}</span>
-                  </div>
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -3876,12 +3885,9 @@ function App() {
                     borderTop: `1px solid ${colors.border}`,
                     marginTop: '8px'
                   }}>
-                    <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Total</span>
+                    <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Session price</span>
                     <span style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${totalPrice.toFixed(2)}</span>
                   </div>
-                  <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '8px', textAlign: 'right' }}>
-                    Giver receives ${(giverPayoutCents / 100).toFixed(2)} (85%)
-                  </p>
                 </div>
                 <button
                   style={{
@@ -3913,12 +3919,8 @@ function App() {
   }
 
   if (screen === 'payment' && currentBooking && selectedGiver && selectedBookingDate) {
-    // Calculate price from listing or fallback to giver rate
-    const sessionPrice = selectedListingForBooking
-      ? selectedListingForBooking.price_cents / 100
-      : (selectedGiver.rate_per_30 ?? 0)
-    const platformFee = Math.round(sessionPrice * 0.15)
-    const totalPayment = sessionPrice + platformFee
+    // PRICING MODEL: Use the total amount from booking (already includes platform fee)
+    const totalPayment = currentBooking.total_amount_cents / 100
 
     const inputStyle: React.CSSProperties = {
       width: '100%',
@@ -3975,17 +3977,9 @@ function App() {
               </div>
             </div>
             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <span style={{ color: colors.textSecondary }}>30-minute session</span>
-                <span>${sessionPrice}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.85rem' }}>
-                <span style={{ color: colors.textMuted }}>Platform fee</span>
-                <span style={{ color: colors.textMuted }}>${platformFee}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600, paddingTop: '8px', borderTop: `1px solid ${colors.border}` }}>
-                <span>Total</span>
-                <span>${totalPayment}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                <span>Session price</span>
+                <span style={{ fontSize: '1.2rem', color: colors.accent }}>${totalPayment.toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -6899,7 +6893,7 @@ function App() {
             {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
+                You will receive <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -6926,7 +6920,7 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                You receive: ${((listingFormData.price_cents / 100) * 0.85).toFixed(2)} (85%)
+                Platform fee is added to the session price
               </p>
             </div>
 
@@ -7128,7 +7122,7 @@ function App() {
             {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Price for this offering <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
+                You will receive <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
               </label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -7155,7 +7149,7 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                You receive: ${((listingFormData.price_cents / 100) * 0.85).toFixed(2)} (85%)
+                Platform fee is added to the session price
               </p>
             </div>
 
