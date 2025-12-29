@@ -2,16 +2,16 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const colors = {
-  bgPrimary: '#0a0a0a',
-  bgSecondary: '#141414',
-  bgCard: '#1a1a1a',
-  textPrimary: '#f5f5f5',
-  textSecondary: '#a0a0a0',
-  textMuted: '#666',
-  accent: '#c9a66b',
-  accentSoft: 'rgba(201, 166, 107, 0.15)',
-  border: '#2a2a2a',
-  success: '#4a9c6d',
+  bgPrimary: '#000000',
+  bgSecondary: '#0a0a0a',
+  bgCard: '#0f0f0f',
+  textPrimary: '#ffffff',
+  textSecondary: '#999999',
+  textMuted: '#666666',
+  accent: '#b89d5f',
+  accentSoft: 'rgba(184, 157, 95, 0.1)',
+  border: '#1a1a1a',
+  success: '#b89d5f',
   error: '#d9534f',
 }
 
@@ -332,7 +332,7 @@ export function ReceiverInitiatedExtension({
         <div style={{
           background: colors.bgCard,
           border: `2px solid ${colors.accent}`,
-          borderRadius: '16px',
+          borderRadius: '3px',
           padding: '40px',
           maxWidth: '500px',
           textAlign: 'center'
@@ -341,7 +341,7 @@ export function ReceiverInitiatedExtension({
 
           <h2 style={{
             fontSize: '1.5rem',
-            fontFamily: 'Georgia, serif',
+            fontWeight: 600,
             marginBottom: '15px',
             color: colors.textPrimary
           }}>
@@ -376,7 +376,7 @@ export function ReceiverInitiatedExtension({
                 background: colors.success,
                 color: '#fff',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '3px',
                 fontSize: '1rem',
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
@@ -394,7 +394,7 @@ export function ReceiverInitiatedExtension({
                 background: 'transparent',
                 color: colors.textPrimary,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '10px',
+                borderRadius: '3px',
                 fontSize: '1rem',
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
@@ -428,7 +428,7 @@ export function ReceiverInitiatedExtension({
         <div style={{
           background: colors.bgCard,
           border: `2px solid ${colors.accent}`,
-          borderRadius: '16px',
+          borderRadius: '3px',
           padding: '40px',
           maxWidth: '500px',
           textAlign: 'center'
@@ -437,7 +437,7 @@ export function ReceiverInitiatedExtension({
 
           <h2 style={{
             fontSize: '1.5rem',
-            fontFamily: 'Georgia, serif',
+            fontWeight: 600,
             marginBottom: '15px',
             color: colors.textPrimary
           }}>
@@ -481,7 +481,7 @@ export function ReceiverInitiatedExtension({
                 background: colors.success,
                 color: '#fff',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '3px',
                 fontSize: '1rem',
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
@@ -499,7 +499,7 @@ export function ReceiverInitiatedExtension({
                 background: 'rgba(201, 107, 107, 0.9)',
                 color: '#fff',
                 border: 'none',
-                borderRadius: '10px',
+                borderRadius: '3px',
                 fontSize: '1rem',
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',

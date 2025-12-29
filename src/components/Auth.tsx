@@ -4,12 +4,12 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
 const colors = {
-  bgPrimary: '#0a0a0a',
-  bgSecondary: '#141414',
-  textPrimary: '#f5f5f5',
-  textSecondary: '#a0a0a0',
-  accent: '#c9a66b',
-  border: '#2a2a2a',
+  bgPrimary: '#000000',
+  bgSecondary: '#0a0a0a',
+  textPrimary: '#ffffff',
+  textSecondary: '#999999',
+  accent: '#b89d5f',
+  border: '#1a1a1a',
 }
 
 interface AuthProps {
@@ -64,7 +64,7 @@ export default function Auth({ onBack }: AuthProps) {
     <div style={{
       background: colors.bgSecondary,
       padding: '30px',
-      borderRadius: '20px',
+      borderRadius: '3px',
       border: `1px solid ${colors.border}`,
       position: 'relative',
     }}>
@@ -76,7 +76,7 @@ export default function Auth({ onBack }: AuthProps) {
           left: '15px',
           width: '36px',
           height: '36px',
-          borderRadius: '50%',
+          borderRadius: '3px',
           background: colors.bgPrimary,
           border: `1px solid ${colors.border}`,
           color: colors.textPrimary,
@@ -90,8 +90,8 @@ export default function Auth({ onBack }: AuthProps) {
         ←
       </button>
 
-      <h2 style={{ marginBottom: '25px', marginTop: '10px', fontFamily: 'Georgia, serif', fontSize: '2rem', textAlign: 'center' }}>
-        {mode === 'signin' ? 'Sign In' : 'Sign Up'}
+      <h2 style={{ marginBottom: '30px', marginTop: '10px', fontWeight: 600, fontSize: '1.5rem', textAlign: 'center' }}>
+        {mode === 'signin' ? 'Sign in' : 'Sign up'}
       </h2>
 
       <div style={{ marginBottom: '25px' }}>
@@ -103,7 +103,7 @@ export default function Auth({ onBack }: AuthProps) {
             background: '#fff',
             color: '#000',
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '3px',
             fontSize: '1rem',
             cursor: 'pointer',
             fontWeight: 500,
@@ -137,7 +137,7 @@ export default function Auth({ onBack }: AuthProps) {
             marginBottom: '12px',
             background: colors.bgPrimary,
             border: `1px solid ${colors.border}`,
-            borderRadius: '12px',
+            borderRadius: '3px',
             color: colors.textPrimary,
             fontSize: '1rem',
             boxSizing: 'border-box',
@@ -158,7 +158,7 @@ export default function Auth({ onBack }: AuthProps) {
               paddingRight: '50px',
               background: colors.bgPrimary,
               border: `1px solid ${colors.border}`,
-              borderRadius: '12px',
+              borderRadius: '3px',
               color: colors.textPrimary,
               fontSize: '1rem',
               boxSizing: 'border-box',
@@ -197,7 +197,7 @@ export default function Auth({ onBack }: AuthProps) {
               marginBottom: '20px',
               background: colors.bgPrimary,
               border: `1px solid ${colors.border}`,
-              borderRadius: '12px',
+              borderRadius: '3px',
               color: colors.textPrimary,
               fontSize: '1rem',
               boxSizing: 'border-box',
@@ -214,7 +214,7 @@ export default function Auth({ onBack }: AuthProps) {
             background: colors.accent,
             color: colors.bgPrimary,
             border: 'none',
-            borderRadius: '12px',
+            borderRadius: '3px',
             fontSize: '1rem',
             fontWeight: 600,
             cursor: loading ? 'not-allowed' : 'pointer',

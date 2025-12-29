@@ -112,16 +112,16 @@ interface Booking {
 }
 
 const colors = {
-  bgPrimary: '#0a0a0a',
-  bgSecondary: '#141414',
-  bgCard: '#1a1a1a',
-  textPrimary: '#f5f5f5',
-  textSecondary: '#a0a0a0',
-  textMuted: '#666',
-  accent: '#c9a66b',
-  accentSoft: 'rgba(201, 166, 107, 0.15)',
-  border: '#2a2a2a',
-  success: '#4a9c6d',
+  bgPrimary: '#000000',
+  bgSecondary: '#0a0a0a',
+  bgCard: '#0f0f0f',
+  textPrimary: '#ffffff',
+  textSecondary: '#999999',
+  textMuted: '#666666',
+  accent: '#b89d5f',
+  accentSoft: 'rgba(184, 157, 95, 0.1)',
+  border: '#1a1a1a',
+  success: '#b89d5f',
 }
 
 const demoGivers = [
@@ -233,10 +233,10 @@ function ImageUpload({
 
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
-    borderRadius: '8px',
+    borderRadius: '3px',
     border: `1px solid ${colors.border}`,
     fontSize: '1rem',
-    fontFamily: 'Georgia, serif',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
     background: 'transparent',
@@ -302,8 +302,8 @@ function ImageUpload({
   // Preview dimensions based on aspect ratio
   const previewStyle = {
     circle: { width: '80px', height: '80px', borderRadius: '50%' },
-    square: { width: '120px', height: '120px', borderRadius: '8px' },
-    wide: { width: '200px', height: '112px', borderRadius: '8px' }
+    square: { width: '120px', height: '120px', borderRadius: '3px' },
+    wide: { width: '200px', height: '112px', borderRadius: '3px' }
   }[aspectRatio]
 
   return (
@@ -357,7 +357,7 @@ function ImageUpload({
           fontSize: '2rem',
           fontWeight: 600,
           color: colors.accent,
-          fontFamily: 'Georgia, serif'
+          fontWeight: 600
         }}>
           {!currentImageUrl && initials}
         </div>
@@ -425,10 +425,10 @@ function VideoUpload({
 
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
-    borderRadius: '8px',
+    borderRadius: '3px',
     border: `1px solid ${colors.border}`,
     fontSize: '1rem',
-    fontFamily: 'Georgia, serif',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
     background: 'transparent',
@@ -559,7 +559,7 @@ function VideoUpload({
             style={{
               width: '100%',
               maxWidth: '300px',
-              borderRadius: '8px',
+              borderRadius: '3px',
               border: `2px solid ${colors.accent}`
             }}
           />
@@ -1981,7 +1981,7 @@ function App() {
           width: '100%',
           height: '100%',
           border: '0',
-          borderRadius: '16px',
+          borderRadius: '3px',
         },
         showLeaveButton: false,
         showFullscreenButton: true,
@@ -2481,7 +2481,7 @@ function App() {
   }
 
   const containerStyle: React.CSSProperties = {
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif",
     background: colors.bgPrimary,
     color: colors.textPrimary,
     minHeight: '100vh',
@@ -2496,16 +2496,17 @@ function App() {
   }
 
   const btnStyle: React.CSSProperties = {
-    padding: '18px 30px',
-    borderRadius: '12px',
-    fontSize: '1rem',
+    padding: '16px 24px',
+    borderRadius: '3px',
+    fontSize: '0.95rem',
     fontWeight: 500,
     cursor: 'pointer',
     border: 'none',
     width: '100%',
     background: colors.accent,
-    color: colors.bgPrimary,
-    marginBottom: '15px',
+    color: '#000000',
+    marginBottom: '20px',
+    letterSpacing: '0.01em',
   }
 
   const btnSecondaryStyle: React.CSSProperties = {
@@ -2518,9 +2519,9 @@ function App() {
   const cardStyle: React.CSSProperties = {
     background: colors.bgCard,
     border: `1px solid ${colors.border}`,
-    borderRadius: '20px',
-    padding: '20px',
-    marginBottom: '20px',
+    borderRadius: '3px',
+    padding: '24px',
+    marginBottom: '24px',
     cursor: 'pointer',
   }
 
@@ -2549,7 +2550,7 @@ function App() {
       <div style={{
         display: 'inline-flex',
         background: colors.bgSecondary,
-        borderRadius: '8px',
+        borderRadius: '3px',
         padding: '4px',
         gap: '4px'
       }}>
@@ -2637,7 +2638,7 @@ function App() {
         padding: '8px 16px',
         background: colors.bgSecondary,
         border: `1px solid ${colors.border}`,
-        borderRadius: '8px',
+        borderRadius: '3px',
         color: colors.textPrimary,
         cursor: 'pointer',
         fontSize: '0.9rem',
@@ -2664,28 +2665,25 @@ function App() {
             }}
           />
 
-          <h1 style={{ fontSize: '1.8rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '340px', lineHeight: 1.3, marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
-            Undivided attention. Focused entirely on you.
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '380px', lineHeight: 1.5, marginBottom: '40px', letterSpacing: '-0.01em' }}>
+            One person speaks.<br />
+            One person listens.<br />
+            Nothing moves forward until you're understood.
           </h1>
-          <p style={{ fontSize: '0.95rem', color: colors.textMuted, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
-            One person speaks. One person listens. Understanding comes first.
+          <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
+            A private, time-bound video conversation where reflection is required.
           </p>
-          <div style={{ width: '100%', maxWidth: '320px' }}>
+          <div style={{ width: '100%', maxWidth: '340px' }}>
             <button style={btnStyle} onClick={() => {
               setDiscoveryStep('category') // Skip mode selection, go straight to category
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
-            }}>Book Private Video</button>
+            }}>Speak now</button>
             <button
               style={{
-                background: 'transparent',
-                border: 'none',
-                color: colors.textMuted,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                marginTop: '15px',
-                textDecoration: 'underline',
-                width: '100%'
+                ...btnSecondaryStyle,
+                marginBottom: '20px',
+                fontSize: '0.95rem'
               }}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
@@ -2697,21 +2695,29 @@ function App() {
                 }
               }}
             >
-              Offer your time
+              Listen now
             </button>
             {!user && (
-              <button 
-                style={{ 
-                  ...btnSecondaryStyle, 
-                  marginBottom: 0,
-                  marginTop: '10px',
-                  fontSize: '0.9rem'
-                }} 
+              <button
+                style={{
+                  ...btnSecondaryStyle,
+                  marginBottom: '20px',
+                  fontSize: '0.95rem'
+                }}
                 onClick={() => setNeedsAuth(true)}
               >
-                Sign In
+                Sign in
               </button>
             )}
+            <p style={{
+              fontSize: '0.8rem',
+              color: colors.textMuted,
+              marginTop: '80px',
+              lineHeight: 1.6,
+              maxWidth: '340px'
+            }}>
+              Most conversations don't enforce understanding. This one does.
+            </p>
           </div>
           {user && <Nav />}
         </div>
@@ -2737,7 +2743,7 @@ function App() {
                   setDiscoveryStep('availability')
                 }
               }}
-              style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}
+              style={{ width: '40px', height: '40px', borderRadius: '3px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}
             >
               ←
             </button>
@@ -2748,7 +2754,7 @@ function App() {
           {/* STEP 1: Category (mode selection removed - modes only appear after validation) */}
           {discoveryStep === 'category' && (
             <div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+              <h3 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '24px' }}>
                 What do you want to talk about?
               </h3>
 
@@ -2798,7 +2804,7 @@ function App() {
           {/* STEP 3: Availability */}
           {discoveryStep === 'availability' && (
             <div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>
                 When do you need someone?
               </h3>
 
@@ -2945,7 +2951,7 @@ function App() {
                       <div
                         style={{
                           position: 'relative',
-                          borderRadius: '16px',
+                          borderRadius: '3px',
                           overflow: 'hidden',
                           background: '#000',
                           cursor: 'pointer',
@@ -2995,14 +3001,14 @@ function App() {
                               justifyContent: 'center',
                               fontSize: '1rem',
                               fontWeight: 600,
-                              fontFamily: 'Georgia, serif',
+                              fontWeight: 600,
                               flexShrink: 0
                             }}>
                               {!(currentListing.listing_image_url || giver.profile_picture_url) && giver.name[0].toUpperCase()}
                             </div>
 
                             <div style={{ flex: 1 }}>
-                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontFamily: 'Georgia, serif', fontWeight: 600 }}>
+                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 600, fontWeight: 600 }}>
                                 {giver.name}
                                 {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
                                   <span style={{ marginLeft: '8px', fontSize: '0.9rem' }}>✓</span>
@@ -3026,7 +3032,7 @@ function App() {
                           right: '20px',
                           padding: '8px 12px',
                           background: 'rgba(0,0,0,0.6)',
-                          borderRadius: '20px',
+                          borderRadius: '3px',
                           fontSize: '0.85rem',
                           color: '#fff'
                         }}>
@@ -3041,7 +3047,7 @@ function App() {
                           setScreen('publicGiverProfile')
                         }}
                       >
-                        <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{giver.name}</h3>
+                        <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', fontWeight: 600 }}>{giver.name}</h3>
                         <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
                           {currentListing.description || currentListing.topic || giver.bio || 'Available now'}
                         </p>
@@ -3124,7 +3130,7 @@ function App() {
               onClick={() => setShowSavedOnly(false)}
               style={{
                 padding: '8px 16px',
-                borderRadius: '20px',
+                borderRadius: '3px',
                 border: `1px solid ${!showSavedOnly ? colors.accent : colors.border}`,
                 background: !showSavedOnly ? colors.accentSoft : 'transparent',
                 color: !showSavedOnly ? colors.accent : colors.textSecondary,
@@ -3138,7 +3144,7 @@ function App() {
               onClick={() => setShowSavedOnly(true)}
               style={{
                 padding: '8px 16px',
-                borderRadius: '20px',
+                borderRadius: '3px',
                 border: `1px solid ${showSavedOnly ? colors.accent : colors.border}`,
                 background: showSavedOnly ? colors.accentSoft : 'transparent',
                 color: showSavedOnly ? colors.accent : colors.textSecondary,
@@ -3213,7 +3219,7 @@ function App() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    fontFamily: 'Georgia, serif',
+                    fontWeight: 600,
                     fontSize: '1.5rem',
                     color: colors.accent,
                     flexShrink: 0
@@ -3222,7 +3228,7 @@ function App() {
                   </div>
                 )}
                 <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: '5px', fontFamily: 'Georgia, serif' }}>
+                  <h3 style={{ fontSize: '1.2rem', marginBottom: '5px', fontWeight: 600 }}>
                     {giver.name}
                     {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
                       <span style={{
@@ -3243,7 +3249,7 @@ function App() {
                   <span key={q} style={{
                     padding: '6px 12px',
                     background: i < 2 ? colors.accentSoft : colors.bgSecondary,
-                    borderRadius: '20px',
+                    borderRadius: '3px',
                     fontSize: '0.8rem',
                     color: i < 2 ? colors.accent : colors.textSecondary,
                     marginRight: '8px',
@@ -3349,7 +3355,7 @@ function App() {
               margin: '0 auto 20px'
             }} />
           )}
-          <h1 style={{ fontSize: '2rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '10px' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>
             {selectedGiver.name}
           </h1>
           {selectedGiver.tagline && (
@@ -3368,7 +3374,7 @@ function App() {
                 style={{
                   width: '100%',
                   maxHeight: '400px',
-                  borderRadius: '16px',
+                  borderRadius: '3px',
                   background: '#000'
                 }}
               />
@@ -3390,7 +3396,7 @@ function App() {
           {/* Listings Menu (Multi-listing architecture) */}
           {selectedGiver.listings && selectedGiver.listings.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Offerings</h3>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
               {selectedGiver.listings.map(listing => {
                 const modeInfo = MODES.find(m => m.value === listing.mode)
                 return (
@@ -3405,7 +3411,7 @@ function App() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                       <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
                           {listing.topic}
                         </h4>
                         <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
@@ -3492,7 +3498,7 @@ function App() {
           {/* Available slots */}
           {selectedGiverSlots.length > 0 ? (
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>
                 Available Times
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
@@ -3502,7 +3508,7 @@ function App() {
                     style={{
                       padding: '8px 12px',
                       background: colors.bgSecondary,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       fontSize: '0.85rem',
                       color: colors.textPrimary
                     }}
@@ -3547,7 +3553,7 @@ function App() {
                 padding: '10px 20px',
                 background: colors.bgSecondary,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '8px',
+                borderRadius: '3px',
                 color: colors.textPrimary,
                 cursor: 'pointer'
               }}
@@ -3612,7 +3618,7 @@ function App() {
               <div style={{
                 width: '100%',
                 aspectRatio: '16/9',
-                borderRadius: '16px',
+                borderRadius: '3px',
                 overflow: 'hidden',
                 marginBottom: '20px'
               }}>
@@ -3638,7 +3644,7 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'Georgia, serif',
+                fontWeight: 600,
                 fontSize: '2.5rem',
                 color: colors.accent,
                 border: `3px solid ${colors.accent}`,
@@ -3658,7 +3664,7 @@ function App() {
                   margin: '0 auto 15px'
                 }} />
               )}
-              <h1 style={{ fontSize: '2rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{selectedGiver.name}</h1>
+              <h1 style={{ fontSize: '2rem', marginBottom: '10px', fontWeight: 600 }}>{selectedGiver.name}</h1>
               <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>{selectedGiver.tagline}</p>
               {/* Show listing count or fallback to single rate */}
               {selectedGiver.listings && selectedGiver.listings.length > 0 ? (
@@ -3686,7 +3692,7 @@ function App() {
           {/* Listings Menu (Multi-listing architecture) */}
           {selectedGiver.listings && selectedGiver.listings.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Offerings</h3>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
               {selectedGiver.listings.map(listing => {
                 const modeInfo = MODES.find(m => m.value === listing.mode)
                 return (
@@ -3701,7 +3707,7 @@ function App() {
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                       <div style={{ flex: 1 }}>
-                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                        <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
                           {listing.topic}
                         </h4>
                         <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
@@ -3786,7 +3792,7 @@ function App() {
           )}
 
           <div style={{ ...cardStyle, cursor: 'default' }}>
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Book a Session</h3>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '20px', fontWeight: 600 }}>Book a Session</h3>
 
             {/* Listing Selection (Multi-listing architecture) */}
             {selectedGiver.listings && selectedGiver.listings.length > 0 && (
@@ -4048,9 +4054,9 @@ function App() {
                 setScreen('profile')
                 setCurrentBooking(null)
               }}
-              style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}
+              style={{ width: '40px', height: '40px', borderRadius: '3px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}
             >←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Complete Payment</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Complete Payment</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -4069,14 +4075,14 @@ function App() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontFamily: 'Georgia, serif',
+                fontWeight: 600,
                 fontSize: '1.3rem',
                 color: colors.accent,
               }}>
                 {selectedGiver.name[0]}
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '5px', fontFamily: 'Georgia, serif' }}>{selectedGiver.name}</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '5px', fontWeight: 600 }}>{selectedGiver.name}</h3>
                 <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
                   {formatFullDate(selectedBookingDate, selectedBookingTime)}
                 </p>
@@ -4100,7 +4106,7 @@ function App() {
 
           {/* Payment Form */}
           <div style={{ ...cardStyle, cursor: 'default' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', fontFamily: 'Georgia, serif' }}>Payment Details</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', fontWeight: 600 }}>Payment Details</h3>
 
             {bookingError && (
               <div style={{
@@ -4216,7 +4222,7 @@ function App() {
             fontSize: '3rem',
             color: colors.accent,
           }}>✓</div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Session Booked</h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontWeight: 600 }}>Session Booked</h1>
           <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
             Your session with {selectedGiver?.name} is confirmed.
           </p>
@@ -4296,7 +4302,7 @@ function App() {
             }}
           />
 
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', marginBottom: '30px' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '30px' }}>
             You have something to offer.
           </h2>
 
@@ -4331,7 +4337,7 @@ function App() {
                 margin: '0 auto 25px'
               }}
             />
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', marginBottom: 0 }}>What This Is</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: 0 }}>What This Is</h2>
           </div>
 
           <p style={{ color: colors.textSecondary, lineHeight: 1.7, marginBottom: '25px' }}>
@@ -4415,7 +4421,7 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Video & Availability</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Video & Availability</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -4426,7 +4432,7 @@ function App() {
             </label>
 
             {myGiverProfile.video_url && !recordedUrl && videoStep === 'done' && (
-              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px', marginBottom: '15px' }}>
+              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px', marginBottom: '15px' }}>
                 <video
                   src={myGiverProfile.video_url}
                   controls
@@ -4455,7 +4461,7 @@ function App() {
             )}
 
             {(!myGiverProfile.video_url || videoStep !== 'done') && (
-              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px' }}>
+              <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px' }}>
                 {videoStep === 'done' && (
                   <button onClick={() => setVideoStep('prompt')} style={{ width: '100%', ...btnStyle }}>
                     Record Introduction Video
@@ -4526,24 +4532,24 @@ function App() {
               Your Availability <span style={{ color: colors.textMuted }}>({availabilitySlots.length} slots)</span>
             </label>
 
-            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '16px', padding: '20px' }}>
+            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px' }}>
               {/* Bulk Add */}
               <div style={{ marginBottom: '25px', paddingBottom: '20px', borderBottom: `2px solid ${colors.border}` }}>
                 <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Quick Add</h4>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Date</label>
-                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Date</label>
-                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Time</label>
-                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
                       {Array.from({ length: 24 }, (_, i) => {
                         const hour = i.toString().padStart(2, '0')
                         return [
@@ -4555,7 +4561,7 @@ function App() {
                   </div>
                   <div style={{ flex: 1 }}>
                     <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Time</label>
-                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
                       {Array.from({ length: 24 }, (_, i) => {
                         const hour = i.toString().padStart(2, '0')
                         return [
@@ -4570,13 +4576,13 @@ function App() {
                   <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 4px', borderRadius: '8px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
+                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 4px', borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}` }}>
                         {day}
                       </div>
                     ))}
                   </div>
                 </div>
-                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: '12px', borderRadius: '8px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: '0.9rem', fontWeight: 600 }}>
+                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: '12px', borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: '0.9rem', fontWeight: 600 }}>
                   Add Availability
                 </button>
               </div>
@@ -4587,7 +4593,7 @@ function App() {
                   <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
-                      <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '8px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                      <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '3px', marginBottom: '8px', fontSize: '0.85rem' }}>
                         <span style={{ color: colors.textPrimary }}>
                           {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeTo12Hour(slot.time)}
                         </span>
@@ -4648,7 +4654,7 @@ function App() {
           <div style={screenStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
               <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-              <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Account</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Account</h2>
               <div style={{ width: '40px' }} />
             </div>
             <Auth onBack={() => setScreen('giverCode')} />
@@ -4664,7 +4670,7 @@ function App() {
           
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Profile</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Profile</h2>
             <div style={{ width: '40px' }} />
           </div>
           <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Share your presence with those who need it.</p>
@@ -4784,7 +4790,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '0.95rem',
                   boxSizing: 'border-box'
@@ -4807,7 +4813,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '0.95rem',
                   boxSizing: 'border-box'
@@ -4830,7 +4836,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '0.95rem',
                   boxSizing: 'border-box'
@@ -4882,7 +4888,7 @@ function App() {
               <div style={{
                 background: colors.bgCard,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '16px',
+                borderRadius: '3px',
                 padding: '25px',
                 textAlign: 'center'
               }}>
@@ -4922,7 +4928,7 @@ function App() {
               <div style={{
                 background: colors.bgCard,
                 border: `1px solid ${colors.accent}`,
-                borderRadius: '16px',
+                borderRadius: '3px',
                 padding: '20px',
                 textAlign: 'center'
               }}>
@@ -4957,7 +4963,7 @@ function App() {
                     gap: '8px',
                     background: 'rgba(220, 38, 38, 0.9)',
                     padding: '8px 12px',
-                    borderRadius: '20px'
+                    borderRadius: '3px'
                   }}>
                     <div style={{
                       width: '10px',
@@ -4977,7 +4983,7 @@ function App() {
                     right: '15px',
                     background: 'rgba(0, 0, 0, 0.7)',
                     padding: '8px 12px',
-                    borderRadius: '20px',
+                    borderRadius: '3px',
                     color: recordingTime >= 30 ? colors.success : colors.textSecondary,
                     fontSize: '0.85rem'
                   }}>
@@ -5007,7 +5013,7 @@ function App() {
               <div style={{
                 background: colors.bgCard,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '16px',
+                borderRadius: '3px',
                 padding: '20px',
                 textAlign: 'center'
               }}>
@@ -5059,7 +5065,7 @@ function App() {
               <div style={{
                 background: colors.bgCard,
                 border: `1px solid ${colors.success}`,
-                borderRadius: '16px',
+                borderRadius: '3px',
                 padding: '20px',
                 textAlign: 'center'
               }}>
@@ -5112,7 +5118,7 @@ function App() {
             <div style={{
               background: colors.bgCard,
               border: `1px solid ${colors.border}`,
-              borderRadius: '16px',
+              borderRadius: '3px',
               padding: '20px'
             }}>
               {/* Bulk Add Section */}
@@ -5141,7 +5147,7 @@ function App() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '8px',
+                        borderRadius: '3px',
                         border: `1px solid ${colors.border}`,
                         background: colors.bgSecondary,
                         color: colors.textPrimary,
@@ -5161,7 +5167,7 @@ function App() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '8px',
+                        borderRadius: '3px',
                         border: `1px solid ${colors.border}`,
                         background: colors.bgSecondary,
                         color: colors.textPrimary,
@@ -5183,7 +5189,7 @@ function App() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '8px',
+                        borderRadius: '3px',
                         border: `1px solid ${colors.border}`,
                         background: colors.bgSecondary,
                         color: colors.textPrimary,
@@ -5209,7 +5215,7 @@ function App() {
                       style={{
                         width: '100%',
                         padding: '10px',
-                        borderRadius: '8px',
+                        borderRadius: '3px',
                         border: `1px solid ${colors.border}`,
                         background: colors.bgSecondary,
                         color: colors.textPrimary,
@@ -5249,7 +5255,7 @@ function App() {
                           flex: '1 1 40px',
                           minWidth: '45px',
                           padding: '8px 4px',
-                          borderRadius: '8px',
+                          borderRadius: '3px',
                           textAlign: 'center',
                           cursor: 'pointer',
                           fontSize: '0.8rem',
@@ -5272,7 +5278,7 @@ function App() {
                   style={{
                     width: '100%',
                     padding: '12px',
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     border: 'none',
                     background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary,
                     color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted,
@@ -5309,7 +5315,7 @@ function App() {
                     flex: 1,
                     minWidth: '150px',
                     padding: '12px',
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     border: `1px solid ${colors.border}`,
                     background: colors.bgSecondary,
                     color: colors.textPrimary,
@@ -5323,7 +5329,7 @@ function App() {
                     flex: 1,
                     minWidth: '120px',
                     padding: '12px',
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     border: `1px solid ${colors.border}`,
                     background: colors.bgSecondary,
                     color: colors.textPrimary,
@@ -5343,7 +5349,7 @@ function App() {
                   disabled={!newSlotDate || !newSlotTime}
                   style={{
                     padding: '12px 20px',
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     border: 'none',
                     background: colors.accent,
                     color: colors.bgPrimary,
@@ -5376,7 +5382,7 @@ function App() {
                           alignItems: 'center',
                           padding: '10px 12px',
                           background: colors.bgSecondary,
-                          borderRadius: '8px',
+                          borderRadius: '3px',
                           fontSize: '0.85rem'
                         }}
                       >
@@ -5453,7 +5459,7 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <div style={{ width: '40px' }} />
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Set Up Payouts</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Set Up Payouts</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -5471,7 +5477,7 @@ function App() {
             }}>
               💳
             </div>
-            <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>
+            <h3 style={{ fontSize: '1.3rem', marginBottom: '10px', fontWeight: 600 }}>
               Almost there!
             </h3>
             <p style={{ color: colors.textSecondary, maxWidth: '320px', margin: '0 auto' }}>
@@ -5571,7 +5577,7 @@ function App() {
             fontSize: '3rem',
             color: colors.accent,
           }}>✓</div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Payouts Connected</h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontWeight: 600 }}>Payouts Connected</h1>
           <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
             You're all set to receive payments!
           </p>
@@ -5602,7 +5608,7 @@ function App() {
             fontSize: '3rem',
             color: colors.accent,
           }}>🌱</div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>You're Live</h1>
+          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontWeight: 600 }}>You're Live</h1>
           <p style={{ color: colors.textSecondary, marginBottom: '15px' }}>
             Your profile is now visible to people seeking presence.
           </p>
@@ -5625,7 +5631,7 @@ function App() {
                   border: `1px solid ${colors.accent}`,
                   color: colors.accent,
                   padding: '8px 16px',
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   cursor: 'pointer',
                   fontSize: '0.85rem'
                 }}
@@ -5749,7 +5755,7 @@ function App() {
               color: '#fff',
               border: 'none',
               padding: '15px 40px',
-              borderRadius: '30px',
+              borderRadius: '3px',
               fontSize: '1rem',
               fontWeight: 500,
               cursor: 'pointer',
@@ -5771,7 +5777,7 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={screenStyle}>
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '15px' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '15px' }}>
             Session Feedback
           </h2>
 
@@ -5918,7 +5924,7 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
 
           {/* Giver payout status card */}
           {myGiverProfile && (
@@ -5949,7 +5955,7 @@ function App() {
                       background: colors.accent,
                       color: colors.bgPrimary,
                       border: 'none',
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       cursor: 'pointer',
                       fontSize: '0.85rem',
                       fontWeight: 500
@@ -6186,7 +6192,7 @@ function App() {
                             background: colors.accent,
                             color: colors.bgPrimary,
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '3px',
                             cursor: 'pointer',
                             fontSize: '0.85rem',
                             fontWeight: 500,
@@ -6222,7 +6228,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Manage Availability</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Manage Availability</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -6268,13 +6274,13 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif', textAlign: 'center', marginBottom: '30px' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>
             {myGiverProfile ? 'Profile & Settings' : 'Profile Settings'}
           </h2>
 
           {/* Account Info */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Account</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Account</h3>
             <div style={{ marginBottom: '12px' }}>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
               <p style={{ color: colors.textPrimary }}>{user.email}</p>
@@ -6283,7 +6289,7 @@ function App() {
 
           {/* Profile Picture */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Profile Picture</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Profile Picture</h3>
             <ImageUpload
               onUpload={async (publicUrl) => {
                 // Update profile with new picture URL
@@ -6307,7 +6313,7 @@ function App() {
 
           {/* Timezone Setting */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Timezone</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Timezone</h3>
             <select
               value={currentTimezone}
               onChange={async (e) => {
@@ -6369,7 +6375,7 @@ function App() {
             <>
               {/* Name & Tagline */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Public Profile</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Public Profile</h3>
 
                 <div style={{ marginBottom: '15px' }}>
                   <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Name</label>
@@ -6381,7 +6387,7 @@ function App() {
                       padding: '12px',
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       color: colors.textPrimary,
                       fontSize: '1rem',
                       boxSizing: 'border-box'
@@ -6400,7 +6406,7 @@ function App() {
                       padding: '12px',
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       color: colors.textPrimary,
                       fontSize: '1rem',
                       boxSizing: 'border-box'
@@ -6425,7 +6431,7 @@ function App() {
                       padding: '12px',
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       color: colors.textPrimary,
                       fontSize: '1rem',
                       boxSizing: 'border-box',
@@ -6478,7 +6484,7 @@ function App() {
 
               {/* Rate */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Rate</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Rate</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
                   <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
                   <input
@@ -6500,7 +6506,7 @@ function App() {
                       padding: '12px',
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       color: colors.textPrimary,
                       fontSize: '1rem',
                       boxSizing: 'border-box'
@@ -6543,7 +6549,7 @@ function App() {
 
               {/* Introduction Video */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>Introduction Video</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Introduction Video</h3>
                 {myGiverProfile?.video_url ? (
                   <>
                     <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '15px' }}>
@@ -6602,7 +6608,7 @@ function App() {
 
               {/* Manage Availability */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Manage Availability</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Manage Availability</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
                   Control when you're available for bookings. This applies to all your offerings.
                 </p>
@@ -6616,7 +6622,7 @@ function App() {
 
               {/* What You Offer */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>What You Offer</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>What You Offer</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
                   Each listing is a different type of session you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
                 </p>
@@ -6641,7 +6647,7 @@ function App() {
 
               {/* Share Profile */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Share Your Profile</h3>
+                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Share Your Profile</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
                   Share this on Instagram, Twitter, or anywhere you want people to find you.
                 </p>
@@ -6660,7 +6666,7 @@ function App() {
               {/* Upcoming Availability */}
               {myGiverProfile && availabilitySlots.length > 0 && (
                 <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>
                     Your Upcoming Availability ({availabilitySlots.length} slots)
                   </h3>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
@@ -6712,7 +6718,7 @@ function App() {
           ) : (
             /* Non-giver: Option to become a giver */
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontFamily: 'Georgia, serif' }}>Become a Giver</h3>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Become a Giver</h3>
               <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
                 Get paid for your time and expertise
               </p>
@@ -6754,7 +6760,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>My Listings</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>My Listings</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -6818,7 +6824,7 @@ function App() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                           <div style={{ flex: 1 }}>
-                            <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontFamily: 'Georgia, serif' }}>
+                            <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
                               {listing.topic}
                             </h3>
                             <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
@@ -6871,7 +6877,7 @@ function App() {
                               padding: '10px',
                               background: colors.bgSecondary,
                               border: `1px solid ${colors.border}`,
-                              borderRadius: '8px',
+                              borderRadius: '3px',
                               color: colors.textPrimary,
                               cursor: 'pointer',
                               fontSize: '0.9rem'
@@ -6898,7 +6904,7 @@ function App() {
                               padding: '10px',
                               background: listing.is_active ? colors.bgSecondary : colors.accentSoft,
                               border: `1px solid ${listing.is_active ? colors.border : colors.accent}`,
-                              borderRadius: '8px',
+                              borderRadius: '3px',
                               color: listing.is_active ? colors.textSecondary : colors.accent,
                               cursor: 'pointer',
                               fontSize: '0.9rem'
@@ -6971,7 +6977,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Create Listing</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Listing</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -7015,7 +7021,7 @@ function App() {
                       padding: '12px',
                       background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
                       border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'start',
@@ -7069,7 +7075,7 @@ function App() {
                         padding: '8px 16px',
                         background: isSelected ? colors.accentSoft : colors.bgSecondary,
                         border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                        borderRadius: '20px',
+                        borderRadius: '3px',
                         color: isSelected ? colors.accent : colors.textSecondary,
                         cursor: 'pointer',
                         fontSize: '0.85rem'
@@ -7097,7 +7103,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '1rem',
                   boxSizing: 'border-box',
@@ -7132,7 +7138,7 @@ function App() {
                     padding: '12px',
                     background: colors.bgSecondary,
                     border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     color: colors.textPrimary,
                     fontSize: '1rem',
                     boxSizing: 'border-box'
@@ -7163,7 +7169,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '1rem',
                   boxSizing: 'border-box',
@@ -7256,7 +7262,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontFamily: 'Georgia, serif' }}>Edit Listing</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit Listing</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -7298,7 +7304,7 @@ function App() {
                       padding: '12px',
                       background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
                       border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
-                      borderRadius: '8px',
+                      borderRadius: '3px',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'start',
@@ -7352,7 +7358,7 @@ function App() {
                         padding: '8px 16px',
                         background: isSelected ? colors.accentSoft : colors.bgSecondary,
                         border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                        borderRadius: '20px',
+                        borderRadius: '3px',
                         color: isSelected ? colors.accent : colors.textSecondary,
                         cursor: 'pointer',
                         fontSize: '0.85rem'
@@ -7380,7 +7386,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '1rem',
                   boxSizing: 'border-box',
@@ -7415,7 +7421,7 @@ function App() {
                     padding: '12px',
                     background: colors.bgSecondary,
                     border: `1px solid ${colors.border}`,
-                    borderRadius: '8px',
+                    borderRadius: '3px',
                     color: colors.textPrimary,
                     fontSize: '1rem',
                     boxSizing: 'border-box'
@@ -7446,7 +7452,7 @@ function App() {
                   padding: '12px',
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
-                  borderRadius: '8px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   fontSize: '1rem',
                   boxSizing: 'border-box',

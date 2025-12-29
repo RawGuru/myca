@@ -6,16 +6,16 @@ import type { EmergenceVerb } from '../../SessionStateMachine'
 // ============================================
 
 const colors = {
-  bgPrimary: '#0a0a0a',
-  bgSecondary: '#141414',
-  bgCard: '#1a1a1a',
-  textPrimary: '#f5f5f5',
-  textSecondary: '#a0a0a0',
-  textMuted: '#666',
-  accent: '#c9a66b',
-  accentSoft: 'rgba(201, 166, 107, 0.15)',
-  border: '#2a2a2a',
-  success: '#4a9c6d',
+  bgPrimary: '#000000',
+  bgSecondary: '#0a0a0a',
+  bgCard: '#0f0f0f',
+  textPrimary: '#ffffff',
+  textSecondary: '#999999',
+  textMuted: '#666666',
+  accent: '#b89d5f',
+  accentSoft: 'rgba(184, 157, 95, 0.1)',
+  border: '#1a1a1a',
+  success: '#b89d5f',
   error: '#d9534f',
 }
 
@@ -36,14 +36,14 @@ const overlayStyle: React.CSSProperties = {
 
 const buttonStyle: React.CSSProperties = {
   padding: '18px 30px',
-  borderRadius: '12px',
+  borderRadius: '3px',
   fontSize: '1rem',
   fontWeight: 500,
   cursor: 'pointer',
   border: 'none',
   background: colors.accent,
   color: colors.bgPrimary,
-  fontFamily: 'Georgia, serif',
+  fontWeight: 600,
 }
 
 const buttonSecondaryStyle: React.CSSProperties = {
@@ -97,7 +97,7 @@ export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
         fontSize: '0.9rem',
         color: colors.textSecondary,
         marginBottom: '8px',
-        fontFamily: 'Georgia, serif'
+        fontWeight: 600
       }}>
         {phaseLabels[phase]}
       </div>
@@ -143,7 +143,7 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
             </div>
             <h2 style={{
               fontSize: '1.5rem',
-              fontFamily: 'Georgia, serif',
+              fontWeight: 600,
               marginBottom: '15px',
               color: colors.textPrimary
             }}>
@@ -174,7 +174,7 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
             </div>
             <h2 style={{
               fontSize: '1.5rem',
-              fontFamily: 'Georgia, serif',
+              fontWeight: 600,
               marginBottom: '15px',
               color: colors.textPrimary
             }}>
@@ -225,7 +225,7 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
             </div>
             <h2 style={{
               fontSize: '1.5rem',
-              fontFamily: 'Georgia, serif',
+              fontWeight: 600,
               marginBottom: '15px',
               color: colors.textPrimary
             }}>
@@ -263,7 +263,7 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
             </div>
             <h2 style={{
               fontSize: '1.5rem',
-              fontFamily: 'Georgia, serif',
+              fontWeight: 600,
               marginBottom: '15px',
               color: colors.textPrimary
             }}>
@@ -326,7 +326,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
           </div>
           <h2 style={{
             fontSize: '1.5rem',
-            fontFamily: 'Georgia, serif',
+            fontWeight: 600,
             marginBottom: '15px',
             color: colors.textPrimary
           }}>
@@ -350,7 +350,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
         <div style={{ maxWidth: '450px', width: '100%' }}>
           <h2 style={{
             fontSize: '1.3rem',
-            fontFamily: 'Georgia, serif',
+            fontWeight: 600,
             marginBottom: '20px',
             color: colors.textPrimary,
             textAlign: 'center'
@@ -370,7 +370,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
                   padding: '16px',
                   background: selectedVerb === verb.value ? colors.accentSoft : colors.bgCard,
                   border: `1px solid ${selectedVerb === verb.value ? colors.accent : colors.border}`,
-                  borderRadius: '12px',
+                  borderRadius: '3px',
                   color: colors.textPrimary,
                   textAlign: 'left',
                   cursor: 'pointer',
@@ -421,7 +421,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
         </div>
         <h2 style={{
           fontSize: '1.5rem',
-          fontFamily: 'Georgia, serif',
+          fontWeight: 600,
           marginBottom: '15px',
           color: colors.textPrimary
         }}>
@@ -517,7 +517,7 @@ export function EmergencePhase({ userRole, emergenceVerb, sessionTimeRemaining, 
         fontSize: '0.85rem',
         color: colors.accent,
         marginBottom: '5px',
-        fontFamily: 'Georgia, serif'
+        fontWeight: 600
       }}>
         {emergenceVerb ? verbLabels[emergenceVerb] : 'Free conversation'}
       </div>
@@ -573,7 +573,7 @@ export function SessionEndedSummary({ endReason }: SessionEndedSummaryProps) {
         </div>
         <h2 style={{
           fontSize: '1.8rem',
-          fontFamily: 'Georgia, serif',
+          fontWeight: 600,
           marginBottom: '20px',
           color: colors.textPrimary
         }}>
