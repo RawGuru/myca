@@ -2668,11 +2668,11 @@ function App() {
             Undivided attention. Focused entirely on you.
           </h1>
           <p style={{ fontSize: '0.95rem', color: colors.textMuted, maxWidth: '340px', lineHeight: 1.5, marginBottom: '50px' }}>
-            Unique minds ready to listen, strategize, teach, or challenge.
+            One person speaks. One person listens. Understanding comes first.
           </p>
           <div style={{ width: '100%', maxWidth: '320px' }}>
             <button style={btnStyle} onClick={() => {
-              setDiscoveryStep('attention')
+              setDiscoveryStep('category') // Skip mode selection, go straight to category
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
             }}>Book Private Video</button>
@@ -2729,10 +2729,8 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button
               onClick={() => {
-                if (discoveryStep === 'attention') {
+                if (discoveryStep === 'category') {
                   setScreen('welcome')
-                } else if (discoveryStep === 'category') {
-                  setDiscoveryStep('attention')
                 } else if (discoveryStep === 'availability') {
                   setDiscoveryStep('category')
                 } else if (discoveryStep === 'feed') {
@@ -2747,58 +2745,7 @@ function App() {
           </div>
 
           {/* STEP 1: Type of Attention */}
-          {discoveryStep === 'attention' && (
-            <div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
-                What kind of attention do you need right now?
-              </h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
-                {[
-                  { mode: 'vault' as Mode, label: 'I need to be heard', description: 'Pure listening. No advice.' },
-                  { mode: 'mirror' as Mode, label: 'I need to be reflected back', description: 'Help me see myself clearly.' },
-                  { mode: 'strategist' as Mode, label: 'I need to strategize', description: 'Brainstorming and problem-solving.' },
-                  { mode: 'teacher' as Mode, label: 'I need to learn', description: 'Instruction and skill transfer.' },
-                  { mode: 'challenger' as Mode, label: 'I need to be challenged', description: 'Debate and stress-test ideas.' },
-                  { mode: 'vibe_check' as Mode, label: 'I just need to talk', description: 'Casual conversation, no agenda.' },
-                ].map(option => (
-                  <button
-                    key={option.mode}
-                    onClick={() => {
-                      setDiscoveryFilters({ ...discoveryFilters, attentionType: option.mode })
-                      setDiscoveryStep('category')
-                    }}
-                    style={{
-                      padding: '16px',
-                      background: colors.bgCard,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = colors.accent
-                      e.currentTarget.style.background = colors.accentSoft
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = colors.border
-                      e.currentTarget.style.background = colors.bgCard
-                    }}
-                  >
-                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '6px' }}>
-                      {option.label}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
-                      {option.description}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: Category */}
+          {/* STEP 1: Category (mode selection removed - modes only appear after validation) */}
           {discoveryStep === 'category' && (
             <div>
               <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontFamily: 'Georgia, serif' }}>
@@ -2891,7 +2838,7 @@ function App() {
                           )
                         `)
                         .eq('is_active', true)
-                        .eq('mode', discoveryFilters.attentionType!)
+                        // Mode filtering removed - modes only appear after validation as emergence verbs
                         .eq('profiles.is_giver', true)
                         .eq('profiles.available', true)
 
@@ -6164,36 +6111,38 @@ function App() {
                           onClick={async () => {
                             const isGiver = booking.giver_id === user?.id
 
-                          // Different consequences based on who cancels
-                          const message = isGiver
-                            ? 'Cancel this session? The seeker will receive a full refund. You will not be paid.'
-                            : 'Cancel this session? Your payment will still go to the giver. No refund.'
+                            // Different consequences based on who cancels
+                            const message = isGiver
+                              ? 'Cancel this session? The seeker will receive a full refund. You will not be paid.'
+                              : 'Cancel this session? Your payment will still go to the giver. No refund.'
 
-                          if (confirm(message)) {
-                            const { error } = await supabase
-                              .from('bookings')
-                              .update({
-                                status: 'cancelled',
-                                cancelled_by: isGiver ? 'giver' : 'seeker',
-                                cancelled_at: new Date().toISOString(),
-                                // Track refund status for when Stripe is real
-                                refund_to_seeker: isGiver ? true : false
-                              })
-                              .eq('id', booking.id)
+                            if (confirm(message)) {
+                              const { error } = await supabase
+                                .from('bookings')
+                                .update({
+                                  status: 'cancelled',
+                                  cancelled_by: isGiver ? 'giver' : 'seeker',
+                                  cancelled_at: new Date().toISOString(),
+                                  refund_to_seeker: isGiver ? true : false
+                                })
+                                .eq('id', booking.id)
 
-                            if (!error) {
-                              // Send cancellation notification
-                              sendNotification('cancellation', booking.id)
+                              if (!error) {
+                                // Send cancellation notification
+                                await sendNotification('cancellation', booking.id)
+                                await fetchUserBookings()
 
-                              fetchUserBookings()
-                              if (isGiver) {
-                                alert('Session cancelled. The seeker will be refunded.')
+                                if (isGiver) {
+                                  alert('Session cancelled. The seeker will be refunded.')
+                                } else {
+                                  alert('Session cancelled. Your payment has been forfeited to the giver.')
+                                }
                               } else {
-                                alert('Session cancelled. Your payment has been forfeited to the giver.')
+                                console.error('Cancellation error:', error)
+                                alert('Failed to cancel session. Please try again.')
                               }
                             }
-                          }
-                        }}
+                          }}
                         style={{
                           width: '100%',
                           padding: '12px',

@@ -155,7 +155,7 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
               color: colors.textSecondary,
               marginBottom: '30px'
             }}>
-              Share what brought you here. Speak freely. The giver is listening with full attention. Your mic is ON.
+              Speak until you feel complete. Nothing else is required right now.
             </p>
             <button
               style={buttonStyle}
@@ -186,13 +186,13 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
               color: colors.textSecondary,
               marginBottom: '15px'
             }}>
-              The receiver is speaking. Listen deeply without responding yet. Your mic is OFF.
+              One person speaks. One person listens. The app enforces it.
             </p>
             <p style={{
               fontSize: '0.9rem',
               color: colors.textMuted
             }}>
-              You'll reflect next
+              Your mic is OFF
             </p>
           </>
         )}
@@ -235,9 +235,16 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
               fontSize: '1rem',
               lineHeight: 1.6,
               color: colors.textSecondary,
+              marginBottom: '10px'
+            }}>
+              Here is what I think you're saying.
+            </p>
+            <p style={{
+              fontSize: '0.9rem',
+              color: colors.textMuted,
               marginBottom: '30px'
             }}>
-              Reflect back what you heard. Not advice, not solutions—just what you understood. Your mic is ON.
+              Accuracy matters more than insight.
             </p>
             <button
               style={buttonStyle}
@@ -348,7 +355,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
             color: colors.textPrimary,
             textAlign: 'center'
           }}>
-            How would you like to emerge together?
+            Given that you now feel understood, what, if anything, would you like from me next?
           </h2>
           <div style={{
             display: 'grid',
@@ -426,7 +433,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
           color: colors.textSecondary,
           marginBottom: '30px'
         }}>
-          Reflect on what the giver just said. Did they truly hear you?
+          You decide if you were understood. Not them.
         </p>
 
         {validationAttempts > 0 && (
