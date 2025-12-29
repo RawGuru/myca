@@ -711,11 +711,59 @@ function App() {
   const [filteredListings, setFilteredListings] = useState<Listing[]>([])
   const [currentFeedIndex, setCurrentFeedIndex] = useState(0)
 
+  // Ensure user profile exists before giver operations
+  const ensureProfileExists = async () => {
+    if (!user) return false
+
+    try {
+      // Check if profile exists
+      const { data: existing, error: fetchError } = await supabase
+        .from('profiles')
+        .select('id, is_giver')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      if (fetchError) throw fetchError
+
+      if (!existing) {
+        // Create profile
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            is_giver: true,
+            created_at: new Date().toISOString()
+          })
+
+        if (insertError) throw insertError
+      } else if (!existing.is_giver) {
+        // Update to mark as giver
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ is_giver: true })
+          .eq('id', user.id)
+
+        if (updateError) throw updateError
+      }
+
+      return true
+    } catch (err) {
+      console.error('Error ensuring profile exists:', err)
+      alert('Error creating profile. Please try again.')
+      return false
+    }
+  }
+
   // Add availability slot (specific date + time)
   const addAvailabilitySlot = async () => {
     if (!newSlotDate || !newSlotTime || !user) return
 
     try {
+      // Ensure profile exists first
+      const profileReady = await ensureProfileExists()
+      if (!profileReady) return
+
       const { data, error } = await supabase
         .from('giver_availability')
         .insert({
@@ -734,6 +782,7 @@ function App() {
       setNewSlotTime('9:00')
     } catch (err) {
       console.error('Error adding availability slot:', err)
+      alert('Error adding availability slot. Please try again.')
     }
   }
 
@@ -758,6 +807,10 @@ function App() {
     if (!user || bulkSelectedDays.size === 0) return
 
     try {
+      // Ensure profile exists first
+      const profileReady = await ensureProfileExists()
+      if (!profileReady) return
+
       // Validate dates
       const startDate = new Date(bulkStartDate + 'T00:00:00')
       const endDate = new Date(bulkEndDate + 'T00:00:00')
@@ -1720,6 +1773,10 @@ function App() {
     if (!user) return { success: false, error: 'Not authenticated' }
 
     try {
+      // Ensure profile exists first
+      const profileReady = await ensureProfileExists()
+      if (!profileReady) return { success: false, error: 'Failed to create profile' }
+
       // Insert listing
       const { data: newListing, error: listingError } = await supabase
         .from('listings')
