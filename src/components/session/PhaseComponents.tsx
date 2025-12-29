@@ -38,12 +38,11 @@ const buttonStyle: React.CSSProperties = {
   padding: '18px 30px',
   borderRadius: '3px',
   fontSize: '1rem',
-  fontWeight: 500,
+  fontWeight: 600,
   cursor: 'pointer',
   border: 'none',
   background: colors.accent,
   color: colors.bgPrimary,
-  fontWeight: 600,
 }
 
 const buttonSecondaryStyle: React.CSSProperties = {

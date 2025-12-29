@@ -2940,14 +2940,13 @@ function App() {
                               justifyContent: 'center',
                               fontSize: '1rem',
                               fontWeight: 600,
-                              fontWeight: 600,
                               flexShrink: 0
                             }}>
                               {!(currentListing.listing_image_url || giver.profile_picture_url) && giver.name[0].toUpperCase()}
                             </div>
 
                             <div style={{ flex: 1 }}>
-                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 600, fontWeight: 600 }}>
+                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 600 }}>
                                 {giver.name}
                                 {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
                                   <span style={{ marginLeft: '8px', fontSize: '0.9rem' }}>✓</span>
