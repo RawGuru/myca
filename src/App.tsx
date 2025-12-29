@@ -3874,9 +3874,8 @@ function App() {
 
                 {/* Price Summary */}
                 <div style={{ padding: '20px 0', borderTop: `1px solid ${colors.border}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <span style={{ color: colors.textSecondary }}>Duration</span>
-                    <span style={{ fontWeight: 600 }}>{activeMinutes} minutes active</span>
+                  <div style={{ marginBottom: '12px', color: colors.textSecondary }}>
+                    {activeMinutes} minutes
                   </div>
                   <div style={{
                     display: 'flex',
@@ -6893,8 +6892,11 @@ function App() {
             {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You will receive <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
+                You will receive <span style={{ color: colors.accent }}>*</span>
               </label>
+              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
+                per 30 minutes
+              </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
                 <input
@@ -6920,7 +6922,22 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Platform fee is added to the session price
+                Platform fee is added to the session price.{' '}
+                <button
+                  type="button"
+                  onClick={() => alert('The listener sets what they earn. The platform fee is added on top.')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: colors.accent,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    padding: 0
+                  }}
+                >
+                  How pricing works
+                </button>
               </p>
             </div>
 
@@ -7122,8 +7139,11 @@ function App() {
             {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You will receive <span style={{ color: colors.textMuted, fontWeight: 400 }}>(per 30 minutes)</span> <span style={{ color: colors.accent }}>*</span>
+                You will receive <span style={{ color: colors.accent }}>*</span>
               </label>
+              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
+                per 30 minutes
+              </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
                 <input
@@ -7149,7 +7169,22 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Platform fee is added to the session price
+                Platform fee is added to the session price.{' '}
+                <button
+                  type="button"
+                  onClick={() => alert('The listener sets what they earn. The platform fee is added on top.')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: colors.accent,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    padding: 0
+                  }}
+                >
+                  How pricing works
+                </button>
               </p>
             </div>
 
