@@ -2598,7 +2598,6 @@ function App() {
 
   const Nav = () => (
     <>
-      <ModeToggle />
       <nav style={navStyle}>
         {[
           { id: 'browse', icon: '🔍', label: 'Find' },
@@ -2675,16 +2674,12 @@ function App() {
           </p>
           <div style={{ width: '100%', maxWidth: '340px' }}>
             <button style={btnStyle} onClick={() => {
-              setDiscoveryStep('category') // Skip mode selection, go straight to category
+              setDiscoveryStep('availability') // Skip category and mode, go straight to availability
               setDiscoveryFilters({ attentionType: null, category: null, availability: null })
               setScreen('discovery')
             }}>Speak now</button>
             <button
-              style={{
-                ...btnSecondaryStyle,
-                marginBottom: '20px',
-                fontSize: '0.95rem'
-              }}
+              style={btnStyle}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
                 // Otherwise, start the onboarding flow
@@ -2735,10 +2730,8 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
             <button
               onClick={() => {
-                if (discoveryStep === 'category') {
+                if (discoveryStep === 'availability') {
                   setScreen('welcome')
-                } else if (discoveryStep === 'availability') {
-                  setDiscoveryStep('category')
                 } else if (discoveryStep === 'feed') {
                   setDiscoveryStep('availability')
                 }
@@ -2750,58 +2743,9 @@ function App() {
             <div style={{ width: '40px' }} />
           </div>
 
-          {/* STEP 1: Type of Attention */}
-          {/* STEP 1: Category (mode selection removed - modes only appear after validation) */}
-          {discoveryStep === 'category' && (
-            <div>
-              <h3 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '24px' }}>
-                What do you want to talk about?
-              </h3>
+          {/* Category and mode selection removed - givers offer themselves, not expertise */}
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
-                {[
-                  ...CATEGORIES.map(cat => ({ value: cat.value, label: cat.label, examples: cat.examples })),
-                  { value: null as Category | null, label: 'Anything / I\'ll figure it out', examples: '' }
-                ].map(option => (
-                  <button
-                    key={option.value || 'any'}
-                    onClick={() => {
-                      setDiscoveryFilters({ ...discoveryFilters, category: option.value })
-                      setDiscoveryStep('availability')
-                    }}
-                    style={{
-                      padding: '16px',
-                      background: colors.bgCard,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = colors.accent
-                      e.currentTarget.style.background = colors.accentSoft
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = colors.border
-                      e.currentTarget.style.background = colors.bgCard
-                    }}
-                  >
-                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: option.examples ? '6px' : 0 }}>
-                      {option.label}
-                    </div>
-                    {option.examples && (
-                      <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
-                        {option.examples}
-                      </div>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* STEP 3: Availability */}
+          {/* STEP 1: Availability */}
           {discoveryStep === 'availability' && (
             <div>
               <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>
@@ -2850,12 +2794,7 @@ function App() {
 
                       let filtered = allListings || []
 
-                      // Filter by category if selected
-                      if (discoveryFilters.category) {
-                        filtered = filtered.filter(listing =>
-                          listing.categories?.includes(discoveryFilters.category!)
-                        )
-                      }
+                      // Category filtering removed - givers offer themselves, not expertise categories
 
                       // Sort by: quality_score (primary), total sessions (secondary), recency (tertiary), then randomize
                       // Note: quality_score is invisible to users, used only for ranking
