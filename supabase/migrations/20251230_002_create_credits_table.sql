@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS credits (
   used_at TIMESTAMPTZ NULL,
   booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
   source_booking_id UUID REFERENCES bookings(id) ON DELETE SET NULL,
-  reason TEXT CHECK (reason IN ('giver_safety_exit', 'platform_failure', 'goodwill'))
+  reason TEXT CHECK (reason IN ('giver_safety_exit', 'platform_failure', 'goodwill', 'giver_joined_late'))
 );
 
 -- Create indexes for efficient queries

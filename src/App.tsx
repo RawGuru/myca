@@ -1044,7 +1044,7 @@ function App() {
 
   // Fetch unused credits for current user
   const fetchUnusedCredits = async () => {
-    if (!user) return
+    if (!user) return { credits: [], totalCents: 0 }
 
     try {
       const { data: credits, error } = await supabase
@@ -1056,14 +1056,16 @@ function App() {
 
       if (error) {
         console.error('Error fetching credits:', error)
-        return
+        return { credits: [], totalCents: 0 }
       }
 
       const totalCents = (credits || []).reduce((sum, credit) => sum + credit.amount_cents, 0)
       setAvailableCredits(credits || [])
       setTotalCreditsCents(totalCents)
+      return { credits: credits || [], totalCents }
     } catch (err) {
       console.error('Error fetching credits:', err)
+      return { credits: [], totalCents: 0 }
     }
   }
 
@@ -1098,10 +1100,10 @@ function App() {
       const totalAmountCents = grossAmountCents // For backwards compatibility
 
       // Fetch available credits
-      await fetchUnusedCredits()
+      const { totalCents: availableCreditsCents } = await fetchUnusedCredits()
 
       // Calculate credit application
-      const creditsToApplyCents = Math.min(totalCreditsCents, grossAmountCents)
+      const creditsToApplyCents = Math.min(availableCreditsCents, grossAmountCents)
       setCreditsAppliedCents(creditsToApplyCents)
 
       // Determine initial status based on listing approval settings
@@ -1252,12 +1254,15 @@ function App() {
         // Continue without room - can be created later
       }
 
-      // Step 4: Update booking to confirmed with video room URL
-      // Note: Webhook will also update with payment_intent_id
+      // Step 4: Update booking status and payment details
+      // Important: Keep status as 'pending_approval' if it requires giver approval
+      // Only set to 'confirmed' if it was 'pending' (instant book)
+      const newStatus = currentBooking.status === 'pending_approval' ? 'pending_approval' : 'confirmed'
+
       const { error } = await supabase
         .from('bookings')
         .update({
-          status: 'confirmed',
+          status: newStatus,
           stripe_payment_intent_id: payment_intent_id,
           video_room_url: videoRoomUrl,
         })
@@ -1265,13 +1270,15 @@ function App() {
 
       if (error) throw error
 
-      // Send confirmation notification
-      sendNotification('booking_confirmed', currentBooking.id)
+      // Send confirmation notification only if auto-confirmed
+      if (newStatus === 'confirmed') {
+        sendNotification('booking_confirmed', currentBooking.id)
+      }
 
       // Update local booking state
       setCurrentBooking({
         ...currentBooking,
-        status: 'confirmed',
+        status: newStatus,
         stripe_payment_intent_id: payment_intent_id,
         video_room_url: videoRoomUrl,
       })
@@ -4069,7 +4076,10 @@ function App() {
 
   if (screen === 'payment' && currentBooking && selectedGiver && selectedBookingDate) {
     // PRICING MODEL: Use the total amount from booking (already includes platform fee)
-    const totalPayment = currentBooking.total_amount_cents / 100
+    const grossAmountCents = currentBooking.total_amount_cents
+    const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
+    const totalPayment = amountAfterCreditsCents / 100
+    const hasCredits = creditsAppliedCents > 0
 
     const inputStyle: React.CSSProperties = {
       width: '100%',
@@ -4126,16 +4136,55 @@ function App() {
               </div>
             </div>
             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '15px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                <span>Session price</span>
-                <span style={{ fontSize: '1.2rem', color: colors.accent }}>${totalPayment.toFixed(2)}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: hasCredits ? '10px' : '0' }}>
+                <span style={{ color: hasCredits ? colors.textSecondary : colors.textPrimary, fontWeight: hasCredits ? 400 : 600 }}>Session price</span>
+                <span style={{ fontSize: hasCredits ? '1rem' : '1.2rem', color: hasCredits ? colors.textSecondary : colors.accent, fontWeight: hasCredits ? 400 : 600 }}>${(grossAmountCents / 100).toFixed(2)}</span>
               </div>
+              {hasCredits && (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', color: '#10b981' }}>
+                    <span>Credits applied</span>
+                    <span>-${(creditsAppliedCents / 100).toFixed(2)}</span>
+                  </div>
+                  <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                    <span>Amount to pay</span>
+                    <span style={{ fontSize: '1.2rem', color: colors.accent }}>${totalPayment.toFixed(2)}</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
+          {/* Available Credits Display */}
+          {totalCreditsCents > 0 && (
+            <div style={{
+              ...cardStyle,
+              cursor: 'default',
+              marginBottom: '25px',
+              background: 'rgba(16, 185, 129, 0.05)',
+              border: '1px solid rgba(16, 185, 129, 0.2)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                <span style={{ fontSize: '1.3rem' }}>💰</span>
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#10b981' }}>Platform Credits Available</h3>
+              </div>
+              <p style={{ fontSize: '0.85rem', color: colors.textSecondary, marginBottom: '10px' }}>
+                You have ${(totalCreditsCents / 100).toFixed(2)} in platform credits from completed sessions.
+              </p>
+              <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                {creditsAppliedCents > 0
+                  ? `Applied ${(creditsAppliedCents / 100).toFixed(2)} of ${(totalCreditsCents / 100).toFixed(2)} available credits to this booking.`
+                  : `${(totalCreditsCents / 100).toFixed(2)} available credits (automatically applied when booking).`
+                }
+              </p>
+            </div>
+          )}
+
           {/* Payment Form */}
           <div style={{ ...cardStyle, cursor: 'default' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', fontWeight: 600 }}>Payment Details</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '20px', fontWeight: 600 }}>
+              {amountAfterCreditsCents > 0 ? 'Payment Details' : 'Confirm Booking'}
+            </h3>
 
             {bookingError && (
               <div style={{
@@ -4151,46 +4200,66 @@ function App() {
               </div>
             )}
 
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Card number</label>
-              <input
-                type="text"
-                value={cardNumber}
-                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                placeholder="1234 5678 9012 3456"
-                maxLength={19}
-                style={inputStyle}
-              />
-            </div>
+            {amountAfterCreditsCents > 0 ? (
+              <>
+                <div style={{ marginBottom: '15px' }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Card number</label>
+                  <input
+                    type="text"
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
+                    placeholder="1234 5678 9012 3456"
+                    maxLength={19}
+                    style={inputStyle}
+                  />
+                </div>
 
-            <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Expiry</label>
-                <input
-                  type="text"
-                  value={cardExpiry}
-                  onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-                  placeholder="MM/YY"
-                  maxLength={5}
-                  style={inputStyle}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>CVC</label>
-                <input
-                  type="text"
-                  value={cardCvc}
-                  onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                  placeholder="123"
-                  maxLength={4}
-                  style={inputStyle}
-                />
-              </div>
-            </div>
+                <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Expiry</label>
+                    <input
+                      type="text"
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
+                      placeholder="MM/YY"
+                      maxLength={5}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>CVC</label>
+                    <input
+                      type="text"
+                      value={cardCvc}
+                      onChange={(e) => setCardCvc(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      placeholder="123"
+                      maxLength={4}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
 
-            <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', textAlign: 'center' }}>
-              Payment is held until the session completes, then released to {selectedGiver.name}.
-            </p>
+                <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', textAlign: 'center' }}>
+                  Payment is held until the session completes, then released to {selectedGiver.name}.
+                </p>
+              </>
+            ) : (
+              <div style={{
+                padding: '15px',
+                background: 'rgba(16, 185, 129, 0.1)',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+                borderRadius: '12px',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                <p style={{ fontSize: '0.9rem', color: '#10b981', fontWeight: 600, marginBottom: '5px' }}>
+                  Fully covered by credits!
+                </p>
+                <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                  No payment required for this booking.
+                </p>
+              </div>
+            )}
 
             {/* Cancellation Policy Notice */}
             <div style={{
@@ -4223,12 +4292,14 @@ function App() {
               onClick={processPayment}
               disabled={bookingLoading}
             >
-              {bookingLoading ? 'Processing...' : `Pay $${totalPayment}`}
+              {bookingLoading ? 'Processing...' : amountAfterCreditsCents > 0 ? `Pay $${totalPayment.toFixed(2)}` : 'Confirm Booking'}
             </button>
 
-            <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '15px', textAlign: 'center' }}>
-              For testing, use card: 4242 4242 4242 4242
-            </p>
+            {amountAfterCreditsCents > 0 && (
+              <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '15px', textAlign: 'center' }}>
+                For testing, use card: 4242 4242 4242 4242
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -4236,13 +4307,15 @@ function App() {
   }
 
   if (screen === 'confirmation') {
+    const isPendingApproval = currentBooking?.status === 'pending_approval'
+
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
           <div style={{
             width: '100px',
             height: '100px',
-            background: colors.accentSoft,
+            background: isPendingApproval ? 'rgba(201, 166, 107, 0.2)' : colors.accentSoft,
             borderRadius: '50%',
             display: 'flex',
             alignItems: 'center',
@@ -4250,10 +4323,15 @@ function App() {
             marginBottom: '30px',
             fontSize: '3rem',
             color: colors.accent,
-          }}>✓</div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontWeight: 600 }}>Session Booked</h1>
+          }}>{isPendingApproval ? '⏳' : '✓'}</div>
+          <h1 style={{ fontSize: '2rem', marginBottom: '15px', fontWeight: 600 }}>
+            {isPendingApproval ? 'Payment Complete' : 'Session Booked'}
+          </h1>
           <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
-            Your session with {selectedGiver?.name} is confirmed.
+            {isPendingApproval
+              ? `Waiting for ${selectedGiver?.name} to approve your booking.`
+              : `Your session with ${selectedGiver?.name} is confirmed.`
+            }
           </p>
           {selectedBookingDate && selectedBookingTime && (
             <p style={{ color: colors.accent, fontSize: '1.1rem', fontWeight: 500, marginBottom: '30px' }}>
@@ -4261,7 +4339,10 @@ function App() {
             </p>
           )}
           <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '30px', maxWidth: '300px' }}>
-            You'll receive a reminder before your session. The video room will be available at your scheduled time.
+            {isPendingApproval
+              ? `You'll be notified when ${selectedGiver?.name} approves your request. They have until the scheduled time to respond.`
+              : "You'll receive a reminder before your session. The video room will be available at your scheduled time."
+            }
           </p>
           <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', maxWidth: '300px' }}>
             Remember: If you cancel, your payment goes to {selectedGiver?.name}. If they cancel, you'll be refunded.

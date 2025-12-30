@@ -164,6 +164,31 @@ serve(async (req) => {
       }
     }
 
+    // Create credit if giver joined late (seeker_credit_earned flag)
+    if (booking.seeker_credit_earned && (end_reason === 'completed' || end_reason === 'receiver_end_complete')) {
+      const lateCreditAmount = platformFeeCents // Seeker gets platform fee back as credit
+      console.log(`[Finalize Session] Creating late-join credit: ${lateCreditAmount} cents for user ${booking.seeker_id}`)
+
+      try {
+        const { error: lateCreditError } = await supabase
+          .from('credits')
+          .insert({
+            user_id: booking.seeker_id,
+            amount_cents: lateCreditAmount,
+            source_booking_id: booking_id,
+            reason: 'giver_joined_late'
+          })
+
+        if (lateCreditError) {
+          console.error('[Finalize Session] Late-join credit creation failed:', lateCreditError.message)
+        } else {
+          console.log('[Finalize Session] Late-join credit created successfully')
+        }
+      } catch (lateCreditErr: any) {
+        console.error('[Finalize Session] Late-join credit creation error:', lateCreditErr.message)
+      }
+    }
+
     // Update booking record
     const { error: updateError } = await supabase
       .from('bookings')
