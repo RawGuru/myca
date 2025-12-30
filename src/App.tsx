@@ -40,6 +40,8 @@ export interface Listing {
   updated_at: string
   listing_video_url?: string | null  // Per-listing video (30 seconds)
   listing_image_url?: string | null  // Per-listing image
+  directions_allowed?: string[]      // Pre-consented direction types
+  boundaries?: string | null         // Giver boundaries and safety guidelines
   categories?: Category[]
   profiles?: {
     id: string
