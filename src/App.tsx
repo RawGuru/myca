@@ -40,6 +40,9 @@ export interface Listing {
   updated_at: string
   listing_video_url?: string | null  // Per-listing video (30 seconds)
   listing_image_url?: string | null  // Per-listing image
+  presence_video_script?: string | null  // Selected script for presence video
+  requires_approval?: boolean        // Booking requires giver approval (default true)
+  allow_instant_book?: boolean       // Allow instant booking without approval
   directions_allowed?: string[]      // Pre-consented direction types
   boundaries?: string | null         // Giver boundaries and safety guidelines
   categories?: Category[]
@@ -95,7 +98,8 @@ interface Booking {
   total_amount_cents: number
   platform_fee_cents: number
   giver_payout_cents: number
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'pending' | 'pending_approval' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  session_intention?: string | null  // Receiver's intention for the session
   stripe_payment_id: string | null
   stripe_payment_intent_id: string | null
   video_room_url: string | null
@@ -609,6 +613,7 @@ function App() {
   const [selectedBookingTime, setSelectedBookingTime] = useState<string>('')
   const [selectedListingForBooking, setSelectedListingForBooking] = useState<Listing | null>(null)
   const [blocksBooked] = useState<1>(1) // Single 30-min block only, extensions happen in-session
+  const [sessionIntention] = useState<string>('') // TODO: Add UI for receiver to enter intention
 
   // Booking/payment state
   const [currentBooking, setCurrentBooking] = useState<Booking | null>(null)
@@ -706,6 +711,9 @@ function App() {
     selectedCategories: [] as Category[],
     listing_video_url: '' as string,
     listing_image_url: '' as string,
+    presence_video_script: '' as string,
+    requires_approval: true as boolean,
+    allow_instant_book: false as boolean,
     directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'] as string[],
     boundaries: '' as string
   })
@@ -1096,6 +1104,11 @@ function App() {
       const creditsToApplyCents = Math.min(totalCreditsCents, grossAmountCents)
       setCreditsAppliedCents(creditsToApplyCents)
 
+      // Determine initial status based on listing approval settings
+      const requiresApproval = selectedListingForBooking?.requires_approval !== false // Default true
+      const allowInstantBook = selectedListingForBooking?.allow_instant_book || false
+      const initialStatus = (requiresApproval && !allowInstantBook) ? 'pending_approval' : 'pending'
+
       // Create booking record with multi-listing data
       const { data, error } = await supabase
         .from('bookings')
@@ -1110,7 +1123,8 @@ function App() {
           total_amount_cents: totalAmountCents,
           platform_fee_cents: platformFeeCents,
           giver_payout_cents: giverPayoutCents,
-          status: 'pending',
+          session_intention: sessionIntention || null,
+          status: initialStatus,
           stripe_payment_id: null,
           video_room_url: null,
         })
@@ -1844,6 +1858,9 @@ function App() {
     categories: Category[]
     listing_video_url?: string
     listing_image_url?: string
+    presence_video_script?: string
+    requires_approval?: boolean
+    allow_instant_book?: boolean
     directions_allowed?: string[]
     boundaries?: string
   }) => {
@@ -1865,6 +1882,9 @@ function App() {
           description: listingData.description,
           listing_video_url: listingData.listing_video_url || null,
           listing_image_url: listingData.listing_image_url || null,
+          presence_video_script: listingData.presence_video_script || null,
+          requires_approval: listingData.requires_approval !== undefined ? listingData.requires_approval : true,
+          allow_instant_book: listingData.allow_instant_book || false,
           directions_allowed: listingData.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
           boundaries: listingData.boundaries || null,
           is_active: true
@@ -6797,6 +6817,9 @@ function App() {
                     selectedCategories: [],
                     listing_video_url: '',
                     listing_image_url: '',
+                    presence_video_script: '',
+                    requires_approval: true,
+                    allow_instant_book: false,
                     directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
                     boundaries: ''
                   })
@@ -6901,6 +6924,9 @@ function App() {
                                 selectedCategories: listing.categories || [],
                                 listing_video_url: listing.listing_video_url || '',
                                 listing_image_url: listing.listing_image_url || '',
+                                presence_video_script: listing.presence_video_script || '',
+                                requires_approval: listing.requires_approval !== undefined ? listing.requires_approval : true,
+                                allow_instant_book: listing.allow_instant_book || false,
                                 directions_allowed: listing.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
                                 boundaries: listing.boundaries || ''
                               })
@@ -7002,6 +7028,16 @@ function App() {
                 return
               }
 
+              if (!listingFormData.presence_video_script) {
+                alert('Please select a script for your presence video')
+                return
+              }
+
+              if (!listingFormData.listing_video_url) {
+                alert('Please record your presence video using the script you selected')
+                return
+              }
+
               const result = await createListing({
                 topic: '', // No longer used - giver offers themselves, not topics
                 mode: 'vault' as Mode, // Default mode - actual mode emerges after validation
@@ -7010,6 +7046,9 @@ function App() {
                 categories: [], // No longer used - no category filtering
                 listing_video_url: listingFormData.listing_video_url,
                 listing_image_url: undefined, // No longer supported
+                presence_video_script: listingFormData.presence_video_script,
+                requires_approval: listingFormData.requires_approval,
+                allow_instant_book: listingFormData.allow_instant_book,
                 directions_allowed: listingFormData.directions_allowed,
                 boundaries: listingFormData.boundaries
               })
@@ -7144,13 +7183,57 @@ function App() {
               </p>
             </div>
 
+            {/* Presence Video Script Selection */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Choose your presence video script <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
+                Select a script to use for your presence video (required)
+              </p>
+              {[
+                { value: 'script_a', text: "Here's how I show up. I'll give you a protected floor, then reflect what I hear until you say it's accurate." },
+                { value: 'script_b', text: "I'm here to listen without agenda. You speak, I mirror back, and we only move forward when you feel understood." },
+                { value: 'script_c', text: "My role is simple: hold space, reflect what you share, and let you decide what happens next." }
+              ].map(script => (
+                <div
+                  key={script.value}
+                  onClick={() => setListingFormData({ ...listingFormData, presence_video_script: script.value })}
+                  style={{
+                    padding: '15px',
+                    marginBottom: '10px',
+                    background: listingFormData.presence_video_script === script.value ? colors.accentSoft : 'transparent',
+                    border: `2px solid ${listingFormData.presence_video_script === script.value ? colors.accent : colors.border}`,
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{
+                      width: '20px',
+                      height: '20px',
+                      borderRadius: '50%',
+                      border: `2px solid ${listingFormData.presence_video_script === script.value ? colors.accent : colors.border}`,
+                      background: listingFormData.presence_video_script === script.value ? colors.accent : 'transparent',
+                      flexShrink: 0,
+                      marginTop: '2px'
+                    }} />
+                    <p style={{ color: colors.textPrimary, fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
+                      {script.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             {/* Video (15-30 sec) */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Short video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(15-30 seconds)</span>
+                Presence video <span style={{ color: colors.accent }}>*</span> <span style={{ color: colors.textMuted, fontWeight: 400 }}>(15-30 seconds)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                A brief video showing yourself. Falls back to your profile video if not provided.
+                Record yourself saying the script you selected above. This shows receivers how you show up.
               </p>
               <VideoUpload
                 onUpload={async (publicUrl) => {
@@ -7246,6 +7329,26 @@ function App() {
                   boxSizing: 'border-box'
                 }}
               />
+            </div>
+
+            {/* Instant Booking Toggle */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={listingFormData.allow_instant_book || false}
+                  onChange={(e) => setListingFormData({ ...listingFormData, allow_instant_book: e.target.checked })}
+                  style={{ marginRight: '10px', cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ color: colors.textPrimary, fontSize: '0.9rem', fontWeight: 500 }}>
+                    Allow instant booking
+                  </div>
+                  <div style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '4px' }}>
+                    When enabled, bookings are confirmed immediately without your approval. When disabled (default), you'll review each booking request.
+                  </div>
+                </div>
+              </label>
             </div>
 
             {/* Submit */}
