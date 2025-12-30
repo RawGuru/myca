@@ -33,7 +33,7 @@ Sentry.init({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Sentry.ErrorBoundary
-      fallback={({ error, resetError }) => (
+      fallback={({ resetError }) => (
         <div style={{
           display: 'flex',
           flexDirection: 'column',
