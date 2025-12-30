@@ -54,6 +54,7 @@ export interface Booking {
   id: string
   seeker_id: string
   giver_id: string
+  listing_id: string
   scheduled_time: string
   blocks_booked: number
   amount_cents: number
@@ -690,6 +691,7 @@ export function SessionStateMachine({
               validationAttempts={sessionState.validation_attempts}
               onYes={handleReceiverValidationYes}
               onNo={handleReceiverValidationNo}
+              listingId={booking.listing_id}
             />
           )}
 

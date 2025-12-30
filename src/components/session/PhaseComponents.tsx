@@ -1,5 +1,7 @@
-import React from 'react'
-import type { EmergenceVerb } from '../../SessionStateMachine'
+import React, { useState, useEffect } from 'react'
+import type { DirectionType } from '../../SessionStateMachine'
+import type { DailyCall } from '@daily-co/daily-js'
+import { supabase } from '../../lib/supabase'
 
 // ============================================
 // SHARED STYLES & TYPES
@@ -57,7 +59,7 @@ const buttonSecondaryStyle: React.CSSProperties = {
 // ============================================
 
 interface PhaseIndicatorProps {
-  currentPhase: 'transmission' | 'reflection' | 'validation' | 'emergence' | 'ended'
+  currentPhase: 'transmission' | 'reflection' | 'validation' | 'direction' | 'ended'
 }
 
 export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
@@ -66,7 +68,7 @@ export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
     transmission: 'Transmission',
     reflection: 'Reflection',
     validation: 'Validation',
-    emergence: 'Emergence',
+    direction: 'Direction',
     ended: 'Complete'
   }
 
@@ -74,7 +76,7 @@ export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
     transmission: 0,
     reflection: 1,
     validation: 2,
-    emergence: 3,
+    direction: 3,
     ended: 4
   }
 
@@ -296,22 +298,43 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
 interface ValidationPhaseProps {
   userRole: 'receiver' | 'giver'
   validationAttempts: number
-  onYes: (verb: EmergenceVerb) => void
+  onYes: (direction: DirectionType, source: 'pre_consented' | 'custom_request', customText?: string) => void
   onNo: () => void
+  listingId: string
 }
 
-export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: ValidationPhaseProps) {
-  const [showVerbSelector, setShowVerbSelector] = React.useState(false)
-  const [selectedVerb, setSelectedVerb] = React.useState<EmergenceVerb | null>(null)
+export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, listingId }: ValidationPhaseProps) {
+  const [showDirectionSelector, setShowDirectionSelector] = useState(false)
+  const [showCustomInput, setShowCustomInput] = useState(false)
+  const [customText, setCustomText] = useState('')
+  const [allowedDirections, setAllowedDirections] = useState<DirectionType[]>([])
 
-  const verbs: Array<{ value: EmergenceVerb; label: string; description: string }> = [
-    { value: 'explore', label: 'Explore together', description: 'Discover new perspectives' },
-    { value: 'strategize', label: 'Strategize solutions', description: 'Plan concrete next steps' },
-    { value: 'reflect_deeper', label: 'Reflect deeper', description: 'Go further into what emerged' },
-    { value: 'challenge', label: 'Challenge my thinking', description: 'Push back on my assumptions' },
-    { value: 'synthesize', label: 'Synthesize insights', description: 'Connect the threads together' },
-    { value: 'just_talk', label: 'Just talk freely', description: 'Open conversation' }
-  ]
+  // Fetch giver's allowed directions
+  useEffect(() => {
+    const fetchAllowedDirections = async () => {
+      const { data, error } = await supabase
+        .from('listings')
+        .select('directions_allowed')
+        .eq('id', listingId)
+        .single()
+
+      if (!error && data) {
+        setAllowedDirections(data.directions_allowed || [])
+      }
+    }
+
+    if (listingId) {
+      fetchAllowedDirections()
+    }
+  }, [listingId])
+
+  const allDirections: Record<DirectionType, { label: string; description: string }> = {
+    go_deeper: { label: 'Go deeper', description: 'Explore this further together' },
+    hear_perspective: { label: 'Hear your perspective', description: 'Share your thoughts' },
+    think_together: { label: 'Think together', description: 'Collaborative dialogue' },
+    build_next_step: { label: 'Build next step', description: 'Plan concrete actions' },
+    end_cleanly: { label: 'Wind down', description: 'Finish gracefully' }
+  }
 
   if (userRole === 'giver') {
     return (
@@ -343,7 +366,87 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
     )
   }
 
-  if (showVerbSelector) {
+  // Custom direction text input
+  if (showCustomInput) {
+    return (
+      <div style={overlayStyle}>
+        <div style={{ maxWidth: '450px', width: '100%' }}>
+          <button
+            onClick={() => {
+              setShowCustomInput(false)
+              setCustomText('')
+            }}
+            style={{
+              marginBottom: '20px',
+              background: 'none',
+              border: 'none',
+              color: colors.textSecondary,
+              cursor: 'pointer',
+              fontSize: '0.9rem'
+            }}
+          >
+            ← Back
+          </button>
+          <h2 style={{
+            fontSize: '1.3rem',
+            fontWeight: 600,
+            marginBottom: '20px',
+            color: colors.textPrimary
+          }}>
+            Request Custom Direction
+          </h2>
+          <p style={{
+            fontSize: '0.9rem',
+            color: colors.textSecondary,
+            marginBottom: '15px'
+          }}>
+            Describe what you'd like from the giver (200 character limit)
+          </p>
+          <textarea
+            value={customText}
+            onChange={(e) => setCustomText(e.target.value.slice(0, 200))}
+            placeholder="I would like..."
+            style={{
+              width: '100%',
+              minHeight: '100px',
+              padding: '12px',
+              background: colors.bgCard,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '3px',
+              color: colors.textPrimary,
+              fontSize: '1rem',
+              fontFamily: 'inherit',
+              resize: 'vertical'
+            }}
+          />
+          <p style={{
+            fontSize: '0.75rem',
+            color: colors.textMuted,
+            marginTop: '5px',
+            textAlign: 'right'
+          }}>
+            {customText.length}/200
+          </p>
+          <button
+            onClick={() => customText.trim() && onYes('go_deeper', 'custom_request', customText)}
+            disabled={!customText.trim()}
+            style={{
+              ...buttonStyle,
+              width: '100%',
+              marginTop: '15px',
+              opacity: customText.trim() ? 1 : 0.5,
+              cursor: customText.trim() ? 'pointer' : 'not-allowed'
+            }}
+          >
+            Send Request to Giver
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Direction selector
+  if (showDirectionSelector) {
     return (
       <div style={overlayStyle}>
         <div style={{ maxWidth: '450px', width: '100%' }}>
@@ -354,21 +457,23 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
             color: colors.textPrimary,
             textAlign: 'center'
           }}>
-            Given that you now feel understood, what, if anything, would you like from me next?
+            What would you like next?
           </h2>
+
+          {/* Pre-consented directions */}
           <div style={{
             display: 'grid',
             gap: '12px',
-            marginBottom: '20px'
+            marginBottom: '15px'
           }}>
-            {verbs.map(verb => (
+            {allowedDirections.map(direction => (
               <button
-                key={verb.value}
-                onClick={() => setSelectedVerb(verb.value)}
+                key={direction}
+                onClick={() => onYes(direction, 'pre_consented')}
                 style={{
                   padding: '16px',
-                  background: selectedVerb === verb.value ? colors.accentSoft : colors.bgCard,
-                  border: `1px solid ${selectedVerb === verb.value ? colors.accent : colors.border}`,
+                  background: colors.bgCard,
+                  border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
                   color: colors.textPrimary,
                   textAlign: 'left',
@@ -379,36 +484,36 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
                 <div style={{
                   fontWeight: 500,
                   marginBottom: '4px',
-                  color: selectedVerb === verb.value ? colors.accent : colors.textPrimary
+                  color: colors.accent
                 }}>
-                  {verb.label}
+                  {allDirections[direction].label}
                 </div>
                 <div style={{
                   fontSize: '0.85rem',
                   color: colors.textSecondary
                 }}>
-                  {verb.description}
+                  {allDirections[direction].description}
                 </div>
               </button>
             ))}
           </div>
+
+          {/* Request something else */}
           <button
-            onClick={() => selectedVerb && onYes(selectedVerb)}
-            disabled={!selectedVerb}
+            onClick={() => setShowCustomInput(true)}
             style={{
-              ...buttonStyle,
-              width: '100%',
-              opacity: selectedVerb ? 1 : 0.5,
-              cursor: selectedVerb ? 'pointer' : 'not-allowed'
+              ...buttonSecondaryStyle,
+              width: '100%'
             }}
           >
-            Continue to Emergence
+            Request something else
           </button>
         </div>
       </div>
     )
   }
 
+  // Initial validation screen
   return (
     <div style={overlayStyle}>
       <div style={{ maxWidth: '400px', textAlign: 'center' }}>
@@ -448,7 +553,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button
             style={{ ...buttonStyle, background: colors.success }}
-            onClick={() => setShowVerbSelector(true)}
+            onClick={() => setShowDirectionSelector(true)}
           >
             Yes, you understood me
           </button>
@@ -474,36 +579,249 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo }: V
 }
 
 // ============================================
-// EMERGENCE PHASE
+// DIRECTION PHASE
 // ============================================
 
-interface EmergencePhaseProps {
+interface DirectionPhaseProps {
   userRole: 'receiver' | 'giver'
-  emergenceVerb: EmergenceVerb | null
+  directionSelected: DirectionType | null
+  directionSource: 'pre_consented' | 'custom_request' | null
+  directionRequestText: string | null
+  directionGiverResponse: 'accepted' | 'declined' | null
   sessionTimeRemaining: number
   onRequestExtension?: () => void
+  onGiverCustomDirectionResponse: (accepted: boolean) => void
+  onSafetyExit: () => void
+  dailyCall: DailyCall | null
 }
 
-export function EmergencePhase({ userRole, emergenceVerb, sessionTimeRemaining, onRequestExtension }: EmergencePhaseProps) {
-  const verbLabels: Record<EmergenceVerb, string> = {
-    explore: 'Exploring together',
-    strategize: 'Strategizing solutions',
-    reflect_deeper: 'Reflecting deeper',
-    challenge: 'Challenging thinking',
-    synthesize: 'Synthesizing insights',
-    just_talk: 'Talking freely'
+export function DirectionPhase({
+  userRole,
+  directionSelected,
+  directionSource,
+  directionRequestText,
+  directionGiverResponse,
+  sessionTimeRemaining,
+  onRequestExtension,
+  onGiverCustomDirectionResponse,
+  onSafetyExit,
+  dailyCall
+}: DirectionPhaseProps) {
+  const [turnState, setTurnState] = useState<'turn1' | 'turn2' | 'completed'>('turn1')
+  const [micOwner, setMicOwner] = useState<'receiver' | 'giver'>('receiver')
+
+  const directionLabels: Record<DirectionType, string> = {
+    go_deeper: 'Going Deeper',
+    hear_perspective: 'Hearing Perspective',
+    think_together: 'Thinking Together',
+    build_next_step: 'Building Next Step',
+    end_cleanly: 'Winding Down'
   }
 
   const minutesRemaining = Math.floor(sessionTimeRemaining / 60)
   const secondsRemaining = sessionTimeRemaining % 60
-
-  // Show extension option at 3 minutes remaining for receiver
   const showExtensionOption = userRole === 'receiver' && sessionTimeRemaining <= 180 && sessionTimeRemaining > 0 && onRequestExtension
 
+  // Handle custom direction giver modal
+  if (directionSource === 'custom_request' && !directionGiverResponse && userRole === 'giver') {
+    return (
+      <div style={overlayStyle}>
+        <div style={{ maxWidth: '450px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '20px', color: colors.textPrimary }}>
+            Custom Direction Request
+          </h2>
+          <p style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.6 }}>
+            The receiver has requested:
+          </p>
+          <div style={{
+            background: colors.bgCard,
+            padding: '20px',
+            borderRadius: '3px',
+            marginBottom: '30px',
+            border: `1px solid ${colors.border}`
+          }}>
+            <p style={{ fontSize: '1.1rem', color: colors.textPrimary, lineHeight: 1.6 }}>
+              "{directionRequestText}"
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              style={{ ...buttonStyle, flex: 1 }}
+              onClick={() => onGiverCustomDirectionResponse(true)}
+            >
+              Accept
+            </button>
+            <button
+              style={{ ...buttonSecondaryStyle, flex: 1 }}
+              onClick={() => onGiverCustomDirectionResponse(false)}
+            >
+              Decline
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle build_next_step template
+  if (directionSelected === 'build_next_step') {
+    const handleTurn1Done = () => {
+      setTurnState('turn2')
+      if (dailyCall) {
+        dailyCall.setLocalAudio(userRole === 'giver')
+      }
+    }
+
+    const handleTurn2Done = () => {
+      setTurnState('completed')
+      if (dailyCall) {
+        dailyCall.setLocalAudio(false)
+      }
+    }
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '70px',
+        left: 0,
+        right: 0,
+        background: colors.bgSecondary,
+        borderBottom: `1px solid ${colors.border}`,
+        padding: '15px 20px',
+        zIndex: 98,
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+          {directionLabels[directionSelected]}
+        </div>
+        <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace', marginBottom: '10px' }}>
+          {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+        </div>
+
+        {turnState === 'turn1' && (
+          <div>
+            <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
+              Turn 1: Receiver proposes next step (Giver listens)
+            </p>
+            {userRole === 'receiver' && (
+              <button style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }} onClick={handleTurn1Done}>
+                Done Proposing
+              </button>
+            )}
+          </div>
+        )}
+
+        {turnState === 'turn2' && (
+          <div>
+            <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
+              Turn 2: Giver responds to proposal (Receiver listens)
+            </p>
+            {userRole === 'giver' && (
+              <button style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }} onClick={handleTurn2Done}>
+                Done Responding
+              </button>
+            )}
+          </div>
+        )}
+
+        {turnState === 'completed' && (
+          <p style={{ fontSize: '0.9rem', color: colors.accent }}>
+            Template complete - continue or wind down
+          </p>
+        )}
+
+        {userRole === 'giver' && (
+          <button
+            style={{
+              ...buttonSecondaryStyle,
+              fontSize: '0.75rem',
+              padding: '8px 16px',
+              marginTop: '10px',
+              borderColor: colors.error,
+              color: colors.error
+            }}
+            onClick={onSafetyExit}
+          >
+            Safety Exit
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // Handle think_together manual turn passing
+  if (directionSelected === 'think_together') {
+    const handlePassTurn = () => {
+      const newOwner = micOwner === 'receiver' ? 'giver' : 'receiver'
+      setMicOwner(newOwner)
+      if (dailyCall) {
+        dailyCall.setLocalAudio(userRole === newOwner)
+      }
+    }
+
+    return (
+      <div style={{
+        position: 'fixed',
+        top: '70px',
+        left: 0,
+        right: 0,
+        background: colors.bgSecondary,
+        borderBottom: `1px solid ${colors.border}`,
+        padding: '15px 20px',
+        zIndex: 98,
+        textAlign: 'center'
+      }}>
+        <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+          {directionLabels[directionSelected]}
+        </div>
+        <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace', marginBottom: '10px' }}>
+          {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+        </div>
+
+        <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
+          Current speaker: {micOwner === 'receiver' ? 'Receiver' : 'Giver'}
+        </p>
+
+        <button
+          style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }}
+          onClick={handlePassTurn}
+        >
+          Pass Turn
+        </button>
+
+        {showExtensionOption && (
+          <button
+            style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
+            onClick={onRequestExtension}
+          >
+            Request +30 minutes
+          </button>
+        )}
+
+        {userRole === 'giver' && (
+          <button
+            style={{
+              ...buttonSecondaryStyle,
+              fontSize: '0.75rem',
+              padding: '8px 16px',
+              marginTop: '10px',
+              borderColor: colors.error,
+              color: colors.error
+            }}
+            onClick={onSafetyExit}
+          >
+            Safety Exit
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  // Default direction UI (go_deeper, hear_perspective, end_cleanly)
   return (
     <div style={{
       position: 'fixed',
-      top: '70px', // Below phase indicator
+      top: '70px',
       left: 0,
       right: 0,
       background: colors.bgSecondary,
@@ -512,33 +830,35 @@ export function EmergencePhase({ userRole, emergenceVerb, sessionTimeRemaining, 
       zIndex: 98,
       textAlign: 'center'
     }}>
-      <div style={{
-        fontSize: '0.85rem',
-        color: colors.accent,
-        marginBottom: '5px',
-        fontWeight: 600
-      }}>
-        {emergenceVerb ? verbLabels[emergenceVerb] : 'Free conversation'}
+      <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+        {directionSelected ? directionLabels[directionSelected] : 'Direction Phase'}
       </div>
-      <div style={{
-        fontSize: '1.2rem',
-        color: colors.textPrimary,
-        fontFamily: 'monospace'
-      }}>
+      <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace' }}>
         {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
       </div>
 
       {showExtensionOption && (
         <button
-          style={{
-            ...buttonStyle,
-            fontSize: '0.85rem',
-            padding: '10px 20px',
-            marginTop: '10px'
-          }}
+          style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
           onClick={onRequestExtension}
         >
           Request +30 minutes
+        </button>
+      )}
+
+      {userRole === 'giver' && (
+        <button
+          style={{
+            ...buttonSecondaryStyle,
+            fontSize: '0.75rem',
+            padding: '8px 16px',
+            marginTop: '10px',
+            borderColor: colors.error,
+            color: colors.error
+          }}
+          onClick={onSafetyExit}
+        >
+          Safety Exit
         </button>
       )}
     </div>
