@@ -550,7 +550,7 @@ export function SessionStateMachine({
     } else if (sessionState.current_phase === 'reflection') {
       shouldMicBeOn = userRole === 'giver'
     } else if (sessionState.current_phase === 'validation') {
-      shouldMicBeOn = false // Both muted
+      shouldMicBeOn = false // Neither has the floor
     } else if (sessionState.current_phase === 'direction') {
       const direction = sessionState.direction_selected
 

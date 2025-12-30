@@ -1,5 +1,5 @@
 // Supabase Edge Function: Finalize Session
-// Computes elapsed time, applies payout policy, handles Stripe refunds/payouts
+// Full payout policy - no pro-rating, platform credits for safety exits
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -57,44 +57,56 @@ serve(async (req) => {
     const endedAt = new Date()
     const elapsedSeconds = Math.floor((endedAt.getTime() - startedAt.getTime()) / 1000)
 
-    // Get booking duration (blocks_booked * 30 minutes * 60 seconds)
-    const totalDurationSeconds = booking.blocks_booked * 30 * 60
-    const elapsedPercentage = Math.min(Math.max(elapsedSeconds / totalDurationSeconds, 0), 1.0)
+    console.log(`[Finalize Session] Elapsed: ${elapsedSeconds}s`)
 
-    console.log(`[Finalize Session] Elapsed: ${elapsedSeconds}s / ${totalDurationSeconds}s = ${(elapsedPercentage * 100).toFixed(1)}%`)
+    // PAYOUT POLICY (No Pro-rating)
+    let payoutNetCents = 0
+    let refundGrossCents = 0
+    let creditAmountCents = 0
 
-    // PAYOUT POLICY (Linear Pro-rating)
-    let payoutPercentage = 0
-    let refundPercentage = 0
+    const totalAmountCents = booking.total_amount_cents || 0
+    const platformFeeCents = booking.platform_fee_cents || 0
+    const giverPayoutCents = booking.giver_payout_cents || 0
 
     switch (end_reason) {
       case 'receiver_end_complete':
       case 'completed':
         // Full payout, no refund
-        payoutPercentage = 1.0
-        refundPercentage = 0
+        payoutNetCents = giverPayoutCents
+        refundGrossCents = 0
+        creditAmountCents = 0
         console.log('[Finalize Session] Policy: Full payout (session completed)')
         break
 
       case 'giver_safety_exit':
+        // Full payout to giver, platform credit to receiver, no cash refund
+        payoutNetCents = giverPayoutCents
+        refundGrossCents = 0
+        creditAmountCents = platformFeeCents  // Receiver gets platform fee as credit
+        console.log(`[Finalize Session] Policy: Full payout + ${creditAmountCents} credit (safety exit)`)
+        break
+
       case 'technical_failure':
-        // LINEAR pro-rating: % elapsed = % payout, rest refunded
-        payoutPercentage = elapsedPercentage
-        refundPercentage = 1.0 - elapsedPercentage
-        console.log(`[Finalize Session] Policy: Pro-rated (${(payoutPercentage * 100).toFixed(1)}% payout, ${(refundPercentage * 100).toFixed(1)}% refund)`)
+        // Full payout, no refund (platform absorbs cost)
+        payoutNetCents = giverPayoutCents
+        refundGrossCents = 0
+        creditAmountCents = 0
+        console.log('[Finalize Session] Policy: Full payout (technical failure)')
         break
 
       case 'receiver_no_show':
         // Full refund to receiver, no payout to giver
-        payoutPercentage = 0
-        refundPercentage = 1.0
+        payoutNetCents = 0
+        refundGrossCents = totalAmountCents
+        creditAmountCents = 0
         console.log('[Finalize Session] Policy: Full refund (receiver no-show)')
         break
 
       case 'giver_no_show':
         // Full refund to receiver
-        payoutPercentage = 0
-        refundPercentage = 1.0
+        payoutNetCents = 0
+        refundGrossCents = totalAmountCents
+        creditAmountCents = 0
         console.log('[Finalize Session] Policy: Full refund (giver no-show)')
         break
 
@@ -102,15 +114,7 @@ serve(async (req) => {
         throw new Error(`Unknown end_reason: ${end_reason}`)
     }
 
-    // Calculate amounts
-    const totalAmountCents = booking.total_amount_cents || 0
-    const platformFeeCents = booking.platform_fee_cents || 0
-    const giverPayoutOriginalCents = booking.giver_payout_cents || 0
-
-    const payoutNetCents = Math.floor(giverPayoutOriginalCents * payoutPercentage)
-    const refundGrossCents = Math.floor(totalAmountCents * refundPercentage)
-
-    console.log(`[Finalize Session] Amounts: payout=${payoutNetCents}, refund=${refundGrossCents}`)
+    console.log(`[Finalize Session] Amounts: payout=${payoutNetCents}, refund=${refundGrossCents}, credit=${creditAmountCents}`)
 
     // Stripe operations
     const paymentIntentId = booking.stripe_payment_intent_id
@@ -119,7 +123,7 @@ serve(async (req) => {
       throw new Error('No payment intent found for booking')
     }
 
-    // Process refund if needed
+    // Process refund if needed (only for no-shows)
     if (refundGrossCents > 0) {
       console.log(`[Finalize Session] Creating Stripe refund for ${refundGrossCents} cents`)
 
@@ -127,12 +131,36 @@ serve(async (req) => {
         await stripe.refunds.create({
           payment_intent: paymentIntentId,
           amount: refundGrossCents,
-          reason: end_reason === 'giver_no_show' || end_reason === 'receiver_no_show' ? 'requested_by_customer' : 'requested_by_customer',
+          reason: 'requested_by_customer',
         })
         console.log('[Finalize Session] Stripe refund created successfully')
       } catch (stripeError: any) {
         console.error('[Finalize Session] Stripe refund failed:', stripeError.message)
         // Don't throw - still update database with failed status
+      }
+    }
+
+    // Create platform credit if needed (safety exit)
+    if (creditAmountCents > 0) {
+      console.log(`[Finalize Session] Creating ${creditAmountCents} cents credit for user ${booking.seeker_id}`)
+
+      try {
+        const { error: creditError } = await supabase
+          .from('credits')
+          .insert({
+            user_id: booking.seeker_id,
+            amount_cents: creditAmountCents,
+            source_booking_id: booking_id,
+            reason: 'giver_safety_exit'
+          })
+
+        if (creditError) {
+          console.error('[Finalize Session] Credit creation failed:', creditError.message)
+        } else {
+          console.log('[Finalize Session] Credit created successfully')
+        }
+      } catch (creditErr: any) {
+        console.error('[Finalize Session] Credit creation error:', creditErr.message)
       }
     }
 
@@ -145,7 +173,7 @@ serve(async (req) => {
         end_reason,
         payout_net_cents: payoutNetCents,
         refund_gross_cents: refundGrossCents,
-        payout_status: refundGrossCents > 0 ? 'completed' : 'completed',
+        payout_status: 'completed',
       })
       .eq('id', booking_id)
 
@@ -172,8 +200,8 @@ serve(async (req) => {
         success: true,
         payout_net_cents: payoutNetCents,
         refund_gross_cents: refundGrossCents,
+        credit_amount_cents: creditAmountCents,
         elapsed_seconds: elapsedSeconds,
-        elapsed_percentage: elapsedPercentage,
       }),
       {
         status: 200,

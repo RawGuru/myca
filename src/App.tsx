@@ -4245,7 +4245,7 @@ function App() {
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            You'll be muted while they speak. Your job is to reflect what you heard until they confirm it's accurate. After that, you can consent to a next step or end the session.
+            They'll have the protected floor while they speak. Your job is to reflect what you heard until they confirm it's accurate. After that, you can consent to a next step or end the session.
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
@@ -7109,7 +7109,7 @@ function App() {
                 { value: 'go_deeper', label: 'Go deeper', description: 'Explore topics further together' },
                 { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights' },
                 { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking' },
-                { value: 'build_next_step', label: 'Build next step', description: 'Help plan concrete actions' },
+                { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions' },
                 { value: 'end_cleanly', label: 'Wind down', description: 'Finish session gracefully' }
               ].map(direction => (
                 <label

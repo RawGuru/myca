@@ -332,7 +332,7 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, lis
     go_deeper: { label: 'Go deeper', description: 'Explore this further together' },
     hear_perspective: { label: 'Hear your perspective', description: 'Share your thoughts' },
     think_together: { label: 'Think together', description: 'Collaborative dialogue' },
-    build_next_step: { label: 'Build next step', description: 'Plan concrete actions' },
+    build_next_step: { label: 'Define next step', description: 'Plan concrete actions' },
     end_cleanly: { label: 'Wind down', description: 'Finish gracefully' }
   }
 
@@ -614,7 +614,7 @@ export function DirectionPhase({
     go_deeper: 'Going Deeper',
     hear_perspective: 'Hearing Perspective',
     think_together: 'Thinking Together',
-    build_next_step: 'Building Next Step',
+    build_next_step: 'Defining Next Step',
     end_cleanly: 'Winding Down'
   }
 
