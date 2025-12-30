@@ -698,7 +698,9 @@ function App() {
     description: '',
     selectedCategories: [] as Category[],
     listing_video_url: '' as string,
-    listing_image_url: '' as string
+    listing_image_url: '' as string,
+    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'] as string[],
+    boundaries: '' as string
   })
 
   // Seeker discovery flow state (Part 5)
@@ -1769,6 +1771,8 @@ function App() {
     categories: Category[]
     listing_video_url?: string
     listing_image_url?: string
+    directions_allowed?: string[]
+    boundaries?: string
   }) => {
     if (!user) return { success: false, error: 'Not authenticated' }
 
@@ -1788,6 +1792,8 @@ function App() {
           description: listingData.description,
           listing_video_url: listingData.listing_video_url || null,
           listing_image_url: listingData.listing_image_url || null,
+          directions_allowed: listingData.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
+          boundaries: listingData.boundaries || null,
           is_active: true
         })
         .select()
@@ -6926,7 +6932,9 @@ function App() {
                 description: '', // No longer used
                 categories: [], // No longer used - no category filtering
                 listing_video_url: listingFormData.listing_video_url,
-                listing_image_url: undefined // No longer supported
+                listing_image_url: undefined, // No longer supported
+                directions_allowed: listingFormData.directions_allowed,
+                boundaries: listingFormData.boundaries
               })
 
               if (result.success) {
@@ -7081,6 +7089,86 @@ function App() {
               {listingFormData.listing_video_url && (
                 <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
               )}
+            </div>
+
+            {/* Direction Types Selection */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Directions you allow <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
+                Select which directions receivers can choose from during sessions
+              </p>
+              {[
+                { value: 'go_deeper', label: 'Go deeper', description: 'Explore topics further together' },
+                { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights' },
+                { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking' },
+                { value: 'build_next_step', label: 'Build next step', description: 'Help plan concrete actions' },
+                { value: 'end_cleanly', label: 'Wind down', description: 'Finish session gracefully' }
+              ].map(direction => (
+                <label
+                  key={direction.value}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    padding: '12px',
+                    marginBottom: '8px',
+                    background: listingFormData.directions_allowed?.includes(direction.value) ? colors.accentSoft : 'transparent',
+                    border: `1px solid ${listingFormData.directions_allowed?.includes(direction.value) ? colors.accent : colors.border}`,
+                    borderRadius: '3px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={listingFormData.directions_allowed?.includes(direction.value) || false}
+                    onChange={(e) => {
+                      const current = listingFormData.directions_allowed || []
+                      const updated = e.target.checked
+                        ? [...current, direction.value]
+                        : current.filter(d => d !== direction.value)
+                      setListingFormData({ ...listingFormData, directions_allowed: updated })
+                    }}
+                    style={{ marginRight: '12px', marginTop: '4px' }}
+                  />
+                  <div>
+                    <div style={{ fontWeight: 500, color: colors.textPrimary, marginBottom: '2px' }}>
+                      {direction.label}
+                    </div>
+                    <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                      {direction.description}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {/* Boundaries Text */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+                Boundaries <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+              </label>
+              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
+                Share any boundaries or topics you prefer not to discuss
+              </p>
+              <textarea
+                value={listingFormData.boundaries || ''}
+                onChange={(e) => setListingFormData({ ...listingFormData, boundaries: e.target.value })}
+                placeholder="e.g., I prefer not to discuss politics or medical advice"
+                style={{
+                  width: '100%',
+                  minHeight: '80px',
+                  padding: '12px',
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '3px',
+                  color: colors.textPrimary,
+                  fontSize: '0.9rem',
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+              />
             </div>
 
             {/* Submit */}
