@@ -618,6 +618,11 @@ function App() {
   const [cardExpiry, setCardExpiry] = useState('')
   const [cardCvc, setCardCvc] = useState('')
 
+  // Credits state
+  const [availableCredits, setAvailableCredits] = useState<any[]>([])
+  const [totalCreditsCents, setTotalCreditsCents] = useState(0)
+  const [creditsAppliedCents, setCreditsAppliedCents] = useState(0)
+
   // Stripe Connect state (for givers)
   const [myGiverProfile, setMyGiverProfile] = useState<Giver | null>(null)
   const [stripeConnectLoading, setStripeConnectLoading] = useState(false)
@@ -1029,6 +1034,31 @@ function App() {
     return scheduled.toISOString()
   }
 
+  // Fetch unused credits for current user
+  const fetchUnusedCredits = async () => {
+    if (!user) return
+
+    try {
+      const { data: credits, error } = await supabase
+        .from('credits')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('used_at', null)
+        .order('created_at', { ascending: true }) // Use oldest credits first
+
+      if (error) {
+        console.error('Error fetching credits:', error)
+        return
+      }
+
+      const totalCents = (credits || []).reduce((sum, credit) => sum + credit.amount_cents, 0)
+      setAvailableCredits(credits || [])
+      setTotalCreditsCents(totalCents)
+    } catch (err) {
+      console.error('Error fetching credits:', err)
+    }
+  }
+
   // Create a booking
   const createBooking = async () => {
     if (!user || !selectedGiver || !selectedBookingDate || !selectedBookingTime) return
@@ -1058,6 +1088,13 @@ function App() {
       const platformFeeCents = grossAmountCents - netAmountCents
       const giverPayoutCents = netAmountCents
       const totalAmountCents = grossAmountCents // For backwards compatibility
+
+      // Fetch available credits
+      await fetchUnusedCredits()
+
+      // Calculate credit application
+      const creditsToApplyCents = Math.min(totalCreditsCents, grossAmountCents)
+      setCreditsAppliedCents(creditsToApplyCents)
 
       // Create booking record with multi-listing data
       const { data, error } = await supabase
@@ -1099,63 +1136,97 @@ function App() {
     setBookingError('')
 
     try {
-      // Validate card inputs (basic validation)
-      if (!cardNumber || cardNumber.replace(/\s/g, '').length < 15) {
-        throw new Error('Please enter a valid card number')
-      }
-      if (!cardExpiry || !cardExpiry.includes('/')) {
-        throw new Error('Please enter a valid expiry date (MM/YY)')
-      }
-      if (!cardCvc || cardCvc.length < 3) {
-        throw new Error('Please enter a valid CVC')
-      }
+      // Calculate amount after credits
+      const grossAmountCents = currentBooking.total_amount_cents
+      const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
 
-      // Phase 7: Real Stripe Integration
-      // Step 1: Create PaymentIntent on backend
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) throw new Error('No active session')
+      let payment_intent_id: string | null = null
 
-      const paymentIntentResponse = await fetch(`${SUPABASE_URL}/functions/v1/create-payment-intent`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          amount_cents: currentBooking.total_amount_cents,
-          booking_id: currentBooking.id,
-          type: 'booking',
-          seeker_email: user.email,
-          giver_id: currentBooking.giver_id,
+      // Only process Stripe payment if there's a remaining balance
+      if (amountAfterCreditsCents > 0) {
+        // Validate card inputs (basic validation)
+        if (!cardNumber || cardNumber.replace(/\s/g, '').length < 15) {
+          throw new Error('Please enter a valid card number')
+        }
+        if (!cardExpiry || !cardExpiry.includes('/')) {
+          throw new Error('Please enter a valid expiry date (MM/YY)')
+        }
+        if (!cardCvc || cardCvc.length < 3) {
+          throw new Error('Please enter a valid CVC')
+        }
+
+        // Phase 7: Real Stripe Integration
+        // Step 1: Create PaymentIntent on backend
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) throw new Error('No active session')
+
+        const paymentIntentResponse = await fetch(`${SUPABASE_URL}/functions/v1/create-payment-intent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            amount_cents: amountAfterCreditsCents, // Reduced amount after credits
+            booking_id: currentBooking.id,
+            type: 'booking',
+            seeker_email: user.email,
+            giver_id: currentBooking.giver_id,
+          })
         })
-      })
 
-      if (!paymentIntentResponse.ok) {
-        const errorData = await paymentIntentResponse.json()
-        throw new Error(errorData.error || 'Failed to create payment intent')
+        if (!paymentIntentResponse.ok) {
+          const errorData = await paymentIntentResponse.json()
+          throw new Error(errorData.error || 'Failed to create payment intent')
+        }
+
+        const { client_secret: _clientSecret, payment_intent_id: pid } = await paymentIntentResponse.json()
+        payment_intent_id = pid
+
+        // Step 2: Confirm payment with Stripe
+        // TODO: Production - Use Stripe Elements for PCI compliance
+        // For now, simulating payment confirmation
+        // In production, you would:
+        // 1. Use Stripe Elements to securely collect card details
+        // 2. Call stripe.confirmCardPayment(_clientSecret, { payment_method: elementId })
+        // 3. Or use Stripe Checkout for a hosted payment page
+
+        const stripe = await getStripe()
+        if (!stripe) throw new Error('Stripe failed to load')
+
+        // Simulate payment success for demo
+        await new Promise(resolve => setTimeout(resolve, 1500))
+
+        // In production, this would be the result from stripe.confirmCardPayment()
+        const paymentSucceeded = true
+
+        if (!paymentSucceeded) {
+          throw new Error('Payment was not successful')
+        }
+      } else {
+        // Fully covered by credits - no Stripe payment needed
+        console.log('Booking fully covered by credits, skipping Stripe payment')
       }
 
-      const { client_secret: _clientSecret, payment_intent_id } = await paymentIntentResponse.json()
+      // Mark credits as used
+      if (creditsAppliedCents > 0) {
+        let remainingToApply = creditsAppliedCents
+        for (const credit of availableCredits) {
+          if (remainingToApply <= 0) break
 
-      // Step 2: Confirm payment with Stripe
-      // TODO: Production - Use Stripe Elements for PCI compliance
-      // For now, simulating payment confirmation
-      // In production, you would:
-      // 1. Use Stripe Elements to securely collect card details
-      // 2. Call stripe.confirmCardPayment(_clientSecret, { payment_method: elementId })
-      // 3. Or use Stripe Checkout for a hosted payment page
+          const amountToUse = Math.min(credit.amount_cents, remainingToApply)
+          if (amountToUse > 0) {
+            await supabase
+              .from('credits')
+              .update({
+                used_at: new Date().toISOString(),
+                booking_id: currentBooking.id
+              })
+              .eq('id', credit.id)
 
-      const stripe = await getStripe()
-      if (!stripe) throw new Error('Stripe failed to load')
-
-      // Simulate payment success for demo
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // In production, this would be the result from stripe.confirmCardPayment()
-      const paymentSucceeded = true
-
-      if (!paymentSucceeded) {
-        throw new Error('Payment was not successful')
+            remainingToApply -= amountToUse
+          }
+        }
       }
 
       // Step 3: Create Daily.co room for the video session
