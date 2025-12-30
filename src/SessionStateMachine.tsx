@@ -7,7 +7,7 @@ import {
   TransmissionPhase,
   ReflectionPhase,
   ValidationPhase,
-  EmergencePhase,
+  DirectionPhase,
   SessionEndedSummary
 } from './components/session/PhaseComponents'
 
@@ -15,25 +15,36 @@ import {
 // TYPE DEFINITIONS
 // ============================================
 
-export type SessionPhase = 'transmission' | 'reflection' | 'validation' | 'emergence' | 'ended'
+export type SessionPhase = 'transmission' | 'reflection' | 'validation' | 'direction' | 'ended'
 export type UserRole = 'receiver' | 'giver'
-export type EmergenceVerb = 'explore' | 'strategize' | 'reflect_deeper' | 'challenge' | 'synthesize' | 'just_talk'
+export type DirectionType = 'go_deeper' | 'hear_perspective' | 'think_together' | 'build_next_step' | 'end_cleanly'
 
 export interface SessionState {
   id: string
   booking_id: string
   current_phase: SessionPhase
   validation_attempts: number
-  emergence_verb: EmergenceVerb | null
+
+  // Direction fields (replacing emergence)
+  direction_selected: DirectionType | null
+  direction_source: 'pre_consented' | 'custom_request' | null
+  direction_request_text: string | null
+  direction_giver_response: 'accepted' | 'declined' | null
+
+  // Legacy field for backward compatibility
+  emergence_verb: string | null
+
   extension_pending: boolean
   extension_id: string | null
   started_at: string
   transmission_started_at: string | null
   reflection_started_at: string | null
   validation_started_at: string | null
-  emergence_started_at: string | null
+  direction_started_at: string | null
   ended_at: string | null
-  end_reason: 'completed' | 'time_expired' | 'participant_left' | 'error' | null
+  end_reason: 'completed' | 'time_expired' | 'participant_left' | 'error' |
+              'receiver_end_complete' | 'giver_safety_exit' | 'technical_failure' |
+              'receiver_no_show' | 'giver_no_show' | null
   updated_at: string
   updated_by: string | null
   created_at: string
@@ -340,35 +351,40 @@ export function SessionStateMachine({
     await updatePhase('reflection', 'user')
   }
 
-  const handleReceiverValidationYes = async (verb: EmergenceVerb) => {
-    console.log('[Receiver] Validation YES, advancing to emergence with verb:', verb)
+  const handleReceiverValidationYes = async (
+    direction: DirectionType,
+    source: 'pre_consented' | 'custom_request',
+    customText?: string
+  ) => {
+    console.log('[Receiver] Validation YES, advancing to direction with:', direction, source)
 
     if (!sessionState) return
 
-    // Update phase and verb
-    setSessionState(prev => prev ? {
-      ...prev,
-      current_phase: 'emergence',
-      emergence_verb: verb,
-      emergence_started_at: new Date().toISOString(),
+    const updateData: any = {
+      current_phase: 'direction',
+      direction_selected: direction,
+      direction_source: source,
+      direction_started_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       updated_by: userId
-    } : null)
+    }
+
+    if (source === 'custom_request' && customText) {
+      updateData.direction_request_text = customText
+      updateData.direction_giver_response = null // Pending giver response
+    }
+
+    // Optimistic update
+    setSessionState(prev => prev ? { ...prev, ...updateData } : null)
 
     try {
       const { error } = await supabase
         .from('session_states')
-        .update({
-          current_phase: 'emergence',
-          emergence_verb: verb,
-          emergence_started_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          updated_by: userId
-        })
+        .update(updateData)
         .eq('booking_id', booking.id)
 
       if (error) {
-        console.error('[Session] Failed to advance to emergence:', error)
+        console.error('[Session] Failed to advance to direction:', error)
         await fetchOrCreateSessionState()
         alert('Failed to advance session. Please try again.')
         return
@@ -377,18 +393,19 @@ export function SessionStateMachine({
       // Record milestones
       await recordMilestone('validation_succeeded', {
         validation_attempts: sessionState.validation_attempts,
-        emergence_verb: verb
+        direction_selected: direction,
+        direction_source: source
       })
       await recordMilestone('phase_transition', {
         from_phase: 'validation',
-        to_phase: 'emergence',
-        emergence_verb: verb
+        to_phase: 'direction',
+        direction_selected: direction
       })
 
       // Update giver metrics (validation succeeded)
       await updateGiverMetrics(true)
     } catch (err) {
-      console.error('[Session] Error advancing to emergence:', err)
+      console.error('[Session] Error advancing to direction:', err)
       await fetchOrCreateSessionState()
     }
   }
@@ -447,6 +464,67 @@ export function SessionStateMachine({
     }
   }
 
+  // Handle custom direction response from giver
+  const handleGiverCustomDirectionResponse = async (accepted: boolean) => {
+    console.log('[Giver] Custom direction response:', accepted)
+
+    if (!sessionState) return
+
+    try {
+      const { error } = await supabase
+        .from('session_states')
+        .update({
+          direction_giver_response: accepted ? 'accepted' : 'declined',
+          updated_at: new Date().toISOString(),
+          updated_by: userId
+        })
+        .eq('booking_id', booking.id)
+
+      if (error) throw error
+
+      if (!accepted) {
+        // If declined, go back to validation
+        await updatePhase('validation', 'system')
+      }
+    } catch (err) {
+      console.error('[Session] Error responding to custom direction:', err)
+    }
+  }
+
+  // Handle safety exit from giver
+  const handleGiverSafetyExit = async () => {
+    if (!confirm('Are you sure you want to exit for safety reasons? This will end the session and apply pro-rated payout.')) {
+      return
+    }
+
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      // Call finalize-session edge function
+      const response = await fetch(`${supabaseUrl}/functions/v1/finalize-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          booking_id: booking.id,
+          end_reason: 'giver_safety_exit'
+        })
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to finalize session')
+      }
+
+      await updatePhase('ended', 'system')
+    } catch (err) {
+      console.error('[Session] Error processing safety exit:', err)
+      alert('Failed to exit session. Please try again.')
+    }
+  }
+
   // Handle giver actions
   const handleGiverDoneReflection = async () => {
     console.log('[Giver] Done with reflection, advancing to validation')
@@ -464,15 +542,30 @@ export function SessionStateMachine({
   useEffect(() => {
     if (!dailyCall || !sessionState) return
 
-    const micPermissions: Record<SessionPhase, Record<UserRole, boolean>> = {
-      transmission: { receiver: true, giver: false },
-      reflection: { receiver: false, giver: true },
-      validation: { receiver: false, giver: false }, // Both muted during validation UI
-      emergence: { receiver: true, giver: true },
-      ended: { receiver: false, giver: false }
-    }
+    let shouldMicBeOn = false
 
-    const shouldMicBeOn = micPermissions[sessionState.current_phase][userRole]
+    if (sessionState.current_phase === 'transmission') {
+      shouldMicBeOn = userRole === 'receiver'
+    } else if (sessionState.current_phase === 'reflection') {
+      shouldMicBeOn = userRole === 'giver'
+    } else if (sessionState.current_phase === 'validation') {
+      shouldMicBeOn = false // Both muted
+    } else if (sessionState.current_phase === 'direction') {
+      const direction = sessionState.direction_selected
+
+      if (direction === 'go_deeper') {
+        shouldMicBeOn = userRole === 'receiver'
+      } else if (direction === 'hear_perspective') {
+        shouldMicBeOn = userRole === 'giver'
+      } else if (direction === 'think_together' || direction === 'build_next_step') {
+        // Manual control in DirectionPhase component
+        return
+      } else if (direction === 'end_cleanly') {
+        shouldMicBeOn = false
+      }
+    } else if (sessionState.current_phase === 'ended') {
+      shouldMicBeOn = false
+    }
 
     try {
       dailyCall.setLocalAudio(shouldMicBeOn)
@@ -480,23 +573,45 @@ export function SessionStateMachine({
     } catch (err) {
       console.error('[Mic] Error setting audio state:', err)
     }
-  }, [dailyCall, sessionState?.current_phase, userRole])
+  }, [dailyCall, sessionState?.current_phase, sessionState?.direction_selected, userRole])
 
   // Monitor for manual mic toggles and override
+  // (Skip for think_together and build_next_step which have manual control)
   useEffect(() => {
     if (!dailyCall || !sessionState) return
 
+    // Skip enforcement for directions with manual control
+    if (sessionState.current_phase === 'direction') {
+      const direction = sessionState.direction_selected
+      if (direction === 'think_together' || direction === 'build_next_step') {
+        return // Don't enforce mic state for these directions
+      }
+    }
+
     const handleParticipantUpdated = (event: any) => {
       if (event.participant.local) {
-        const micPermissions: Record<SessionPhase, Record<UserRole, boolean>> = {
-          transmission: { receiver: true, giver: false },
-          reflection: { receiver: false, giver: true },
-          validation: { receiver: false, giver: false },
-          emergence: { receiver: true, giver: true },
-          ended: { receiver: false, giver: false }
+        // Determine expected mic state
+        let shouldMicBeOn = false
+
+        if (sessionState.current_phase === 'transmission') {
+          shouldMicBeOn = userRole === 'receiver'
+        } else if (sessionState.current_phase === 'reflection') {
+          shouldMicBeOn = userRole === 'giver'
+        } else if (sessionState.current_phase === 'validation') {
+          shouldMicBeOn = false
+        } else if (sessionState.current_phase === 'direction') {
+          const direction = sessionState.direction_selected
+          if (direction === 'go_deeper') {
+            shouldMicBeOn = userRole === 'receiver'
+          } else if (direction === 'hear_perspective') {
+            shouldMicBeOn = userRole === 'giver'
+          } else if (direction === 'end_cleanly') {
+            shouldMicBeOn = false
+          }
+        } else if (sessionState.current_phase === 'ended') {
+          shouldMicBeOn = false
         }
 
-        const shouldMicBeOn = micPermissions[sessionState.current_phase][userRole]
         const actualMicState = event.participant.tracks.audio.state
 
         if ((actualMicState === 'playable') !== shouldMicBeOn) {
@@ -511,7 +626,7 @@ export function SessionStateMachine({
     return () => {
       dailyCall.off('participant-updated', handleParticipantUpdated)
     }
-  }, [dailyCall, sessionState?.current_phase, userRole])
+  }, [dailyCall, sessionState?.current_phase, sessionState?.direction_selected, userRole])
 
   if (loading) {
     return (
@@ -578,12 +693,18 @@ export function SessionStateMachine({
             />
           )}
 
-          {sessionState.current_phase === 'emergence' && (
-            <EmergencePhase
+          {sessionState.current_phase === 'direction' && (
+            <DirectionPhase
               userRole={userRole}
-              emergenceVerb={sessionState.emergence_verb || 'explore'}
+              directionSelected={sessionState.direction_selected}
+              directionSource={sessionState.direction_source}
+              directionRequestText={sessionState.direction_request_text}
+              directionGiverResponse={sessionState.direction_giver_response}
               sessionTimeRemaining={sessionTimeRemaining}
               onRequestExtension={onRequestExtension}
+              onGiverCustomDirectionResponse={handleGiverCustomDirectionResponse}
+              onSafetyExit={handleGiverSafetyExit}
+              dailyCall={dailyCall}
             />
           )}
 
