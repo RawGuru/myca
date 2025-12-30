@@ -6723,7 +6723,9 @@ function App() {
                     description: '',
                     selectedCategories: [],
                     listing_video_url: '',
-                    listing_image_url: ''
+                    listing_image_url: '',
+                    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
+                    boundaries: ''
                   })
                   setSelectedListing(null)
                   setScreen('createListing')
@@ -6825,7 +6827,9 @@ function App() {
                                 description: listing.description || '',
                                 selectedCategories: listing.categories || [],
                                 listing_video_url: listing.listing_video_url || '',
-                                listing_image_url: listing.listing_image_url || ''
+                                listing_image_url: listing.listing_image_url || '',
+                                directions_allowed: listing.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
+                                boundaries: listing.boundaries || ''
                               })
                               setScreen('editListing')
                             }}

@@ -870,7 +870,9 @@ export function DirectionPhase({
 // ============================================
 
 interface SessionEndedSummaryProps {
-  endReason: 'completed' | 'time_expired' | 'participant_left' | 'error'
+  endReason: 'completed' | 'time_expired' | 'participant_left' | 'error' |
+             'receiver_end_complete' | 'giver_safety_exit' | 'technical_failure' |
+             'receiver_no_show' | 'giver_no_show'
 }
 
 export function SessionEndedSummary({ endReason }: SessionEndedSummaryProps) {
@@ -878,7 +880,12 @@ export function SessionEndedSummary({ endReason }: SessionEndedSummaryProps) {
     completed: 'Session completed successfully',
     time_expired: 'Time has expired',
     participant_left: 'A participant left the session',
-    error: 'Session ended due to an error'
+    error: 'Session ended due to an error',
+    receiver_end_complete: 'Session completed successfully',
+    giver_safety_exit: 'Session ended - Safety exit',
+    technical_failure: 'Session ended - Technical issue',
+    receiver_no_show: 'Session ended - Receiver did not show',
+    giver_no_show: 'Session ended - Giver did not show'
   }
 
   return (
