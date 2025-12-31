@@ -2084,6 +2084,23 @@ function App() {
     }
   }, [user, myGiverProfile, screen])
 
+  // Auto-redirect authenticated users without profiles to role selection
+  useEffect(() => {
+    if (screen === 'welcome' && user) {
+      supabase
+        .from('profiles')
+        .select('name, is_giver')
+        .eq('id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          // If user has no profile or no name set, they're new → show role selection
+          if (!data || !data.name) {
+            setScreen('roleSelection')
+          }
+        })
+    }
+  }, [user, screen])
+
   // Toggle save/unsave a giver (private, no notifications)
   // Requires saved_givers table in Supabase with RLS policies
   const toggleSaveGiver = async (giverId: string, e?: React.MouseEvent) => {
@@ -3048,23 +3065,6 @@ function App() {
   }
 
   if (screen === 'welcome') {
-    // Check if authenticated user is new and redirect to role selection
-    React.useEffect(() => {
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('name, is_giver')
-          .eq('id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            // If user has no profile or no name set, they're new → show role selection
-            if (!data || !data.name) {
-              setScreen('roleSelection')
-            }
-          })
-      }
-    }, [user])
-
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
