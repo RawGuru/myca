@@ -122,8 +122,8 @@ const colors = {
   bgSecondary: '#0a0a0a',
   bgCard: '#0f0f0f',
   textPrimary: '#ffffff',
-  textSecondary: '#999999',
-  textMuted: '#666666',
+  textSecondary: '#b3b3b3',
+  textMuted: '#808080',
   accent: '#b89d5f',
   accentSoft: 'rgba(184, 157, 95, 0.1)',
   border: '#1a1a1a',
@@ -391,6 +391,9 @@ function ImageUpload({
           <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
             Max {maxSizeMB}MB • JPG, PNG, or GIF
           </p>
+          <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', fontStyle: 'italic' }}>
+            Square image works best. Face visible. Good lighting.
+          </p>
         </div>
       </div>
     </div>
@@ -426,17 +429,25 @@ function VideoUpload({
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isDragOver, setIsDragOver] = useState(false)
 
+  // Recording state
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
+  const [recordedUrl, setRecordedUrl] = useState<string | null>(null)
+  const [recordingTime, setRecordingTime] = useState(0)
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const videoPreviewRef = useRef<HTMLVideoElement>(null)
+
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
     borderRadius: '3px',
     border: `1px solid ${colors.border}`,
     fontSize: '1rem',
     fontWeight: 600,
-    cursor: uploading ? 'not-allowed' : 'pointer',
+    cursor: (uploading || isRecording) ? 'not-allowed' : 'pointer',
     transition: 'all 0.2s',
     background: 'transparent',
     color: colors.textPrimary,
-    opacity: uploading ? 0.6 : 1,
+    opacity: (uploading || isRecording) ? 0.6 : 1,
   }
 
   const handleFileUpload = async (file: File) => {
@@ -522,6 +533,83 @@ function VideoUpload({
     }
   }
 
+  // Recording functions
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' })
+
+      const chunks: Blob[] = []
+      recorder.ondataavailable = (e) => chunks.push(e.data)
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' })
+        setRecordedBlob(blob)
+        setRecordedUrl(URL.createObjectURL(blob))
+        stream.getTracks().forEach(track => track.stop())
+      }
+
+      setMediaRecorder(recorder)
+      recorder.start()
+      setIsRecording(true)
+      setRecordingTime(0)
+    } catch (err) {
+      setUploadError('Camera access denied. Please allow camera access to record.')
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorder) {
+      mediaRecorder.stop()
+      setIsRecording(false)
+    }
+  }
+
+  const uploadRecording = async () => {
+    if (!recordedBlob || !user) return
+
+    setUploading(true)
+    try {
+      const fileName = `${user.id}-${Date.now()}.webm`
+      const { data, error } = await supabase.storage
+        .from(bucketName)
+        .upload(fileName, recordedBlob, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (error) throw error
+
+      const { data: urlData } = supabase.storage
+        .from(bucketName)
+        .getPublicUrl(fileName)
+
+      await onUpload(urlData.publicUrl)
+      setRecordedBlob(null)
+      setRecordedUrl(null)
+    } catch (err) {
+      setUploadError(`Failed to upload: ${err instanceof Error ? err.message : 'Please try again'}`)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Recording timer
+  React.useEffect(() => {
+    let interval: number
+    if (isRecording) {
+      interval = window.setInterval(() => {
+        setRecordingTime(prev => {
+          if (maxDurationSeconds && prev >= maxDurationSeconds) {
+            stopRecording()
+            return prev
+          }
+          return prev + 1
+        })
+      }, 1000)
+    }
+    return () => clearInterval(interval)
+  }, [isRecording, maxDurationSeconds])
+
   return (
     <div
       style={{
@@ -531,7 +619,7 @@ function VideoUpload({
         textAlign: 'center',
         transition: 'all 0.2s',
         background: isDragOver ? colors.accentSoft : colors.bgSecondary,
-        cursor: uploading ? 'not-allowed' : 'default'
+        cursor: (uploading || isRecording) ? 'not-allowed' : 'default'
       }}
       onDragOver={(e) => {
         e.preventDefault()
@@ -564,9 +652,10 @@ function VideoUpload({
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
         {/* Video Preview */}
-        {currentVideoUrl && (
+        {(currentVideoUrl || recordedUrl) && !isRecording && (
           <video
-            src={currentVideoUrl}
+            ref={videoPreviewRef}
+            src={recordedUrl || currentVideoUrl}
             controls
             style={{
               width: '100%',
@@ -577,8 +666,67 @@ function VideoUpload({
           />
         )}
 
+        {/* Recording Preview */}
+        {recordedUrl && !currentVideoUrl && (
+          <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+            <button
+              style={{ ...buttonStyle, margin: 0, background: colors.accent, color: '#000', border: 'none' }}
+              onClick={uploadRecording}
+              disabled={uploading}
+            >
+              {uploading ? 'Uploading...' : 'Use This Video'}
+            </button>
+            <button
+              style={{ ...buttonStyle, margin: 0 }}
+              onClick={() => {
+                setRecordedBlob(null)
+                setRecordedUrl(null)
+                setRecordingTime(0)
+              }}
+              disabled={uploading}
+            >
+              Re-record
+            </button>
+          </div>
+        )}
+
+        {/* Recording UI */}
+        {!recordedUrl && !currentVideoUrl && (
+          <div style={{ marginBottom: '10px' }}>
+            {isRecording ? (
+              <div>
+                <div style={{ fontSize: '2rem', color: colors.accent, marginBottom: '10px' }}>
+                  🔴 {recordingTime}s
+                </div>
+                <button
+                  style={{ ...buttonStyle, margin: 0, background: colors.error, color: '#fff', border: 'none' }}
+                  onClick={stopRecording}
+                >
+                  Stop Recording
+                </button>
+              </div>
+            ) : (
+              <button
+                style={{ ...buttonStyle, margin: 0, background: colors.accent, color: '#000', border: 'none' }}
+                onClick={startRecording}
+              >
+                🎥 Record Video
+              </button>
+            )}
+            {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && !isRecording && (
+              <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
+                Record {minDurationSeconds}-{maxDurationSeconds} seconds
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Upload Controls */}
-        <div>
+        {!isRecording && !recordedUrl && (
+          <div>
+            <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '10px' }}>
+              or upload a video
+            </p>
           <input
             type="file"
             id={uploadId}
@@ -595,16 +743,18 @@ function VideoUpload({
               e.target.value = ''
             }}
           />
-          <button
-            style={{ ...buttonStyle, margin: 0 }}
-            onClick={() => document.getElementById(uploadId)?.click()}
-            disabled={uploading}
-          >
-            {uploading ? 'Uploading...' : (buttonText || (currentVideoUrl ? 'Change Video' : 'Upload Video'))}
-          </button>
-          <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
-            {uploading ? 'Processing video...' : 'or drag and drop'}
-          </p>
+            <button
+              style={{ ...buttonStyle, margin: 0 }}
+              onClick={() => document.getElementById(uploadId)?.click()}
+              disabled={uploading || isRecording}
+            >
+              {uploading ? 'Uploading...' : 'Choose File'}
+            </button>
+            <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
+              {uploading ? 'Processing video...' : 'or drag and drop'}
+            </p>
+          </div>
+        )}
           {!uploading && (
             <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
               Max {maxSizeMB}MB
@@ -2841,7 +2991,7 @@ function App() {
         {[
           { id: 'browse', icon: '🔍', label: 'Find' },
           ...(myGiverProfile ? [] : [{ id: 'giverIntro', icon: '🌱', label: 'Offer' }]),
-          { id: 'sessions', icon: '📅', label: 'Calls' },
+          { id: 'sessions', icon: '📅', label: 'Bookings' },
           { id: 'userProfile', icon: '⚙️', label: 'Profile' },
         ].map(item => (
           <button
@@ -2905,9 +3055,9 @@ function App() {
           />
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '15px' }}>
-            How do you want to use MYCA?
+            What are you here for?
           </h2>
-          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, maxWidth: '360px', lineHeight: 1.6, marginBottom: '30px' }}>
+          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, maxWidth: '360px', lineHeight: 1.6, marginBottom: '15px' }}>
             You can always change this later
           </p>
 
@@ -2916,15 +3066,9 @@ function App() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
               cursor: 'pointer',
               marginBottom: '30px',
-              padding: '15px',
-              background: colors.bgCard,
-              border: `1px solid ${colors.border}`,
-              borderRadius: '3px',
-              maxWidth: '340px',
-              width: '100%'
             }}
           >
             <input
@@ -2932,14 +3076,14 @@ function App() {
               checked={ageVerified}
               onChange={(e) => setAgeVerified(e.target.checked)}
               style={{
-                width: '18px',
-                height: '18px',
+                width: '16px',
+                height: '16px',
                 cursor: 'pointer',
                 accentColor: colors.accent
               }}
             />
-            <span style={{ fontSize: '0.9rem', color: colors.textPrimary, textAlign: 'left' }}>
-              I confirm I am 18 years of age or older
+            <span style={{ fontSize: '0.85rem', color: colors.textSecondary, textAlign: 'left' }}>
+              I confirm I'm 18+
             </span>
           </label>
 
@@ -2975,10 +3119,10 @@ function App() {
               disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
-                I want to receive calls
+                Book time
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-                Find someone to listen and say back what you said
+                Find someone for an uninterrupted conversation
               </div>
             </button>
 
@@ -3013,10 +3157,10 @@ function App() {
               disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
-                I want to give calls
+                Offer time
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-                Offer your attention and get paid for your time
+                Offer focused conversation. Get paid
               </div>
             </button>
 
@@ -3055,7 +3199,7 @@ function App() {
                 Both
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-                Give and receive calls
+                Book and offer time
               </div>
             </button>
           </div>
@@ -3650,19 +3794,16 @@ function App() {
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '280px', margin: '0 auto' }}>
                 <button
-                  style={{ ...btnSecondaryStyle, margin: 0 }}
-                  onClick={() => {
-                    // TODO: Add invite functionality
-                    alert('Invite functionality coming soon')
-                  }}
+                  style={{ ...btnSecondaryStyle, margin: 0, opacity: 0.5, cursor: 'not-allowed' }}
+                  disabled
                 >
-                  Invite someone you trust
+                  Invite someone you trust <span style={{ fontSize: '0.85rem', marginLeft: '8px' }}>(Coming soon)</span>
                 </button>
                 <button
                   style={{ ...btnSecondaryStyle, margin: 0 }}
                   onClick={() => setScreen('giverIntro')}
                 >
-                  Become a giver
+                  Offer time
                 </button>
               </div>
             </div>
@@ -4544,7 +4685,7 @@ function App() {
                   }}
                   disabled={!selectedBookingDate || !selectedBookingTime || bookingLoading}
                 >
-                  {bookingLoading ? 'Processing...' : 'Book Session'}
+                  {bookingLoading ? 'Processing...' : 'Book Time'}
                 </button>
               </>
             )}
@@ -4894,15 +5035,15 @@ function App() {
           />
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '30px' }}>
-            Offer sessions
+            Offer time
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            You give them uninterrupted time. Say back what you hear. They confirm. Then they choose a direction you pre-approved.
+            You offer uninterrupted time. You check for understanding, then move forward in the direction you allow.
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create your first listing</button>
+            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create your first offer</button>
             <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('giverCode')}>
               How it works <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>(optional)</span>
             </button>
@@ -6568,15 +6709,15 @@ function App() {
             </div>
           )}
 
-          {/* Sessions list */}
+          {/* Bookings list */}
           {userBookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
               <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
-              <p style={{ marginBottom: '10px' }}>No calls yet</p>
+              <p style={{ marginBottom: '10px' }}>No bookings yet</p>
               <p style={{ fontSize: '0.85rem', marginBottom: '30px' }}>
                 {myGiverProfile
-                  ? 'When someone books a call with you, it will appear here.'
-                  : 'Book a call with a giver to get started.'}
+                  ? 'When someone books time with you, it will appear here.'
+                  : 'Book time to get started.'}
               </p>
               <button
                 style={{ ...btnStyle, maxWidth: '200px' }}
@@ -6801,7 +6942,7 @@ function App() {
                 style={{ ...btnSecondaryStyle, marginTop: '20px' }}
                 onClick={() => setScreen(myGiverProfile ? 'editGiverProfile' : 'browse')}
               >
-                {myGiverProfile ? 'Manage Availability' : 'Book Another Session'}
+                {myGiverProfile ? 'Manage Availability' : 'Book More Time'}
               </button>
             </div>
           )}
@@ -7109,7 +7250,7 @@ function App() {
                 <button
                   onClick={async () => {
                     if (giverRate < 15) {
-                      alert('Minimum rate is $15 per 30 minutes')
+                      alert('Minimum rate is $15 per block')
                       return
                     }
                     try {
@@ -7215,7 +7356,7 @@ function App() {
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>What You Offer</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Each listing is a different type of session you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
+                  Each listing is a different type of conversation you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
                 </p>
                 <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>
                   {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'listing' : 'listings'}
@@ -7588,7 +7729,7 @@ function App() {
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                alert('Minimum price is $15 per 30 minutes')
+                alert('Minimum price is $15 per block')
                 return
               }
 
@@ -7694,7 +7835,7 @@ function App() {
                 You earn <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per 30 minutes
+                per block (25 minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -7721,36 +7862,22 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => alert('You set what you earn. The platform adds a 15% fee on top for the person booking you. Example: You earn $30, they pay $34.50.')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: colors.accent,
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    padding: 0
-                  }}
-                >
-                  How pricing works
-                </button>
+                Set what you earn per 25 minute block. A platform fee is added at checkout.
               </p>
             </div>
 
             {/* Presence Video Script Selection - OPTIONAL */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Pick a prompt or say it your way
+                Say it your way
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                These are just suggestions for your presence video. Use them as-is or make it your own.
+                Choose a prompt or make it your own.
               </p>
               {[
-                { value: 'script_a', text: "In one sentence, what is it like to talk with you?" },
-                { value: 'script_b', text: "What do you help people do after they feel understood?" },
-                { value: 'script_c', text: "Which directions do you prefer most?" }
+                { value: 'script_a', text: "What kind of conversation are you great at?" },
+                { value: 'script_b', text: "How do people feel after talking with you?" },
+                { value: 'script_c', text: "What do you like helping someone decide?" }
               ].map(script => (
                 <div
                   key={script.value}
@@ -7958,7 +8085,7 @@ function App() {
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                alert('Minimum price is $15 per 30 minutes')
+                alert('Minimum price is $15 per block')
                 return
               }
 
@@ -8089,10 +8216,10 @@ function App() {
             {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You will receive <span style={{ color: colors.accent }}>*</span>
+                You earn <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per 30 minutes
+                per block (25 minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
