@@ -1,5 +1,5 @@
 // src/App.tsx
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { supabase } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
@@ -128,6 +128,7 @@ const colors = {
   accentSoft: 'rgba(184, 157, 95, 0.1)',
   border: '#1a1a1a',
   success: '#b89d5f',
+  error: '#d9534f',
 }
 
 // Calendar-based availability: specific date + time
@@ -539,7 +540,7 @@ function VideoUpload({
           setIsDragOver(true)
         }
       }}
-      onDragLeave={(e) => {
+      onDragLeave={() => {
         console.log('🚫 Drag leave detected')
         setIsDragOver(false)
       }}
@@ -689,7 +690,6 @@ function App() {
   // Receiver profile form state (minimal)
   const [receiverName, setReceiverName] = useState('')
   const [receiverTagline, setReceiverTagline] = useState('')
-  const [receiverProfilePictureUrl, setReceiverProfilePictureUrl] = useState('')
 
   // Age verification state
   const [ageVerified, setAgeVerified] = useState(false)
@@ -3443,7 +3443,7 @@ function App() {
                     // Apply time filtering based on selection
                     // (existing filtering logic would go here)
 
-                    setFilteredListings(filtered as ListingWithProfile[])
+                    setFilteredListings(filtered as Listing[])
                     setCurrentFeedIndex(0)
                   }}
                   style={{
