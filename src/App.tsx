@@ -7109,15 +7109,8 @@ function App() {
                 return
               }
 
-              if (!listingFormData.presence_video_script) {
-                alert('Please select a script for your presence video')
-                return
-              }
-
-              if (!listingFormData.listing_video_url) {
-                alert('Please record your presence video using the script you selected')
-                return
-              }
+              // Video and script are now optional - listings without video rank lower in discovery
+              // No validation needed for presence_video_script or listing_video_url
 
               const result = await createListing({
                 topic: '', // No longer used - giver offers themselves, not topics
@@ -7264,13 +7257,13 @@ function App() {
               </p>
             </div>
 
-            {/* Presence Video Script Selection */}
+            {/* Presence Video Script Selection - OPTIONAL */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Choose your presence video script <span style={{ color: colors.accent }}>*</span>
+                Pick a prompt or say it your way
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                Select a script to use for your presence video (required)
+                These are just suggestions for your presence video. Use them as-is or make it your own.
               </p>
               {[
                 { value: 'script_a', text: "Here's how I show up. I'll give you a protected floor, then reflect what I hear until you say it's accurate." },
@@ -7308,13 +7301,13 @@ function App() {
               ))}
             </div>
 
-            {/* Video (15-30 sec) */}
+            {/* Video (15-30 sec) - OPTIONAL */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Presence video <span style={{ color: colors.accent }}>*</span> <span style={{ color: colors.textMuted, fontWeight: 400 }}>(15-30 seconds)</span>
+                Presence video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional • 15-30 seconds)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Record yourself saying the script you selected above. This shows receivers how you show up.
+                Record yourself saying your chosen prompt. Listings with video rank higher in discovery. <a href="#" style={{ color: colors.accent }}>Add later</a>
               </p>
               <VideoUpload
                 onUpload={async (publicUrl) => {
@@ -7341,7 +7334,7 @@ function App() {
                 Select which directions receivers can choose from during sessions
               </p>
               {[
-                { value: 'go_deeper', label: 'Go deeper', description: 'Explore topics further together' },
+                { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together' },
                 { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights' },
                 { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking' },
                 { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions' },
@@ -7384,18 +7377,18 @@ function App() {
               ))}
             </div>
 
-            {/* Boundaries Text */}
+            {/* Hard No's */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Boundaries <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+                Hard no's <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Share any boundaries or topics you prefer not to discuss
+                List anything that will end the session if it comes up
               </p>
               <textarea
                 value={listingFormData.boundaries || ''}
                 onChange={(e) => setListingFormData({ ...listingFormData, boundaries: e.target.value })}
-                placeholder="e.g., I prefer not to discuss politics or medical advice"
+                placeholder="e.g., No political debate, no medical advice, no relationship counseling"
                 style={{
                   width: '100%',
                   minHeight: '80px',
