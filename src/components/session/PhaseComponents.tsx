@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import type { DirectionType } from '../../SessionStateMachine'
 import type { DailyCall } from '@daily-co/daily-js'
 import { supabase } from '../../lib/supabase'
+import { BLOCK_MINUTES } from '../../App'
 
 // ============================================
 // SHARED STYLES & TYPES
@@ -794,7 +795,7 @@ export function DirectionPhase({
             style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
             onClick={onRequestExtension}
           >
-            Request +30 minutes
+            Request +{BLOCK_MINUTES} minutes
           </button>
         )}
 
@@ -842,7 +843,7 @@ export function DirectionPhase({
           style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
           onClick={onRequestExtension}
         >
-          Request +30 minutes
+          Request +{BLOCK_MINUTES} minutes
         </button>
       )}
 

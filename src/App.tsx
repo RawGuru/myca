@@ -3747,7 +3747,7 @@ function App() {
                           {currentListing.description || currentListing.topic || giver.bio || 'Available now'}
                         </p>
                         <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
-                          ${(currentListing.price_cents / 100).toFixed(0)} per 30 min
+                          ${(currentListing.price_cents / 100).toFixed(0)} per block
                         </p>
                         <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '15px' }}>
                           Tap to view profile
@@ -3991,11 +3991,11 @@ function App() {
                       {giver.listings.length} {giver.listings.length === 1 ? 'offering' : 'offerings'}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
-                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} / 30 min
+                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} per block
                     </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span></div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>per block</span></div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button
@@ -4143,7 +4143,7 @@ function App() {
                           ${(listing.price_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                          per 30 min
+                          per block
                         </div>
                       </div>
                     </div>
@@ -4390,7 +4390,7 @@ function App() {
                   {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'offering' : 'offerings'} available
                 </div>
               ) : selectedGiver.rate_per_30 ? (
-                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>/ 30 min</span></div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>per block</span></div>
               ) : null}
             </div>
           </div>
@@ -4442,7 +4442,7 @@ function App() {
                           ${(listing.price_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                          per 30 min
+                          per block
                         </div>
                       </div>
                     </div>
@@ -6214,7 +6214,7 @@ function App() {
               Almost there!
             </h3>
             <p style={{ color: colors.textSecondary, maxWidth: '320px', margin: '0 auto' }}>
-              Connect your bank account to receive payments from your sessions.
+              Connect your bank account to receive payments from your bookings.
             </p>
           </div>
 
@@ -7245,7 +7245,7 @@ function App() {
                       boxSizing: 'border-box'
                     }}
                   />
-                  <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>/ 30 min</span>
+                  <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>per block</span>
                 </div>
                 <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>Minimum $15</p>
                 <button
@@ -7574,7 +7574,7 @@ function App() {
                               ${(listing.price_cents / 100).toFixed(0)}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                              per 30 min
+                              per block
                             </div>
                           </div>
                         </div>
