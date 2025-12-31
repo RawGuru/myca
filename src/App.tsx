@@ -421,6 +421,9 @@ function VideoUpload({
 }: VideoUploadProps) {
   const { user } = useAuth()
   const uploadId = `video-upload-${bucketName}-${Date.now()}`
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
 
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
@@ -428,24 +431,29 @@ function VideoUpload({
     border: `1px solid ${colors.border}`,
     fontSize: '1rem',
     fontWeight: 600,
-    cursor: 'pointer',
+    cursor: uploading ? 'not-allowed' : 'pointer',
     transition: 'all 0.2s',
     background: 'transparent',
     color: colors.textPrimary,
+    opacity: uploading ? 0.6 : 1,
   }
 
   const handleFileUpload = async (file: File) => {
     console.log('🔄 Starting video upload process...')
+    setUploading(true)
+    setUploadError(null)
 
     // Validate file type
     if (!file.type.startsWith('video/')) {
-      alert('Please select a video file')
+      setUploadError('Please select a video file')
+      setUploading(false)
       return
     }
 
     // Validate file size
     if (file.size > maxSizeMB * 1024 * 1024) {
-      alert(`Video must be less than ${maxSizeMB}MB`)
+      setUploadError(`Video must be less than ${maxSizeMB}MB`)
+      setUploading(false)
       return
     }
 
@@ -462,8 +470,9 @@ function VideoUpload({
       if (minDurationSeconds !== undefined && maxDurationSeconds !== undefined) {
         if (duration < minDurationSeconds || duration > maxDurationSeconds) {
           const targetDuration = Math.round((minDurationSeconds + maxDurationSeconds) / 2)
-          alert(`Video must be ${targetDuration} seconds (${minDurationSeconds}-${maxDurationSeconds} allowed)`)
+          setUploadError(`Video must be ${targetDuration} seconds (${minDurationSeconds}-${maxDurationSeconds} allowed)`)
           URL.revokeObjectURL(tempUrl)
+          setUploading(false)
           return
         }
       }
@@ -502,12 +511,12 @@ function VideoUpload({
         console.log('💾 Calling onUpload callback...')
         await onUpload(publicUrl)
         console.log('✅ Video upload complete!')
-        alert('Video uploaded successfully!')
       } catch (err) {
         console.error('❌ ERROR in video upload:', err)
-        alert(`Failed to upload video: ${err instanceof Error ? err.message : 'Please try again'}`)
+        setUploadError(`Failed to upload video: ${err instanceof Error ? err.message : 'Please try again'}`)
       } finally {
         URL.revokeObjectURL(tempUrl)
+        setUploading(false)
       }
     }
   }
@@ -515,29 +524,32 @@ function VideoUpload({
   return (
     <div
       style={{
-        border: `2px dashed ${colors.border}`,
+        border: `2px dashed ${isDragOver ? colors.accent : colors.border}`,
         borderRadius: '12px',
         padding: '20px',
         textAlign: 'center',
         transition: 'all 0.2s',
-        background: colors.bgSecondary
+        background: isDragOver ? colors.accentSoft : colors.bgSecondary,
+        cursor: uploading ? 'not-allowed' : 'default'
       }}
       onDragOver={(e) => {
         e.preventDefault()
-        console.log('🎯 Drag over detected')
-        e.currentTarget.style.borderColor = colors.accent
-        e.currentTarget.style.background = colors.accentSoft
+        if (!uploading) {
+          console.log('🎯 Drag over detected')
+          setIsDragOver(true)
+        }
       }}
       onDragLeave={(e) => {
         console.log('🚫 Drag leave detected')
-        e.currentTarget.style.borderColor = colors.border
-        e.currentTarget.style.background = colors.bgSecondary
+        setIsDragOver(false)
       }}
       onDrop={async (e) => {
         e.preventDefault()
+        setIsDragOver(false)
+
+        if (uploading) return
+
         console.log('📁 Drop detected!', e.dataTransfer.files)
-        e.currentTarget.style.borderColor = colors.border
-        e.currentTarget.style.background = colors.bgSecondary
 
         const file = e.dataTransfer.files?.[0]
         if (!file) {
@@ -571,6 +583,7 @@ function VideoUpload({
             id={uploadId}
             accept="video/*"
             style={{ display: 'none' }}
+            disabled={uploading}
             onChange={async (e) => {
               const file = e.target.files?.[0]
               if (!file) return
@@ -584,18 +597,26 @@ function VideoUpload({
           <button
             style={{ ...buttonStyle, margin: 0 }}
             onClick={() => document.getElementById(uploadId)?.click()}
+            disabled={uploading}
           >
-            {buttonText || (currentVideoUrl ? 'Change Video' : 'Upload Video')}
+            {uploading ? 'Uploading...' : (buttonText || (currentVideoUrl ? 'Change Video' : 'Upload Video'))}
           </button>
           <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
-            or drag and drop
+            {uploading ? 'Processing video...' : 'or drag and drop'}
           </p>
-          <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
-            Max {maxSizeMB}MB
-            {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && (
-              <> • {Math.round((minDurationSeconds + maxDurationSeconds) / 2)} seconds ({minDurationSeconds}-{maxDurationSeconds} allowed)</>
-            )}
-          </p>
+          {!uploading && (
+            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+              Max {maxSizeMB}MB
+              {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && (
+                <> • {Math.round((minDurationSeconds + maxDurationSeconds) / 2)} seconds ({minDurationSeconds}-{maxDurationSeconds} allowed)</>
+              )}
+            </p>
+          )}
+          {uploadError && (
+            <p style={{ color: colors.error, fontSize: '0.9rem', marginTop: '10px', fontWeight: 500 }}>
+              {uploadError}
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -664,6 +685,11 @@ function App() {
   const [linkedinHandle, setLinkedinHandle] = useState('')
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileError, setProfileError] = useState('')
+
+  // Receiver profile form state (minimal)
+  const [receiverName, setReceiverName] = useState('')
+  const [receiverTagline, setReceiverTagline] = useState('')
+  const [receiverProfilePictureUrl, setReceiverProfilePictureUrl] = useState('')
 
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
@@ -2375,6 +2401,47 @@ function App() {
     return now >= scheduledTime && now <= thirtyMinutesAfter
   }
 
+  // Create receiver profile (minimal)
+  const createReceiverProfile = async () => {
+    if (!user) return
+
+    // Validation
+    if (!receiverName.trim()) {
+      setProfileError('Please enter your name')
+      return
+    }
+
+    setProfileLoading(true)
+    setProfileError('')
+
+    try {
+      // Create/update profile with minimal fields
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          name: receiverName.trim(),
+          tagline: receiverTagline.trim() || null,
+        }, { onConflict: 'id' })
+
+      if (profileError) throw profileError
+
+      // Continue to discovery
+      setScreen('discovery')
+      setDiscoveryStep('availability')
+      setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+
+      // Reset form
+      setReceiverName('')
+      setReceiverTagline('')
+    } catch (err) {
+      setProfileError(err instanceof Error ? err.message : 'Failed to create profile')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
   // Create giver profile
   const createGiverProfile = async () => {
     if (!user) return
@@ -2797,7 +2864,146 @@ function App() {
     </button>
   ) : null
 
+  // Role Selection Screen (Unified Signup)
+  if (screen === 'roleSelection') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+          <SignOutButton />
+
+          {/* MYCA Logo */}
+          <img
+            src="/myca-logo.webp"
+            alt="Myca"
+            style={{
+              width: '120px',
+              height: 'auto',
+              marginBottom: '30px'
+            }}
+          />
+
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '15px' }}>
+            How do you want to use MYCA?
+          </h2>
+          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, maxWidth: '360px', lineHeight: 1.6, marginBottom: '40px' }}>
+            You can always change this later
+          </p>
+
+          <div style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {/* Receive sessions */}
+            <button
+              style={{
+                ...cardStyle,
+                cursor: 'pointer',
+                padding: '20px',
+                textAlign: 'left',
+                border: `1px solid ${colors.border}`,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = colors.accent
+                e.currentTarget.style.background = colors.accentSoft
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.background = colors.bgCard
+              }}
+              onClick={() => {
+                setScreen('receiverProfile')
+              }}
+            >
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
+                I want to receive sessions
+              </div>
+              <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+                Find someone to listen and mirror you back
+              </div>
+            </button>
+
+            {/* Give sessions */}
+            <button
+              style={{
+                ...cardStyle,
+                cursor: 'pointer',
+                padding: '20px',
+                textAlign: 'left',
+                border: `1px solid ${colors.border}`,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = colors.accent
+                e.currentTarget.style.background = colors.accentSoft
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.background = colors.bgCard
+              }}
+              onClick={() => {
+                setScreen('giverIntro')
+              }}
+            >
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
+                I want to give sessions
+              </div>
+              <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+                Offer your attention and get paid for your time
+              </div>
+            </button>
+
+            {/* Both */}
+            <button
+              style={{
+                ...cardStyle,
+                cursor: 'pointer',
+                padding: '20px',
+                textAlign: 'left',
+                border: `1px solid ${colors.border}`,
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = colors.accent
+                e.currentTarget.style.background = colors.accentSoft
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = colors.border
+                e.currentTarget.style.background = colors.bgCard
+              }}
+              onClick={() => {
+                // For "both", start with receiver profile since it's simpler
+                setScreen('receiverProfile')
+              }}
+            >
+              <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
+                Both
+              </div>
+              <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+                Give and receive sessions
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (screen === 'welcome') {
+    // Check if authenticated user is new and redirect to role selection
+    React.useEffect(() => {
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('name, is_giver')
+          .eq('id', user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            // If user has no profile or no name set, they're new → show role selection
+            if (!data || !data.name) {
+              setScreen('roleSelection')
+            }
+          })
+      }
+    }, [user])
+
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
@@ -2815,18 +3021,38 @@ function App() {
           />
 
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '380px', lineHeight: 1.5, marginBottom: '40px', letterSpacing: '-0.01em' }}>
-            One person speaks.<br />
-            One person listens.<br />
-            Nothing moves forward until you're understood.
+            Get understood first.<br />
+            Everything else is optional.
           </h1>
           <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            A private, time-bound video conversation where reflection is required.
+            They mirror you back. You confirm it's accurate. Then you decide what happens next.
           </p>
           <div style={{ width: '100%', maxWidth: '340px' }}>
             <button style={btnStyle} onClick={() => {
-              setDiscoveryStep('availability') // Skip category and mode, go straight to availability
-              setDiscoveryFilters({ attentionType: null, category: null, availability: null })
-              setScreen('discovery')
+              // Check if user has a profile (name set)
+              if (user) {
+                // Fetch user profile to check if they have a name
+                supabase
+                  .from('profiles')
+                  .select('name')
+                  .eq('id', user.id)
+                  .maybeSingle()
+                  .then(({ data }) => {
+                    if (data?.name) {
+                      // User has a profile, go to discovery
+                      setDiscoveryStep('availability')
+                      setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+                      setScreen('discovery')
+                    } else {
+                      // User doesn't have a profile, go to receiver profile creation
+                      setScreen('receiverProfile')
+                    }
+                  })
+              } else {
+                // Not logged in, require auth first
+                setReturnToScreen('receiverProfile')
+                setNeedsAuth(true)
+              }
             }}>Find someone</button>
             <button
               style={{ ...btnSecondaryStyle, marginBottom: '20px' }}
@@ -2840,7 +3066,7 @@ function App() {
                 }
               }}
             >
-              Become available
+              Offer sessions
             </button>
             <p style={{
               fontSize: '0.85rem',
@@ -2869,6 +3095,122 @@ function App() {
             )}
           </div>
           {user && <Nav />}
+        </div>
+      </div>
+    )
+  }
+
+  // Receiver Profile Creation (Minimal)
+  if (screen === 'receiverProfile') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+          <SignOutButton />
+
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <img
+              src="/myca-logo.webp"
+              alt="Myca"
+              style={{
+                width: '100px',
+                height: 'auto',
+                margin: '0 auto 25px'
+              }}
+            />
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '10px' }}>Quick profile</h2>
+            <p style={{ color: colors.textSecondary, fontSize: '0.95rem', lineHeight: 1.6 }}>
+              Just the basics so givers know who they're talking to
+            </p>
+          </div>
+
+          {profileError && (
+            <div style={{ padding: '15px', background: `${colors.error}22`, border: `1px solid ${colors.error}`, borderRadius: '3px', marginBottom: '20px', color: colors.error }}>
+              {profileError}
+            </div>
+          )}
+
+          {/* Name */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+              Name <span style={{ color: colors.accent }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={receiverName}
+              onChange={(e) => setReceiverName(e.target.value)}
+              placeholder="Your name"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '3px',
+                border: `1px solid ${colors.border}`,
+                background: colors.bgSecondary,
+                color: colors.textPrimary,
+                fontSize: '1rem'
+              }}
+            />
+          </div>
+
+          {/* One-liner (Optional) */}
+          <div style={{ marginBottom: '30px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+              One-liner <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={receiverTagline}
+              onChange={(e) => setReceiverTagline(e.target.value)}
+              placeholder="e.g., Designer figuring things out"
+              style={{
+                width: '100%',
+                padding: '12px',
+                borderRadius: '3px',
+                border: `1px solid ${colors.border}`,
+                background: colors.bgSecondary,
+                color: colors.textPrimary,
+                fontSize: '1rem'
+              }}
+              maxLength={80}
+            />
+            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+              {receiverTagline.length}/80 characters
+            </p>
+          </div>
+
+          <button
+            style={{
+              ...btnStyle,
+              opacity: profileLoading ? 0.7 : 1,
+              cursor: profileLoading ? 'not-allowed' : 'pointer',
+              marginBottom: '15px'
+            }}
+            onClick={createReceiverProfile}
+            disabled={profileLoading}
+          >
+            {profileLoading ? 'Saving...' : 'Continue to browse'}
+          </button>
+
+          <button
+            style={{
+              background: 'none',
+              border: 'none',
+              color: colors.textSecondary,
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              textDecoration: 'underline',
+              padding: 0
+            }}
+            onClick={() => {
+              // Skip profile creation and go straight to discovery
+              setScreen('discovery')
+              setDiscoveryStep('availability')
+              setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+            }}
+          >
+            Skip for now
+          </button>
+
+          <Nav />
         </div>
       </div>
     )
@@ -4413,16 +4755,18 @@ function App() {
           />
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '30px' }}>
-            Become available
+            Offer sessions
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            They'll have the protected floor while they speak. Your job is to reflect what you heard until they confirm it's accurate. After that, you can consent to a next step or end the session.
+            You give them the floor. Mirror what you hear. They confirm. Then they choose a direction you pre-approved.
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create profile</button>
-            <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('giverCode')}>How it works</button>
+            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create your first listing</button>
+            <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('giverCode')}>
+              How it works <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>(optional)</span>
+            </button>
           </div>
         </div>
       </div>
@@ -7302,12 +7646,19 @@ function App() {
             </div>
 
             {/* Video (15-30 sec) - OPTIONAL */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <div id="listing-video-section" style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
                 Presence video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional • 15-30 seconds)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Record yourself saying your chosen prompt. Listings with video rank higher in discovery. <a href="#" style={{ color: colors.accent }}>Add later</a>
+                Record yourself saying your chosen prompt. Listings with video rank higher in discovery. <a
+                  href="#listing-directions-section"
+                  style={{ color: colors.accent, textDecoration: 'none' }}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    document.getElementById('listing-directions-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                >Skip for now</a>
               </p>
               <VideoUpload
                 onUpload={async (publicUrl) => {
@@ -7326,7 +7677,7 @@ function App() {
             </div>
 
             {/* Direction Types Selection */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <div id="listing-directions-section" style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
                 Directions you allow <span style={{ color: colors.accent }}>*</span>
               </label>
