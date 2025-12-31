@@ -422,7 +422,6 @@ function VideoUpload({
   maxSizeMB,
   minDurationSeconds,
   maxDurationSeconds,
-  buttonText
 }: VideoUploadProps) {
   const { user } = useAuth()
   const uploadId = `video-upload-${bucketName}-${Date.now()}`
@@ -571,7 +570,7 @@ function VideoUpload({
     setUploading(true)
     try {
       const fileName = `${user.id}-${Date.now()}.webm`
-      const { data, error } = await supabase.storage
+      const { error } = await supabase.storage
         .from(bucketName)
         .upload(fileName, recordedBlob, {
           cacheControl: '3600',
@@ -754,22 +753,21 @@ function VideoUpload({
             <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginTop: '10px' }}>
               {uploading ? 'Processing video...' : 'or drag and drop'}
             </p>
+            {!uploading && (
+              <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
+                Max {maxSizeMB}MB
+                {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && (
+                  <> • {Math.round((minDurationSeconds + maxDurationSeconds) / 2)} seconds ({minDurationSeconds}-{maxDurationSeconds} allowed)</>
+                )}
+              </p>
+            )}
+            {uploadError && (
+              <p style={{ color: colors.error, fontSize: '0.9rem', marginTop: '10px', fontWeight: 500 }}>
+                {uploadError}
+              </p>
+            )}
           </div>
         )}
-          {!uploading && (
-            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '5px' }}>
-              Max {maxSizeMB}MB
-              {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && (
-                <> • {Math.round((minDurationSeconds + maxDurationSeconds) / 2)} seconds ({minDurationSeconds}-{maxDurationSeconds} allowed)</>
-              )}
-            </p>
-          )}
-          {uploadError && (
-            <p style={{ color: colors.error, fontSize: '0.9rem', marginTop: '10px', fontWeight: 500 }}>
-              {uploadError}
-            </p>
-          )}
-        </div>
       </div>
     </div>
   )
