@@ -122,8 +122,8 @@ const colors = {
   bgSecondary: '#0a0a0a',
   bgCard: '#0f0f0f',
   textPrimary: '#ffffff',
-  textSecondary: '#b3b3b3',
-  textMuted: '#808080',
+  textSecondary: '#CFCFCF',
+  textMuted: 'rgba(255, 255, 255, 0.85)',
   accent: '#b89d5f',
   accentSoft: 'rgba(184, 157, 95, 0.1)',
   border: '#1a1a1a',
@@ -202,6 +202,7 @@ export const CATEGORIES: { value: Category; label: string; examples: string }[] 
 ]
 
 // Time physics constants
+export const BLOCK_MINUTES = 25  // Canonical block duration for all UI
 export const ACTIVE_MINUTES_PER_BLOCK = 25
 export const BUFFER_MINUTES = 5
 export const TOTAL_BLOCK_MINUTES = 30
@@ -3230,7 +3231,7 @@ function App() {
             Everything else is optional.
           </h1>
           <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            You talk. They say back what they understood. You correct until it's right. Then you choose what happens next.
+            Uninterrupted conversation. Check for understanding, then move forward in the direction you choose.
           </p>
           <div style={{ width: '100%', maxWidth: '340px' }}>
             <button style={btnStyle} onClick={() => {
@@ -3280,7 +3281,7 @@ function App() {
               lineHeight: 1.7,
               maxWidth: '340px'
             }}>
-              You talk. They say back what they understood. You correct until it's right. Then you choose what happens next.
+              Uninterrupted conversation. Check for understanding, then move forward in the direction you choose.
             </p>
             {!user && (
               <button
@@ -4199,7 +4200,7 @@ function App() {
           {(selectedGiver.total_sessions_completed || 0) > 0 && (
             <div style={{ marginBottom: '20px', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
-                {selectedGiver.total_sessions_completed} session{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
+                {selectedGiver.total_sessions_completed} booking{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
               </p>
               {(selectedGiver.times_joined_late || 0) > 0 && (
                 <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
@@ -4498,7 +4499,7 @@ function App() {
           {(selectedGiver.total_sessions_completed || 0) > 0 && (
             <div style={{ marginBottom: '20px', textAlign: 'center' }}>
               <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
-                {selectedGiver.total_sessions_completed} session{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
+                {selectedGiver.total_sessions_completed} booking{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
               </p>
               {(selectedGiver.times_joined_late || 0) > 0 && (
                 <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
@@ -4791,7 +4792,7 @@ function App() {
                 <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#10b981' }}>Platform Credits Available</h3>
               </div>
               <p style={{ fontSize: '0.85rem', color: colors.textSecondary, marginBottom: '10px' }}>
-                You have ${(totalCreditsCents / 100).toFixed(2)} in platform credits from completed sessions.
+                You have ${(totalCreditsCents / 100).toFixed(2)} in platform credits from completed bookings.
               </p>
               <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
                 {creditsAppliedCents > 0
@@ -4862,7 +4863,7 @@ function App() {
                 </div>
 
                 <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', textAlign: 'center' }}>
-                  Payment is held until the session completes, then released to {selectedGiver.name}.
+                  Payment is held until the booking completes, then released to {selectedGiver.name}.
                 </p>
               </>
             ) : (
@@ -4952,7 +4953,7 @@ function App() {
           <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
             {isPendingApproval
               ? `Waiting for ${selectedGiver?.name} to approve your booking.`
-              : `Your session with ${selectedGiver?.name} is confirmed.`
+              : `Your booking with ${selectedGiver?.name} is confirmed.`
             }
           </p>
           {selectedBookingDate && selectedBookingTime && (
@@ -6314,7 +6315,7 @@ function App() {
             You're all set to receive payments!
           </p>
           <p style={{ color: colors.accent, fontSize: '1.1rem', fontWeight: 500, marginBottom: '30px' }}>
-            You receive ${myGiverProfile?.rate_per_30} per session
+            You receive ${myGiverProfile?.rate_per_30} per block
           </p>
           <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('giveConfirmation')}>
             Continue
@@ -6576,7 +6577,7 @@ function App() {
               marginBottom: '20px',
               color: colors.textPrimary,
             }}>
-              Did the session match the advertised mode?
+              Did the conversation match the advertised mode?
             </h3>
             <div style={{ display: 'flex', gap: '15px' }}>
               <button
@@ -6758,7 +6759,7 @@ function App() {
                           {isGiver ? 'You are giving' : 'You booked'}
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 500 }}>
-                          30-minute session
+                          {BLOCK_MINUTES}-minute booking
                         </div>
                       </div>
                       <div style={{
@@ -6842,7 +6843,7 @@ function App() {
                       <>
                         <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '10px', marginBottom: '5px' }}>
                           {booking.giver_id === user?.id
-                            ? 'Cancelling forfeits your payment for this session.'
+                            ? 'Cancelling forfeits your payment for this booking.'
                             : 'Cancelling means the giver keeps your payment.'}
                         </p>
                         <button
@@ -6851,8 +6852,8 @@ function App() {
 
                             // Different consequences based on who cancels
                             const message = isGiver
-                              ? 'Cancel this session? The seeker will receive a full refund. You will not be paid.'
-                              : 'Cancel this session? Your payment will still go to the giver. No refund.'
+                              ? 'Cancel this booking? The seeker will receive a full refund. You will not be paid.'
+                              : 'Cancel this booking? Your payment will still go to the giver. No refund.'
 
                             if (confirm(message)) {
                               const { error } = await supabase
@@ -6871,13 +6872,13 @@ function App() {
                                 await fetchUserBookings()
 
                                 if (isGiver) {
-                                  alert('Session cancelled. The seeker will be refunded.')
+                                  alert('Booking cancelled. The seeker will be refunded.')
                                 } else {
-                                  alert('Session cancelled. Your payment has been forfeited to the giver.')
+                                  alert('Booking cancelled. Your payment has been forfeited to the giver.')
                                 }
                               } else {
                                 console.error('Cancellation error:', error)
-                                alert('Failed to cancel session. Please try again.')
+                                alert('Failed to cancel booking. Please try again.')
                               }
                             }
                           }}
@@ -7835,7 +7836,7 @@ function App() {
                 You earn <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per block (25 minutes)
+                per block
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -7862,7 +7863,10 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Set what you earn per 25 minute block. A platform fee is added at checkout.
+                Block length is {BLOCK_MINUTES} minutes
+              </p>
+              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
+                A platform fee is added at checkout.
               </p>
             </div>
 
@@ -7947,14 +7951,14 @@ function App() {
                 Directions you allow <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                Select which directions receivers can choose from during calls
+                Select which directions they can choose from during the conversation
               </p>
               {[
                 { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together', required: true },
                 { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights', required: false },
                 { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking', required: false },
                 { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions', required: false },
-                { value: 'end_cleanly', label: 'End cleanly', description: 'End call gracefully', required: true },
+                { value: 'end_cleanly', label: 'End cleanly', description: 'End conversation gracefully', required: true },
                 { value: 'pressure_test', label: 'Pressure test', description: 'Challenge their thinking directly', required: false }
               ].map(direction => (
                 <label
@@ -8000,7 +8004,7 @@ function App() {
                 Hard no's <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                List anything that will end the session if it comes up
+                List anything that will end the conversation if it comes up
               </p>
               <textarea
                 value={listingFormData.boundaries || ''}
@@ -8219,7 +8223,7 @@ function App() {
                 You earn <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per block (25 minutes)
+                per block
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -8246,7 +8250,7 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Platform fee is added to the session price.{' '}
+                Platform fee is added to the booking price.{' '}
                 <button
                   type="button"
                   onClick={() => alert('The listener sets what they earn. The platform fee is added on top.')}
