@@ -691,6 +691,9 @@ function App() {
   const [receiverTagline, setReceiverTagline] = useState('')
   const [receiverProfilePictureUrl, setReceiverProfilePictureUrl] = useState('')
 
+  // Age verification state
+  const [ageVerified, setAgeVerified] = useState(false)
+
   // User profile state
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
 
@@ -2423,14 +2426,15 @@ function App() {
           email: user.email,
           name: receiverName.trim(),
           tagline: receiverTagline.trim() || null,
+          age_verified_at: new Date().toISOString(),
         }, { onConflict: 'id' })
 
       if (profileError) throw profileError
 
-      // Continue to discovery
+      // Continue to discovery feed directly
       setScreen('discovery')
-      setDiscoveryStep('availability')
-      setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+      setDiscoveryStep('feed')
+      setDiscoveryFilters({ attentionType: null, category: null, availability: 'anytime' })
 
       // Reset form
       setReceiverName('')
@@ -2494,6 +2498,7 @@ function App() {
           twitter_handle: twitterHandle.trim() || null,
           instagram_handle: instagramHandle.trim() || null,
           linkedin_handle: linkedinHandle.trim() || null,
+          age_verified_at: new Date().toISOString(),
         }, { onConflict: 'id' })
 
       if (profileError) throw profileError
@@ -2885,32 +2890,72 @@ function App() {
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '15px' }}>
             How do you want to use MYCA?
           </h2>
-          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, maxWidth: '360px', lineHeight: 1.6, marginBottom: '40px' }}>
+          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, maxWidth: '360px', lineHeight: 1.6, marginBottom: '30px' }}>
             You can always change this later
           </p>
+
+          {/* Age Verification */}
+          <label
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              cursor: 'pointer',
+              marginBottom: '30px',
+              padding: '15px',
+              background: colors.bgCard,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '3px',
+              maxWidth: '340px',
+              width: '100%'
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={ageVerified}
+              onChange={(e) => setAgeVerified(e.target.checked)}
+              style={{
+                width: '18px',
+                height: '18px',
+                cursor: 'pointer',
+                accentColor: colors.accent
+              }}
+            />
+            <span style={{ fontSize: '0.9rem', color: colors.textPrimary, textAlign: 'left' }}>
+              I confirm I am 18 years of age or older
+            </span>
+          </label>
 
           <div style={{ width: '100%', maxWidth: '340px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
             {/* Receive sessions */}
             <button
               style={{
                 ...cardStyle,
-                cursor: 'pointer',
+                cursor: ageVerified ? 'pointer' : 'not-allowed',
                 padding: '20px',
                 textAlign: 'left',
                 border: `1px solid ${colors.border}`,
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                opacity: ageVerified ? 1 : 0.5
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.accent
-                e.currentTarget.style.background = colors.accentSoft
+                if (ageVerified) {
+                  e.currentTarget.style.borderColor = colors.accent
+                  e.currentTarget.style.background = colors.accentSoft
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = colors.border
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
+                if (!ageVerified) {
+                  alert('Please confirm you are 18 years of age or older')
+                  return
+                }
                 setScreen('receiverProfile')
               }}
+              disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
                 I want to receive sessions
@@ -2924,23 +2969,31 @@ function App() {
             <button
               style={{
                 ...cardStyle,
-                cursor: 'pointer',
+                cursor: ageVerified ? 'pointer' : 'not-allowed',
                 padding: '20px',
                 textAlign: 'left',
                 border: `1px solid ${colors.border}`,
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                opacity: ageVerified ? 1 : 0.5
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.accent
-                e.currentTarget.style.background = colors.accentSoft
+                if (ageVerified) {
+                  e.currentTarget.style.borderColor = colors.accent
+                  e.currentTarget.style.background = colors.accentSoft
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = colors.border
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
+                if (!ageVerified) {
+                  alert('Please confirm you are 18 years of age or older')
+                  return
+                }
                 setScreen('giverIntro')
               }}
+              disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
                 I want to give sessions
@@ -2954,24 +3007,32 @@ function App() {
             <button
               style={{
                 ...cardStyle,
-                cursor: 'pointer',
+                cursor: ageVerified ? 'pointer' : 'not-allowed',
                 padding: '20px',
                 textAlign: 'left',
                 border: `1px solid ${colors.border}`,
-                transition: 'all 0.2s'
+                transition: 'all 0.2s',
+                opacity: ageVerified ? 1 : 0.5
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = colors.accent
-                e.currentTarget.style.background = colors.accentSoft
+                if (ageVerified) {
+                  e.currentTarget.style.borderColor = colors.accent
+                  e.currentTarget.style.background = colors.accentSoft
+                }
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.borderColor = colors.border
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
+                if (!ageVerified) {
+                  alert('Please confirm you are 18 years of age or older')
+                  return
+                }
                 // For "both", start with receiver profile since it's simpler
                 setScreen('receiverProfile')
               }}
+              disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
                 Both
@@ -3025,7 +3086,7 @@ function App() {
             Everything else is optional.
           </h1>
           <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            They mirror you back. You confirm it's accurate. Then you decide what happens next.
+            You talk. They say back what they understood. You correct until it's right. Then you choose what happens next.
           </p>
           <div style={{ width: '100%', maxWidth: '340px' }}>
             <button style={btnStyle} onClick={() => {
@@ -3039,9 +3100,9 @@ function App() {
                   .maybeSingle()
                   .then(({ data }) => {
                     if (data?.name) {
-                      // User has a profile, go to discovery
-                      setDiscoveryStep('availability')
-                      setDiscoveryFilters({ attentionType: null, category: null, availability: null })
+                      // User has a profile, go DIRECTLY to discovery feed
+                      setDiscoveryStep('feed')
+                      setDiscoveryFilters({ attentionType: null, category: null, availability: 'anytime' })
                       setScreen('discovery')
                     } else {
                       // User doesn't have a profile, go to receiver profile creation
@@ -3053,20 +3114,20 @@ function App() {
                 setReturnToScreen('receiverProfile')
                 setNeedsAuth(true)
               }
-            }}>Find someone</button>
+            }}>Find a person</button>
             <button
               style={{ ...btnSecondaryStyle, marginBottom: '20px' }}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
-                // Otherwise, start the onboarding flow
+                // Otherwise, go straight to listing form
                 if (myGiverProfile) {
                   setScreen('manageListings')
                 } else {
-                  setScreen('giverIntro')
+                  setScreen('createListing')
                 }
               }}
             >
-              Offer sessions
+              Offer your time
             </button>
             <p style={{
               fontSize: '0.85rem',
@@ -3075,7 +3136,7 @@ function App() {
               lineHeight: 1.7,
               maxWidth: '340px'
             }}>
-              You speak. They reflect. You confirm. Then you decide what happens next.
+              You talk. They say back what they understood. You correct until it's right. Then you choose what happens next.
             </p>
             {!user && (
               <button
@@ -3348,6 +3409,61 @@ function App() {
             </div>
           )}
 
+          {/* Time Filter Chips (shown when on feed) */}
+          {discoveryStep === 'feed' && (
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+              {[
+                { value: 'now' as const, label: 'Now' },
+                { value: 'today' as const, label: 'Today' },
+                { value: 'week' as const, label: 'This week' },
+                { value: 'anytime' as const, label: 'Any time' }
+              ].map(filter => (
+                <button
+                  key={filter.value}
+                  onClick={async () => {
+                    setDiscoveryFilters({ ...discoveryFilters, availability: filter.value })
+
+                    // Re-fetch and filter listings based on selection
+                    const { data: allListings } = await supabase
+                      .from('listings')
+                      .select(`
+                        *,
+                        profiles!inner (
+                          id, name, tagline, bio, video_url, qualities_offered,
+                          twitter_handle, instagram_handle, linkedin_handle,
+                          available, total_sessions_completed, profile_picture_url,
+                          giver_metrics (quality_score)
+                        )
+                      `)
+                      .eq('is_active', true)
+                      .eq('profiles.is_giver', true)
+                      .eq('profiles.available', true)
+
+                    let filtered = allListings || []
+                    // Apply time filtering based on selection
+                    // (existing filtering logic would go here)
+
+                    setFilteredListings(filtered as ListingWithProfile[])
+                    setCurrentFeedIndex(0)
+                  }}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    border: `1px solid ${discoveryFilters.availability === filter.value ? colors.accent : colors.border}`,
+                    background: discoveryFilters.availability === filter.value ? colors.accentSoft : colors.bgCard,
+                    color: discoveryFilters.availability === filter.value ? colors.accent : colors.textSecondary,
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                    fontWeight: discoveryFilters.availability === filter.value ? 600 : 400,
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* STEP 4: Video Feed */}
           {discoveryStep === 'feed' && filteredListings.length > 0 && (
             <div>
@@ -3529,9 +3645,32 @@ function App() {
 
           {discoveryStep === 'feed' && filteredListings.length === 0 && (
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px', fontSize: '1.1rem' }}>
-                No one available with these filters. Try broadening your search.
+              <p style={{ color: colors.textSecondary, marginBottom: '30px', fontSize: '1.1rem' }}>
+                No one available right now
               </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '280px', margin: '0 auto' }}>
+                <button
+                  style={{ ...btnSecondaryStyle, margin: 0 }}
+                  onClick={() => {
+                    // TODO: Add invite functionality
+                    alert('Invite functionality coming soon')
+                  }}
+                >
+                  Invite someone you trust
+                </button>
+                <button
+                  style={{ ...btnSecondaryStyle, margin: 0 }}
+                  onClick={() => setScreen('giverIntro')}
+                >
+                  Become a giver
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Old empty state button kept for back compatibility */}
+          {discoveryStep === 'feed' && filteredListings.length === 0 && false && (
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <button
                 style={btnStyle}
                 onClick={() => setDiscoveryStep('attention')}
