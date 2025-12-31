@@ -7691,7 +7691,7 @@ function App() {
             {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You will receive <span style={{ color: colors.accent }}>*</span>
+                You earn <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
                 per 30 minutes
@@ -7721,10 +7721,9 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Platform fee is added to the session price.{' '}
                 <button
                   type="button"
-                  onClick={() => alert('The listener sets what they earn. The platform fee is added on top.')}
+                  onClick={() => alert('You set what you earn. The platform adds a 15% fee on top for the person booking you. Example: You earn $30, they pay $34.50.')}
                   style={{
                     background: 'none',
                     border: 'none',
@@ -7749,9 +7748,9 @@ function App() {
                 These are just suggestions for your presence video. Use them as-is or make it your own.
               </p>
               {[
-                { value: 'script_a', text: "Here's how I show up. I'll give you a protected floor, then reflect what I hear until you say it's accurate." },
-                { value: 'script_b', text: "I'm here to listen without agenda. You speak, I mirror back, and we only move forward when you feel understood." },
-                { value: 'script_c', text: "My role is simple: hold space, reflect what you share, and let you decide what happens next." }
+                { value: 'script_a', text: "In one sentence, what is it like to talk with you?" },
+                { value: 'script_b', text: "What do you help people do after they feel understood?" },
+                { value: 'script_c', text: "Which directions do you prefer most?" }
               ].map(script => (
                 <div
                   key={script.value}
@@ -7824,11 +7823,12 @@ function App() {
                 Select which directions receivers can choose from during sessions
               </p>
               {[
-                { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together' },
-                { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights' },
-                { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking' },
-                { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions' },
-                { value: 'end_cleanly', label: 'Wind down', description: 'Finish session gracefully' }
+                { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together', required: true },
+                { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights', required: false },
+                { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking', required: false },
+                { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions', required: false },
+                { value: 'end_cleanly', label: 'End cleanly', description: 'Finish session gracefully', required: true },
+                { value: 'pressure_test', label: 'Pressure test', description: 'Challenge their thinking directly', required: false }
               ].map(direction => (
                 <label
                   key={direction.value}
