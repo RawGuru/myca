@@ -2824,7 +2824,7 @@ function App() {
         {[
           { id: 'browse', icon: '🔍', label: 'Find' },
           ...(myGiverProfile ? [] : [{ id: 'giverIntro', icon: '🌱', label: 'Offer' }]),
-          { id: 'sessions', icon: '📅', label: 'Sessions' },
+          { id: 'sessions', icon: '📅', label: 'Calls' },
           { id: 'userProfile', icon: '⚙️', label: 'Profile' },
         ].map(item => (
           <button
@@ -2958,10 +2958,10 @@ function App() {
               disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
-                I want to receive sessions
+                I want to receive calls
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-                Find someone to listen and mirror you back
+                Find someone to listen and say back what you said
               </div>
             </button>
 
@@ -2996,7 +2996,7 @@ function App() {
               disabled={!ageVerified}
             >
               <div style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '5px' }}>
-                I want to give sessions
+                I want to give calls
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
                 Offer your attention and get paid for your time
@@ -3038,7 +3038,7 @@ function App() {
                 Both
               </div>
               <div style={{ fontSize: '0.85rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-                Give and receive sessions
+                Give and receive calls
               </div>
             </button>
           </div>
@@ -4822,7 +4822,7 @@ function App() {
           <p style={{ color: colors.textMuted, fontSize: '0.9rem', marginBottom: '30px', maxWidth: '300px' }}>
             {isPendingApproval
               ? `You'll be notified when ${selectedGiver?.name} approves your request. They have until the scheduled time to respond.`
-              : "You'll receive a reminder before your session. The video room will be available at your scheduled time."
+              : "You'll receive a reminder before your call. The video room will be available at your scheduled time."
             }
           </p>
           <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', maxWidth: '300px' }}>
@@ -4859,7 +4859,7 @@ function App() {
               setCurrentBooking(null)
             }}
           >
-            View My Sessions
+            View My Calls
           </button>
           <button
             style={{ ...btnSecondaryStyle, maxWidth: '320px', marginTop: '10px' }}
@@ -4898,7 +4898,7 @@ function App() {
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            You give them the floor. Mirror what you hear. They confirm. Then they choose a direction you pre-approved.
+            You give them uninterrupted time. Say back what you hear. They confirm. Then they choose a direction you pre-approved.
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
@@ -4950,7 +4950,7 @@ function App() {
             <ul style={{ color: colors.textSecondary, lineHeight: 1.8, margin: '0 0 0 20px', padding: 0 }}>
               <li>You show up fully for the time you've agreed to.</li>
               <li>You stay inside the contract. If they booked listening, you listen. If they booked strategy, you strategize. The mode is the promise.</li>
-              <li>You let the system be the boundary. You don't negotiate time. You don't chase payment. You don't owe anything beyond the session.</li>
+              <li>You let the system be the boundary. You don't negotiate time. You don't chase payment. You don't owe anything beyond the call.</li>
               <li>You release it when it ends. You gave your attention. That was the gift. Now it's done.</li>
             </ul>
           </div>
@@ -6247,7 +6247,7 @@ function App() {
           )}
 
           <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('sessions')}>
-            View My Sessions
+            View My Calls
           </button>
           <button
             style={{ ...btnSecondaryStyle, maxWidth: '320px', marginTop: '10px' }}
@@ -6515,7 +6515,7 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>Your Sessions</h2>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>Your Calls</h2>
 
           {/* Giver payout status card */}
           {myGiverProfile && (
@@ -6572,11 +6572,11 @@ function App() {
           {userBookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
               <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
-              <p style={{ marginBottom: '10px' }}>No sessions yet</p>
+              <p style={{ marginBottom: '10px' }}>No calls yet</p>
               <p style={{ fontSize: '0.85rem', marginBottom: '30px' }}>
                 {myGiverProfile
-                  ? 'When someone books a session with you, it will appear here.'
-                  : 'Book a session with a giver to get started.'}
+                  ? 'When someone books a call with you, it will appear here.'
+                  : 'Book a call with a giver to get started.'}
               </p>
               <button
                 style={{ ...btnStyle, maxWidth: '200px' }}
@@ -6588,7 +6588,7 @@ function App() {
           ) : (
             <div>
               <h3 style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '15px' }}>
-                Upcoming Sessions
+                Upcoming Calls
               </h3>
               {userBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
@@ -7820,14 +7820,14 @@ function App() {
                 Directions you allow <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                Select which directions receivers can choose from during sessions
+                Select which directions receivers can choose from during calls
               </p>
               {[
                 { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together', required: true },
                 { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights', required: false },
                 { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking', required: false },
                 { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions', required: false },
-                { value: 'end_cleanly', label: 'End cleanly', description: 'Finish session gracefully', required: true },
+                { value: 'end_cleanly', label: 'End cleanly', description: 'End call gracefully', required: true },
                 { value: 'pressure_test', label: 'Pressure test', description: 'Challenge their thinking directly', required: false }
               ].map(direction => (
                 <label
