@@ -3193,7 +3193,26 @@ function App() {
               }}
               onClick={() => {
                 if (!ageVerified) return
-                setScreen('receiverProfile')
+
+                // Check if user has completed receiver profile
+                if (user) {
+                  supabase
+                    .from('profiles')
+                    .select('name')
+                    .eq('id', user.id)
+                    .maybeSingle()
+                    .then(({ data }) => {
+                      if (data?.name) {
+                        // User has profile → go to discovery feed
+                        setDiscoveryStep('feed')
+                        setDiscoveryFilters({ attentionType: null, category: null, availability: 'anytime' })
+                        setScreen('discovery')
+                      } else {
+                        // New user → create profile
+                        setScreen('receiverProfile')
+                      }
+                    })
+                }
               }}
               disabled={!ageVerified}
             >
