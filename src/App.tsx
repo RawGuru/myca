@@ -320,17 +320,31 @@ function ImageUpload({
       }}
       onDragOver={(e) => {
         e.preventDefault()
+        e.stopPropagation()
         console.log('🎯 Drag over detected')
         e.currentTarget.style.borderColor = colors.accent
         e.currentTarget.style.background = colors.accentSoft
       }}
+      onDragEnter={(e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      }}
       onDragLeave={(e) => {
-        console.log('🚫 Drag leave detected')
-        e.currentTarget.style.borderColor = colors.border
-        e.currentTarget.style.background = colors.bgSecondary
+        e.preventDefault()
+        e.stopPropagation()
+        // Only reset styles if actually leaving the drop zone (not entering a child element)
+        const rect = e.currentTarget.getBoundingClientRect()
+        const x = e.clientX
+        const y = e.clientY
+        if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
+          console.log('🚫 Drag leave detected (actually left zone)')
+          e.currentTarget.style.borderColor = colors.border
+          e.currentTarget.style.background = colors.bgSecondary
+        }
       }}
       onDrop={async (e) => {
         e.preventDefault()
+        e.stopPropagation()
         console.log('📁 Drop detected!', e.dataTransfer.files)
         e.currentTarget.style.borderColor = colors.border
         e.currentTarget.style.background = colors.bgSecondary
@@ -345,7 +359,7 @@ function ImageUpload({
         await handleFileUpload(file)
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', pointerEvents: 'none' }}>
         {/* Image Preview */}
         <div style={{
           ...previewStyle,
@@ -381,7 +395,7 @@ function ImageUpload({
             }}
           />
           <button
-            style={{ ...buttonStyle, margin: 0 }}
+            style={{ ...buttonStyle, margin: 0, pointerEvents: 'auto' }}
             onClick={() => document.getElementById(uploadId)?.click()}
           >
             {buttonText || (currentImageUrl ? 'Change Photo' : 'Upload Photo')}
