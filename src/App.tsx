@@ -7806,10 +7806,10 @@ function App() {
             {/* Price */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You earn <span style={{ color: colors.accent }}>*</span>
+                Name your price <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per block
+                per block ({BLOCK_MINUTES} minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -7835,12 +7835,6 @@ function App() {
                   required
                 />
               </div>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Block length is {BLOCK_MINUTES} minutes
-              </p>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                A platform fee is added at checkout.
-              </p>
             </div>
 
             {/* Presence Video Script Selection - OPTIONAL */}
@@ -8193,10 +8187,10 @@ function App() {
             {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                You earn <span style={{ color: colors.accent }}>*</span>
+                Name your price <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per block
+                per block ({BLOCK_MINUTES} minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -8222,9 +8216,6 @@ function App() {
                   required
                 />
               </div>
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Block length is {BLOCK_MINUTES} minutes
-              </p>
             </div>
 
             {/* STEP 5 - Description */}
