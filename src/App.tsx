@@ -435,6 +435,7 @@ interface VideoUploadProps {
   buttonText?: string
 }
 
+// @ts-expect-error - VideoUpload component kept for potential future use
 function VideoUpload({
   onUpload,
   currentVideoUrl,
@@ -2287,6 +2288,7 @@ function App() {
   }
 
   // Deactivate a listing (soft delete)
+  // @ts-expect-error - Function kept for potential future UI restoration
   const deactivateListing = async (listingId: string) => {
     if (!user) return { success: false, error: 'Not authenticated' }
 
@@ -2310,6 +2312,7 @@ function App() {
   }
 
   // Reactivate a listing
+  // @ts-expect-error - Function kept for potential future UI restoration
   const reactivateListing = async (listingId: string) => {
     if (!user) return { success: false, error: 'Not authenticated' }
 
@@ -7773,9 +7776,6 @@ function App() {
                 return
               }
 
-              // Video and script are now optional - listings without video rank lower in discovery
-              // No validation needed for presence_video_script or listing_video_url
-
               const result = await createListing({
                 topic: '', // No longer used - giver offers themselves, not topics
                 mode: 'vault' as Mode, // Default mode - actual mode emerges after validation
@@ -7854,79 +7854,6 @@ function App() {
                   required
                 />
               </div>
-            </div>
-
-            {/* Presence Video Script Selection - OPTIONAL */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Say it your way
-              </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                Choose a prompt or make it your own.
-              </p>
-              {[
-                { value: 'script_a', text: "What kind of conversation are you great at?" },
-                { value: 'script_b', text: "How do people feel after talking with you?" },
-                { value: 'script_c', text: "What do you like helping someone decide?" }
-              ].map(script => (
-                <div
-                  key={script.value}
-                  style={{
-                    padding: '15px',
-                    marginBottom: '10px',
-                    background: listingFormData.presence_video_script === script.value ? colors.accentSoft : 'transparent',
-                    border: `2px solid ${listingFormData.presence_video_script === script.value ? colors.accent : colors.border}`,
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                    <div style={{
-                      width: '20px',
-                      height: '20px',
-                      borderRadius: '50%',
-                      border: `2px solid ${listingFormData.presence_video_script === script.value ? colors.accent : colors.border}`,
-                      background: listingFormData.presence_video_script === script.value ? colors.accent : 'transparent',
-                      flexShrink: 0,
-                      marginTop: '2px'
-                    }} />
-                    <p style={{ color: colors.textPrimary, fontSize: '0.9rem', lineHeight: 1.6, margin: 0 }}>
-                      {script.text}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Video (15-30 sec) - OPTIONAL */}
-            <div id="listing-video-section" style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Presence video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional • 15-30 seconds)</span>
-              </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Record yourself saying your chosen prompt. Offers with video rank higher in discovery. <a
-                  href="#listing-directions-section"
-                  style={{ color: colors.accent, textDecoration: 'none' }}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    document.getElementById('listing-directions-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                  }}
-                >Skip for now</a>
-              </p>
-              <VideoUpload
-                onUpload={async (publicUrl) => {
-                }}
-                currentVideoUrl={listingFormData.presence_video_url || undefined}
-                bucketName="listing-videos"
-                maxSizeMB={100}
-                minDurationSeconds={15}
-                maxDurationSeconds={30}
-                buttonText={listingFormData.presence_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (15-30 sec)'}
-              />
-              {listingFormData.presence_video_url && (
-                <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
-              )}
             </div>
 
             {/* Direction Types Selection */}
