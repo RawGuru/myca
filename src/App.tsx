@@ -3660,8 +3660,10 @@ function App() {
                     onClick={async () => {
                       setDiscoveryFilters({ ...discoveryFilters, availability: option.value })
 
+                      console.log('🔍 DEBUG: Starting discovery query...')
+
                       // Filter listings based on selections
-                      const { data: allListings } = await supabase
+                      const { data: allListings, error: listingsError } = await supabase
                         .from('listings')
                         .select(`
                           *,
@@ -3687,18 +3689,32 @@ function App() {
                         // Mode filtering removed - modes only appear after validation as emergence verbs
                         .eq('profiles.is_giver', true)
 
+                      console.log('📋 DEBUG: Listings query returned:', allListings?.length || 0, 'listings')
+                      console.log('📋 DEBUG: Listings error:', listingsError)
+                      console.log('📋 DEBUG: Listings data:', allListings)
+
                       // Get givers with available slots
-                      const { data: availableGivers } = await supabase
+                      const { data: availableGivers, error: availabilityError } = await supabase
                         .from('giver_availability')
                         .select('giver_id')
                         .eq('is_booked', false)
 
+                      console.log('📅 DEBUG: Availability query returned:', availableGivers?.length || 0, 'slots')
+                      console.log('📅 DEBUG: Availability error:', availabilityError)
+                      console.log('📅 DEBUG: Availability data:', availableGivers)
+
                       const giverIdsWithAvailability = new Set(availableGivers?.map(slot => slot.giver_id) || [])
+                      console.log('👥 DEBUG: Giver IDs with availability:', Array.from(giverIdsWithAvailability))
 
                       // Filter listings to only include givers with availability
-                      let filtered = (allListings || []).filter(listing =>
-                        giverIdsWithAvailability.has(listing.user_id)
-                      )
+                      let filtered = (allListings || []).filter(listing => {
+                        const hasAvailability = giverIdsWithAvailability.has(listing.user_id)
+                        console.log(`🔍 DEBUG: Checking listing ${listing.id} (user_id: ${listing.user_id}):`, hasAvailability)
+                        return hasAvailability
+                      })
+
+                      console.log('✅ DEBUG: Filtered listings:', filtered.length)
+                      console.log('✅ DEBUG: Filtered data:', filtered)
 
                       // Category filtering removed - givers offer themselves, not expertise categories
 
@@ -3772,8 +3788,10 @@ function App() {
                   onClick={async () => {
                     setDiscoveryFilters({ ...discoveryFilters, availability: filter.value })
 
+                    console.log('🔍 DEBUG (Feed Filter): Starting discovery query...')
+
                     // Re-fetch and filter listings based on selection
-                    const { data: allListings } = await supabase
+                    const { data: allListings, error: listingsError } = await supabase
                       .from('listings')
                       .select(`
                         *,
@@ -3787,18 +3805,32 @@ function App() {
                       .eq('is_active', true)
                       .eq('profiles.is_giver', true)
 
+                    console.log('📋 DEBUG (Feed Filter): Listings query returned:', allListings?.length || 0, 'listings')
+                    console.log('📋 DEBUG (Feed Filter): Listings error:', listingsError)
+                    console.log('📋 DEBUG (Feed Filter): Listings data:', allListings)
+
                     // Get givers with available slots
-                    const { data: availableGivers } = await supabase
+                    const { data: availableGivers, error: availabilityError } = await supabase
                       .from('giver_availability')
                       .select('giver_id')
                       .eq('is_booked', false)
 
+                    console.log('📅 DEBUG (Feed Filter): Availability query returned:', availableGivers?.length || 0, 'slots')
+                    console.log('📅 DEBUG (Feed Filter): Availability error:', availabilityError)
+                    console.log('📅 DEBUG (Feed Filter): Availability data:', availableGivers)
+
                     const giverIdsWithAvailability = new Set(availableGivers?.map(slot => slot.giver_id) || [])
+                    console.log('👥 DEBUG (Feed Filter): Giver IDs with availability:', Array.from(giverIdsWithAvailability))
 
                     // Filter listings to only include givers with availability
-                    let filtered = (allListings || []).filter(listing =>
-                      giverIdsWithAvailability.has(listing.user_id)
-                    )
+                    let filtered = (allListings || []).filter(listing => {
+                      const hasAvailability = giverIdsWithAvailability.has(listing.user_id)
+                      console.log(`🔍 DEBUG (Feed Filter): Checking listing ${listing.id} (user_id: ${listing.user_id}):`, hasAvailability)
+                      return hasAvailability
+                    })
+
+                    console.log('✅ DEBUG (Feed Filter): Filtered listings:', filtered.length)
+                    console.log('✅ DEBUG (Feed Filter): Filtered data:', filtered)
                     // Apply time filtering based on selection
                     // (existing filtering logic would go here)
 
