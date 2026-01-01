@@ -449,6 +449,7 @@ function VideoUpload({
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null)
   const [recordingTime, setRecordingTime] = useState(0)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
+  const [liveStream, setLiveStream] = useState<MediaStream | null>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
 
   const buttonStyle: React.CSSProperties = {
@@ -560,8 +561,16 @@ function VideoUpload({
         setRecordedBlob(blob)
         setRecordedUrl(URL.createObjectURL(blob))
         stream.getTracks().forEach(track => track.stop())
+        setLiveStream(null)
       }
 
+      // Attach live stream to video preview
+      if (videoPreviewRef.current) {
+        videoPreviewRef.current.srcObject = stream
+        videoPreviewRef.current.play()
+      }
+
+      setLiveStream(stream)
       setMediaRecorder(recorder)
       recorder.start()
       setIsRecording(true)
@@ -608,6 +617,16 @@ function VideoUpload({
   }
 
   // Recording timer
+  // Cleanup stream on unmount
+  React.useEffect(() => {
+    return () => {
+      if (liveStream) {
+        liveStream.getTracks().forEach(track => track.stop())
+      }
+    }
+  }, [liveStream])
+
+  // Timer for recording duration
   React.useEffect(() => {
     let interval: number
     if (isRecording) {
@@ -665,7 +684,40 @@ function VideoUpload({
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
-        {/* Video Preview */}
+        {/* Live Recording Preview */}
+        {isRecording && (
+          <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
+            <video
+              ref={videoPreviewRef}
+              autoPlay
+              muted
+              playsInline
+              style={{
+                width: '100%',
+                borderRadius: '3px',
+                border: `2px solid ${colors.accent}`,
+                transform: 'scaleX(-1)' // Mirror effect for natural preview
+              }}
+            />
+            {/* Recording Indicators Overlay */}
+            <div style={{
+              position: 'absolute',
+              top: '10px',
+              left: '10px',
+              background: 'rgba(0, 0, 0, 0.7)',
+              padding: '8px 12px',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span style={{ fontSize: '1rem', color: '#ff0000', animation: 'pulse 1.5s infinite' }}>●</span>
+              <span style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>Recording... {recordingTime}s</span>
+            </div>
+          </div>
+        )}
+
+        {/* Video Preview (after recording) */}
         {(currentVideoUrl || recordedUrl) && !isRecording && (
           <video
             ref={videoPreviewRef}
@@ -708,17 +760,12 @@ function VideoUpload({
         {!recordedUrl && !currentVideoUrl && (
           <div style={{ marginBottom: '10px' }}>
             {isRecording ? (
-              <div>
-                <div style={{ fontSize: '2rem', color: colors.accent, marginBottom: '10px' }}>
-                  🔴 {recordingTime}s
-                </div>
-                <button
-                  style={{ ...buttonStyle, margin: 0, background: colors.error, color: '#fff', border: 'none' }}
-                  onClick={stopRecording}
-                >
-                  Stop Recording
-                </button>
-              </div>
+              <button
+                style={{ ...buttonStyle, margin: 0, background: colors.error, color: '#fff', border: 'none' }}
+                onClick={stopRecording}
+              >
+                ⏹ Stop Recording
+              </button>
             ) : (
               <button
                 style={{ ...buttonStyle, margin: 0, background: colors.accent, color: '#000', border: 'none' }}
