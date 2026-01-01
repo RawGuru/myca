@@ -956,6 +956,7 @@ function App() {
     directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'] as string[],
     boundaries: '' as string
   })
+  const [listingFormError, setListingFormError] = useState<string | null>(null)
 
   // Seeker discovery flow state (Part 5)
   const [discoveryStep, setDiscoveryStep] = useState<'attention' | 'category' | 'availability' | 'feed'>('attention')
@@ -968,8 +969,8 @@ function App() {
   const [currentFeedIndex, setCurrentFeedIndex] = useState(0)
 
   // Ensure user profile exists before giver operations
-  const ensureProfileExists = async () => {
-    if (!user) return false
+  const ensureProfileExists = async (): Promise<{ success: boolean; error?: string }> => {
+    if (!user) return { success: false, error: 'Not authenticated' }
 
     try {
       // Check if profile exists
@@ -992,7 +993,17 @@ function App() {
             created_at: new Date().toISOString()
           })
 
-        if (insertError) throw insertError
+        if (insertError) {
+          console.error('Profile insert error:', insertError)
+          // Parse error to provide helpful message
+          const errMsg = insertError.message || ''
+          if (errMsg.includes('display_name') || errMsg.includes('name')) {
+            return { success: false, error: 'Please complete your profile with a name before creating an offer' }
+          } else if (errMsg.includes('null value')) {
+            return { success: false, error: 'Profile is missing required information. Please contact support.' }
+          }
+          return { success: false, error: 'Failed to create profile. Please try again.' }
+        }
       } else if (!existing.is_giver) {
         // Update to mark as giver
         const { error: updateError } = await supabase
@@ -1000,14 +1011,16 @@ function App() {
           .update({ is_giver: true })
           .eq('id', user.id)
 
-        if (updateError) throw updateError
+        if (updateError) {
+          console.error('Profile update error:', updateError)
+          return { success: false, error: 'Failed to update profile. Please try again.' }
+        }
       }
 
-      return true
+      return { success: true }
     } catch (err) {
       console.error('Error ensuring profile exists:', err)
-      alert('Error creating profile. Please try again.')
-      return false
+      return { success: false, error: 'Unexpected error creating profile. Please try again.' }
     }
   }
 
@@ -1017,8 +1030,11 @@ function App() {
 
     try {
       // Ensure profile exists first
-      const profileReady = await ensureProfileExists()
-      if (!profileReady) return
+      const profileResult = await ensureProfileExists()
+      if (!profileResult.success) {
+        console.error('Profile error:', profileResult.error)
+        return
+      }
 
       const { data, error } = await supabase
         .from('giver_availability')
@@ -1064,8 +1080,11 @@ function App() {
 
     try {
       // Ensure profile exists first
-      const profileReady = await ensureProfileExists()
-      if (!profileReady) return
+      const profileResult = await ensureProfileExists()
+      if (!profileResult.success) {
+        console.error('Profile error:', profileResult.error)
+        return
+      }
 
       // Validate dates
       const startDate = new Date(bulkStartDate + 'T00:00:00')
@@ -2114,8 +2133,8 @@ function App() {
 
     try {
       // Ensure profile exists first
-      const profileReady = await ensureProfileExists()
-      if (!profileReady) return { success: false, error: 'Failed to create profile' }
+      const profileResult = await ensureProfileExists()
+      if (!profileResult.success) return { success: false, error: profileResult.error || 'Failed to create profile' }
 
       // Insert listing
       const { data: newListing, error: listingError } = await supabase
@@ -7747,10 +7766,11 @@ function App() {
           <form
             onSubmit={async (e) => {
               e.preventDefault()
+              setListingFormError(null)
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                alert('Minimum price is $15 per block')
+                setListingFormError('Minimum price is $15 per block')
                 return
               }
 
@@ -7773,9 +7793,23 @@ function App() {
               })
 
               if (result.success) {
+                setListingFormError(null)
                 setScreen('manageListings')
               } else {
-                alert(result.error || 'Failed to create offer')
+                // Parse database errors to show helpful messages
+                const errorMsg = result.error || 'Failed to create offer'
+                if (errorMsg.includes('topic')) {
+                  setListingFormError('System error: Topic field issue. Please contact support.')
+                } else if (errorMsg.includes('price')) {
+                  setListingFormError('Price must be at least $15 per block')
+                } else if (errorMsg.includes('mode')) {
+                  setListingFormError('System error: Mode field issue. Please contact support.')
+                } else if (errorMsg.includes('profile') || errorMsg.includes('auth')) {
+                  setListingFormError('Please complete your profile before creating an offer')
+                } else {
+                  setListingFormError(errorMsg)
+                }
+                console.error('Create offer error:', result.error)
               }
             }}
           >
@@ -8060,6 +8094,29 @@ function App() {
               </label>
             </div>
 
+            {/* Error Display */}
+            {listingFormError && (
+              <div style={{
+                background: 'rgba(220, 38, 38, 0.1)',
+                border: `1px solid rgba(220, 38, 38, 0.3)`,
+                borderRadius: '8px',
+                padding: '15px',
+                marginBottom: '20px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                  <div>
+                    <p style={{ color: '#fca5a5', fontWeight: 600, marginBottom: '5px' }}>
+                      Cannot create offer
+                    </p>
+                    <p style={{ color: colors.textSecondary, fontSize: '0.9rem', lineHeight: 1.5 }}>
+                      {listingFormError}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Submit */}
             <button type="submit" style={btnStyle}>
               Create Offer
@@ -8100,10 +8157,11 @@ function App() {
           <form
             onSubmit={async (e) => {
               e.preventDefault()
+              setListingFormError(null)
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                alert('Minimum price is $15 per block')
+                setListingFormError('Minimum price is $15 per block')
                 return
               }
 
@@ -8116,9 +8174,19 @@ function App() {
               })
 
               if (result.success) {
+                setListingFormError(null)
                 setScreen('manageListings')
               } else {
-                alert(result.error || 'Failed to update offer')
+                // Parse database errors to show helpful messages
+                const errorMsg = result.error || 'Failed to update offer'
+                if (errorMsg.includes('price')) {
+                  setListingFormError('Price must be at least $15 per block')
+                } else if (errorMsg.includes('profile') || errorMsg.includes('auth')) {
+                  setListingFormError('Authentication error. Please sign out and back in.')
+                } else {
+                  setListingFormError(errorMsg)
+                }
+                console.error('Update offer error:', result.error)
               }
             }}
           >
