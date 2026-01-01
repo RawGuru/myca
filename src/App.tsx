@@ -900,6 +900,7 @@ function App() {
   // Receiver profile form state (minimal)
   const [receiverName, setReceiverName] = useState('')
   const [receiverTagline, setReceiverTagline] = useState('')
+  const [receiverProfilePictureUrl, setReceiverProfilePictureUrl] = useState<string | undefined>(undefined)
 
   // Age verification state
   const [ageVerified, setAgeVerified] = useState(false)
@@ -2672,6 +2673,7 @@ function App() {
           email: user.email,
           name: receiverName.trim(),
           tagline: receiverTagline.trim() || null,
+          profile_picture_url: receiverProfilePictureUrl || null,
           age_verified_at: new Date().toISOString(),
         }, { onConflict: 'id' })
 
@@ -2685,6 +2687,7 @@ function App() {
       // Reset form
       setReceiverName('')
       setReceiverTagline('')
+      setReceiverProfilePictureUrl(undefined)
     } catch (err) {
       setProfileError(err instanceof Error ? err.message : 'Failed to create profile')
     } finally {
@@ -3403,6 +3406,23 @@ function App() {
               {profileError}
             </div>
           )}
+
+          {/* Profile Photo */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+              Profile photo <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+            </label>
+            <ImageUpload
+              onUpload={async (publicUrl) => {
+                setReceiverProfilePictureUrl(publicUrl)
+              }}
+              currentImageUrl={receiverProfilePictureUrl}
+              bucketName="profile-pictures"
+              maxSizeMB={5}
+              aspectRatio="circle"
+              initials={(receiverName?.[0] || user?.email?.[0] || '?').toUpperCase()}
+            />
+          </div>
 
           {/* Name */}
           <div style={{ marginBottom: '20px' }}>
