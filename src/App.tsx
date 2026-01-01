@@ -3109,10 +3109,7 @@ function App() {
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
-                if (!ageVerified) {
-                  alert('Please confirm you are 18 years of age or older')
-                  return
-                }
+                if (!ageVerified) return
                 setScreen('receiverProfile')
               }}
               disabled={!ageVerified}
@@ -3147,10 +3144,7 @@ function App() {
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
-                if (!ageVerified) {
-                  alert('Please confirm you are 18 years of age or older')
-                  return
-                }
+                if (!ageVerified) return
                 setScreen('giverIntro')
               }}
               disabled={!ageVerified}
@@ -3185,10 +3179,7 @@ function App() {
                 e.currentTarget.style.background = colors.bgCard
               }}
               onClick={() => {
-                if (!ageVerified) {
-                  alert('Please confirm you are 18 years of age or older')
-                  return
-                }
+                if (!ageVerified) return
                 // For "both", start with receiver profile since it's simpler
                 setScreen('receiverProfile')
               }}
@@ -3714,7 +3705,10 @@ function App() {
                           </div>
 
                           <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0 0 0' }}>
-                            ${(currentListing.price_cents / 100).toFixed(0)}/30min
+                            ${(currentListing.price_cents / 100).toFixed(0)} per block
+                          </p>
+                          <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '4px' }}>
+                            Block length is {BLOCK_MINUTES} minutes
                           </p>
                         </div>
 
@@ -3768,7 +3762,7 @@ function App() {
                         }}
                         style={{ ...btnStyle, flex: 1 }}
                       >
-                        Book Now
+                        Book time
                       </button>
                     </div>
 
@@ -5110,7 +5104,7 @@ function App() {
             <Auth onBack={() => setScreen('giverIntro')} />
           ) : (
             <>
-              <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Listing</button>
+              <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Offer</button>
               <button
                 style={{
                   background: 'none',
@@ -6458,7 +6452,7 @@ function App() {
           userId={user.id}
           giverId={activeSession.giver_id}
           receiverId={activeSession.seeker_id}
-          receiverName={activeSession.seeker_id === user.id ? 'The receiver' : 'The receiver'} // TODO: Fetch receiver name from profile
+          receiverName={activeSession.seeker_id === user.id ? 'The guest' : 'The guest'} // TODO: Fetch guest name from profile
           amountCents={activeSession.amount_cents}
           sessionTimeRemaining={_sessionTimeRemaining}
           onExtensionGranted={() => {
@@ -6722,7 +6716,7 @@ function App() {
                 style={{ ...btnStyle, maxWidth: '200px' }}
                 onClick={() => setScreen('browse')}
               >
-                {myGiverProfile ? 'Browse Givers' : 'Find Someone'}
+                {myGiverProfile ? 'Browse Offers' : 'Find Someone'}
               </button>
             </div>
           ) : (
@@ -6842,7 +6836,7 @@ function App() {
                         <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '10px', marginBottom: '5px' }}>
                           {booking.giver_id === user?.id
                             ? 'Cancelling forfeits your payment for this booking.'
-                            : 'Cancelling means the giver keeps your payment.'}
+                            : 'Cancelling means the host keeps your payment.'}
                         </p>
                         <button
                           onClick={async () => {
@@ -6850,8 +6844,8 @@ function App() {
 
                             // Different consequences based on who cancels
                             const message = isGiver
-                              ? 'Cancel this booking? The seeker will receive a full refund. You will not be paid.'
-                              : 'Cancel this booking? Your payment will still go to the giver. No refund.'
+                              ? 'Cancel this booking? The guest will receive a full refund. You will not be paid.'
+                              : 'Cancel this booking? Your payment will still go to the host. No refund.'
 
                             if (confirm(message)) {
                               const { error } = await supabase
@@ -6870,9 +6864,9 @@ function App() {
                                 await fetchUserBookings()
 
                                 if (isGiver) {
-                                  alert('Booking cancelled. The seeker will be refunded.')
+                                  alert('Booking cancelled. The guest will be refunded.')
                                 } else {
-                                  alert('Booking cancelled. Your payment has been forfeited to the giver.')
+                                  alert('Booking cancelled. Your payment has been forfeited to the host.')
                                 }
                               } else {
                                 console.error('Cancellation error:', error)
@@ -6945,39 +6939,6 @@ function App() {
               </button>
             </div>
           )}
-          <Nav />
-        </div>
-      </div>
-    )
-  }
-
-  if (screen === 'manageAvailability') {
-    return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative' }}>
-          <SignOutButton />
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
-            <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Manage Availability</h2>
-            <div style={{ width: '40px' }} />
-          </div>
-
-          <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ fontSize: '1.1rem', color: colors.textSecondary, marginBottom: '20px' }}>
-              Availability management is coming soon.
-            </p>
-            <p style={{ fontSize: '0.95rem', color: colors.textMuted, marginBottom: '30px' }}>
-              For now, update your availability during profile creation.
-            </p>
-            <button
-              style={btnStyle}
-              onClick={() => setScreen('userProfile')}
-            >
-              Back to Profile
-            </button>
-          </div>
-
           <Nav />
         </div>
       </div>
@@ -7345,7 +7306,7 @@ function App() {
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
-                  onClick={() => setScreen('manageAvailability')}
+                  onClick={() => setScreen('give')}
                 >
                   Manage Availability
                 </button>
@@ -7355,23 +7316,23 @@ function App() {
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>What You Offer</h3>
                 <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Each listing is a different type of conversation you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
+                  Each offer is a different type of conversation you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
                 </p>
                 <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>
-                  {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'listing' : 'listings'}
+                  {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'offer' : 'offers'}
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
                     style={{ ...btnStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('createListing')}
                   >
-                    Create New Listing
+                    Create New Offer
                   </button>
                   <button
                     style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('manageListings')}
                   >
-                    Manage Listings
+                    Manage Offers
                   </button>
                 </div>
               </div>
@@ -7491,7 +7452,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>My Listings</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>My Offers</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -7501,7 +7462,7 @@ function App() {
             </div>
           ) : (
             <>
-              {/* Create New Listing Button */}
+              {/* Create New Offer Button */}
               <button
                 style={{
                   ...btnStyle,
@@ -7532,10 +7493,10 @@ function App() {
                 }}
               >
                 <span style={{ fontSize: '1.2rem' }}>+</span>
-                Create New Listing
+                Create New Offer
               </button>
 
-              {/* Listings List */}
+              {/* Offers List */}
               {myListings.length === 0 ? (
                 <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center' }}>
                   <p style={{ color: colors.textSecondary, marginBottom: '15px' }}>
@@ -7718,7 +7679,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Listing</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Offer</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -7918,7 +7879,7 @@ function App() {
                 Presence video <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional • 15-30 seconds)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                Record yourself saying your chosen prompt. Listings with video rank higher in discovery. <a
+                Record yourself saying your chosen prompt. Offers with video rank higher in discovery. <a
                   href="#listing-directions-section"
                   style={{ color: colors.accent, textDecoration: 'none' }}
                   onClick={(e) => {
@@ -8046,7 +8007,7 @@ function App() {
 
             {/* Submit */}
             <button type="submit" style={btnStyle}>
-              Create Listing
+              Create Offer
             </button>
           </form>
 
@@ -8062,8 +8023,8 @@ function App() {
         <div style={containerStyle}>
           <div style={screenStyle}>
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Listing not found</p>
-              <button style={btnStyle} onClick={() => setScreen('manageListings')}>Back to Listings</button>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Offer not found</p>
+              <button style={btnStyle} onClick={() => setScreen('manageListings')}>Back to Offers</button>
             </div>
           </div>
         </div>
@@ -8077,7 +8038,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit Listing</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit Offer</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -8248,22 +8209,7 @@ function App() {
                 />
               </div>
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '8px' }}>
-                Platform fee is added to the booking price.{' '}
-                <button
-                  type="button"
-                  onClick={() => alert('The listener sets what they earn. The platform fee is added on top.')}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    color: colors.accent,
-                    textDecoration: 'underline',
-                    cursor: 'pointer',
-                    fontSize: '0.85rem',
-                    padding: 0
-                  }}
-                >
-                  How pricing works
-                </button>
+                Block length is {BLOCK_MINUTES} minutes
               </p>
             </div>
 
