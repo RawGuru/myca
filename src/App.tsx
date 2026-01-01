@@ -361,21 +361,29 @@ function ImageUpload({
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', pointerEvents: 'none' }}>
         {/* Image Preview */}
-        <div style={{
-          ...previewStyle,
-          background: currentImageUrl
-            ? `url(${currentImageUrl}) center/cover`
-            : colors.accentSoft,
-          border: `2px solid ${colors.accent}`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '2rem',
-          fontWeight: 600,
-          color: colors.accent
-        }}>
-          {!currentImageUrl && initials}
-        </div>
+        {currentImageUrl ? (
+          <div style={{
+            ...previewStyle,
+            backgroundImage: `url(${currentImageUrl})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            border: `2px solid ${colors.accent}`
+          }} />
+        ) : (
+          <div style={{
+            ...previewStyle,
+            background: colors.accentSoft,
+            border: `2px solid ${colors.accent}`,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '2rem',
+            fontWeight: 600,
+            color: colors.accent
+          }}>
+            {initials}
+          </div>
+        )}
 
         {/* Upload Controls */}
         <div>
@@ -450,6 +458,7 @@ function VideoUpload({
   const [recordingTime, setRecordingTime] = useState(0)
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null)
   const [liveStream, setLiveStream] = useState<MediaStream | null>(null)
+  const liveVideoRef = useRef<HTMLVideoElement>(null)
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
 
   const buttonStyle: React.CSSProperties = {
@@ -565,9 +574,9 @@ function VideoUpload({
       }
 
       // Attach live stream to video preview
-      if (videoPreviewRef.current) {
-        videoPreviewRef.current.srcObject = stream
-        videoPreviewRef.current.play()
+      if (liveVideoRef.current) {
+        liveVideoRef.current.srcObject = stream
+        liveVideoRef.current.play()
       }
 
       setLiveStream(stream)
@@ -688,7 +697,7 @@ function VideoUpload({
         {isRecording && (
           <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
             <video
-              ref={videoPreviewRef}
+              ref={liveVideoRef}
               autoPlay
               muted
               playsInline
@@ -2179,8 +2188,27 @@ function App() {
 
       return { success: true, listing: newListing }
     } catch (err) {
-      console.error('Error creating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to create offer' }
+      console.error('Error creating listing - FULL ERROR:', err)
+
+      // Extract detailed error information from Supabase error
+      let errorMessage = 'Failed to create offer'
+      if (err && typeof err === 'object') {
+        const supabaseError = err as any
+        const parts = []
+
+        if (supabaseError.message) parts.push(supabaseError.message)
+        if (supabaseError.details) parts.push(`Details: ${supabaseError.details}`)
+        if (supabaseError.hint) parts.push(`Hint: ${supabaseError.hint}`)
+        if (supabaseError.code) parts.push(`Code: ${supabaseError.code}`)
+
+        if (parts.length > 0) {
+          errorMessage = parts.join(' | ')
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+
+      return { success: false, error: errorMessage }
     }
   }
 
@@ -2245,8 +2273,27 @@ function App() {
 
       return { success: true }
     } catch (err) {
-      console.error('Error updating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to update offer' }
+      console.error('Error updating listing - FULL ERROR:', err)
+
+      // Extract detailed error information from Supabase error
+      let errorMessage = 'Failed to update offer'
+      if (err && typeof err === 'object') {
+        const supabaseError = err as any
+        const parts = []
+
+        if (supabaseError.message) parts.push(supabaseError.message)
+        if (supabaseError.details) parts.push(`Details: ${supabaseError.details}`)
+        if (supabaseError.hint) parts.push(`Hint: ${supabaseError.hint}`)
+        if (supabaseError.code) parts.push(`Code: ${supabaseError.code}`)
+
+        if (parts.length > 0) {
+          errorMessage = parts.join(' | ')
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message
+      }
+
+      return { success: false, error: errorMessage }
     }
   }
 
@@ -7835,20 +7882,10 @@ function App() {
                 setListingFormError(null)
                 setScreen('manageListings')
               } else {
-                // Parse database errors to show helpful messages
+                // Show the full error details to user
                 const errorMsg = result.error || 'Failed to create offer'
-                if (errorMsg.includes('topic')) {
-                  setListingFormError('System error: Topic field issue. Please contact support.')
-                } else if (errorMsg.includes('price')) {
-                  setListingFormError('Price must be at least $15 per block')
-                } else if (errorMsg.includes('mode')) {
-                  setListingFormError('System error: Mode field issue. Please contact support.')
-                } else if (errorMsg.includes('profile') || errorMsg.includes('auth')) {
-                  setListingFormError('Please complete your profile before creating an offer')
-                } else {
-                  setListingFormError(errorMsg)
-                }
-                console.error('Create offer error:', result.error)
+                console.error('Create offer error - FULL DETAILS:', errorMsg)
+                setListingFormError(errorMsg)
               }
             }}
           >
@@ -8216,16 +8253,10 @@ function App() {
                 setListingFormError(null)
                 setScreen('manageListings')
               } else {
-                // Parse database errors to show helpful messages
+                // Show the full error details to user
                 const errorMsg = result.error || 'Failed to update offer'
-                if (errorMsg.includes('price')) {
-                  setListingFormError('Price must be at least $15 per block')
-                } else if (errorMsg.includes('profile') || errorMsg.includes('auth')) {
-                  setListingFormError('Authentication error. Please sign out and back in.')
-                } else {
-                  setListingFormError(errorMsg)
-                }
-                console.error('Update offer error:', result.error)
+                console.error('Update offer error - FULL DETAILS:', errorMsg)
+                setListingFormError(errorMsg)
               }
             }}
           >
