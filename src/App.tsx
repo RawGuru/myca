@@ -2132,7 +2132,6 @@ function App() {
     description: string
     categories: Category[]
     listing_video_url?: string
-    listing_image_url?: string
     presence_video_script?: string
     requires_approval?: boolean
     allow_instant_book?: boolean
@@ -2156,7 +2155,6 @@ function App() {
           price_cents: listingData.price_cents,
           description: listingData.description,
           listing_video_url: listingData.listing_video_url || null,
-          listing_image_url: listingData.listing_image_url || null,
           presence_video_script: listingData.presence_video_script || null,
           requires_approval: listingData.requires_approval !== undefined ? listingData.requires_approval : true,
           allow_instant_book: listingData.allow_instant_book || false,
@@ -7870,7 +7868,6 @@ function App() {
                 description: '', // No longer used
                 categories: [], // No longer used - no category filtering
                 listing_video_url: listingFormData.listing_video_url,
-                listing_image_url: undefined, // No longer supported
                 presence_video_script: listingFormData.presence_video_script,
                 requires_approval: listingFormData.requires_approval,
                 allow_instant_book: listingFormData.allow_instant_book,
@@ -7892,71 +7889,23 @@ function App() {
             {/* Simplified: Giver offers themselves inside protocol, not expertise */}
 
             {/* Profile Photo */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
                 Profile photo <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-
-                  // Validate file type
-                  if (!file.type.startsWith('image/')) {
-                    alert('Please select an image file')
-                    return
-                  }
-
-                  // Validate file size (max 5MB)
-                  if (file.size > 5 * 1024 * 1024) {
-                    alert('Image must be less than 5MB')
-                    return
-                  }
-
-                  try {
-                    // Upload to Supabase Storage
-                    const fileExt = file.name.split('.').pop()
-                    const fileName = `${user?.id}-profile-${Date.now()}.${fileExt}`
-
-                    const { error: uploadError } = await supabase.storage
-                      .from('profile-pictures')
-                      .upload(fileName, file, {
-                        cacheControl: '3600',
-                        upsert: false
-                      })
-
-                    if (uploadError) throw uploadError
-
-                    // Get public URL
-                    const { data: urlData } = supabase.storage
-                      .from('profile-pictures')
-                      .getPublicUrl(fileName)
-
-                    const publicUrl = urlData.publicUrl
-
-                    // Update profile
-                    await supabase
-                      .from('profiles')
-                      .update({ profile_picture_url: publicUrl })
-                      .eq('id', user!.id)
-
-                    alert('Profile photo uploaded successfully!')
-                  } catch (err) {
-                    console.error('Error uploading photo:', err)
-                    alert('Failed to upload photo. Please try again.')
-                  }
+              <ImageUpload
+                onUpload={async (publicUrl) => {
+                  // Update profile with photo URL
+                  await supabase
+                    .from('profiles')
+                    .update({ profile_picture_url: publicUrl })
+                    .eq('id', user!.id)
                 }}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '3px',
-                  color: colors.textPrimary,
-                  fontSize: '0.9rem'
-                }}
+                currentImageUrl={user?.user_metadata?.picture || undefined}
+                bucketName="profile-pictures"
+                maxSizeMB={5}
+                aspectRatio="circle"
+                initials={user?.email?.[0]?.toUpperCase() || '?'}
               />
             </div>
 
