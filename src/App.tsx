@@ -2099,7 +2099,7 @@ function App() {
       return { success: true, listing: newListing }
     } catch (err) {
       console.error('Error creating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to create listing' }
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to create offer' }
     }
   }
 
@@ -2165,7 +2165,7 @@ function App() {
       return { success: true }
     } catch (err) {
       console.error('Error updating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to update listing' }
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to update offer' }
     }
   }
 
@@ -4014,9 +4014,9 @@ function App() {
           {showSavedOnly && givers.filter(g => savedGiverIds.has(g.id)).length === 0 && (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
               <div style={{ fontSize: '3rem', marginBottom: '20px' }}>♡</div>
-              <p style={{ marginBottom: '10px' }}>No saved givers yet</p>
+              <p style={{ marginBottom: '10px' }}>No saved hosts yet</p>
               <p style={{ fontSize: '0.85rem', marginBottom: '20px' }}>
-                Tap the heart on any giver to save them for later.
+                Tap the heart on any host to save them for later.
               </p>
               <button
                 style={{ ...btnSecondaryStyle, maxWidth: '150px' }}
@@ -4993,7 +4993,7 @@ function App() {
               setCurrentBooking(null)
             }}
           >
-            View My Calls
+            View My Bookings
           </button>
           <button
             style={{ ...btnSecondaryStyle, maxWidth: '320px', marginTop: '10px' }}
@@ -5573,7 +5573,7 @@ function App() {
           {/* Video Recording Section */}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Introduction video <span style={{ color: colors.textMuted }}>(optional, 30-90 seconds)</span>
+              Introduction video <span style={{ color: colors.textMuted }}>(optional, 15-30 seconds)</span>
             </label>
 
             {videoError && (
@@ -6381,13 +6381,13 @@ function App() {
           )}
 
           <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('sessions')}>
-            View My Calls
+            View My Bookings
           </button>
           <button
             style={{ ...btnSecondaryStyle, maxWidth: '320px', marginTop: '10px' }}
             onClick={() => setScreen('browse')}
           >
-            Browse Other Givers
+            Browse Other Hosts
           </button>
         </div>
       </div>
@@ -7286,7 +7286,7 @@ function App() {
                 ) : (
                   <>
                     <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                      Record your introduction video (30-90 seconds)
+                      Record your introduction video (15-30 seconds)
                     </p>
                     <button
                       style={{ ...btnStyle, margin: 0, width: '100%' }}
@@ -7664,7 +7664,7 @@ function App() {
         <div style={containerStyle}>
           <div style={screenStyle}>
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to create a listing</p>
+              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to create an offer</p>
               <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
             </div>
           </div>
@@ -7714,7 +7714,7 @@ function App() {
               if (result.success) {
                 setScreen('manageListings')
               } else {
-                alert(result.error || 'Failed to create listing')
+                alert(result.error || 'Failed to create offer')
               }
             }}
           >
@@ -8063,7 +8063,7 @@ function App() {
               if (result.success) {
                 setScreen('manageListings')
               } else {
-                alert(result.error || 'Failed to update listing')
+                alert(result.error || 'Failed to update offer')
               }
             }}
           >
@@ -8216,7 +8216,7 @@ function App() {
             {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Make your listing irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
+                Make your offer irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
                 What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
