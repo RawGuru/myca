@@ -31,20 +31,17 @@ type Category = 'health' | 'relationships' | 'creativity' | 'career_money' | 'li
 export interface Listing {
   id: string
   user_id: string
-  topic: string
-  mode: Mode
-  price_cents: number
+  title: string
   description: string | null
-  is_active: boolean
-  created_at: string
-  updated_at: string
-  listing_video_url?: string | null  // Per-listing video (30 seconds)
-  listing_image_url?: string | null  // Per-listing image
+  net_cents: number
+  presence_video_url?: string | null
   presence_video_script?: string | null  // Selected script for presence video
   requires_approval?: boolean        // Booking requires giver approval (default true)
   allow_instant_book?: boolean       // Allow instant booking without approval
   directions_allowed?: string[]      // Pre-consented direction types
   boundaries?: string | null         // Giver boundaries and safety guidelines
+  created_at: string
+  updated_at: string
   categories?: Category[]
   profiles?: {
     id: string
@@ -953,13 +950,11 @@ function App() {
   const [listingsLoading, setListingsLoading] = useState(false)
   const [selectedListing, setSelectedListing] = useState<Listing | null>(null)
   const [listingFormData, setListingFormData] = useState({
-    topic: '',
-    mode: 'mirror' as Mode,
-    price_cents: 2500,
+    title: '',
+    net_cents: 2500,
     description: '',
     selectedCategories: [] as Category[],
-    listing_video_url: '' as string,
-    listing_image_url: '' as string,
+    presence_video_url: '' as string,
     presence_video_script: '' as string,
     requires_approval: true as boolean,
     allow_instant_book: false as boolean,
@@ -1351,7 +1346,7 @@ function App() {
       // Giver sets NET price (what they receive)
       // Receiver pays GROSS price (net + 15% platform fee, rounded up)
       const basePrice = selectedListingForBooking
-        ? selectedListingForBooking.price_cents / 100
+        ? selectedListingForBooking.net_cents / 100
         : (selectedGiver.rate_per_30 ?? 0)
       const durationMinutes = blocksBooked * TOTAL_BLOCK_MINUTES
       const amountCents = Math.round(basePrice * 100) // Per-block net amount
@@ -1768,7 +1763,6 @@ function App() {
           .from('listings')
           .select('*')
           .in('user_id', giverIds)
-          .eq('is_active', true)
           .order('created_at', { ascending: false })
 
         if (listingsError) throw listingsError
@@ -2126,12 +2120,11 @@ function App() {
 
   // Create a new listing
   const createListing = async (listingData: {
-    topic: string
-    mode: Mode
-    price_cents: number
+    title: string
+    net_cents: number
     description: string
     categories: Category[]
-    listing_video_url?: string
+    presence_video_url?: string
     presence_video_script?: string
     requires_approval?: boolean
     allow_instant_book?: boolean
@@ -2150,17 +2143,15 @@ function App() {
         .from('listings')
         .insert({
           user_id: user.id,
-          topic: listingData.topic,
-          mode: listingData.mode,
-          price_cents: listingData.price_cents,
+          title: listingData.title || '',
           description: listingData.description,
-          listing_video_url: listingData.listing_video_url || null,
+          net_cents: listingData.net_cents,
+          presence_video_url: listingData.presence_video_url || null,
           presence_video_script: listingData.presence_video_script || null,
           requires_approval: listingData.requires_approval !== undefined ? listingData.requires_approval : true,
           allow_instant_book: listingData.allow_instant_book || false,
           directions_allowed: listingData.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
-          boundaries: listingData.boundaries || null,
-          is_active: true
+          boundaries: listingData.boundaries || null
         })
         .select()
         .single()
@@ -2214,9 +2205,8 @@ function App() {
   const updateListing = async (
     listingId: string,
     updates: {
-      topic?: string
-      mode?: Mode
-      price_cents?: number
+      title?: string
+      net_cents?: number
       description?: string
       categories?: Category[]
     }
@@ -2225,12 +2215,11 @@ function App() {
 
     try {
       // Update listing
-      const { topic, mode, price_cents, description, categories } = updates
+      const { title, net_cents, description, categories } = updates
       const listingUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() }
 
-      if (topic !== undefined) listingUpdates.topic = topic
-      if (mode !== undefined) listingUpdates.mode = mode
-      if (price_cents !== undefined) listingUpdates.price_cents = price_cents
+      if (title !== undefined) listingUpdates.title = title
+      if (net_cents !== undefined) listingUpdates.net_cents = net_cents
       if (description !== undefined) listingUpdates.description = description
 
       const { error: listingError } = await supabase
@@ -2292,52 +2281,6 @@ function App() {
       }
 
       return { success: false, error: errorMessage }
-    }
-  }
-
-  // Deactivate a listing (soft delete)
-  const deactivateListing = async (listingId: string) => {
-    if (!user) return { success: false, error: 'Not authenticated' }
-
-    try {
-      const { error } = await supabase
-        .from('listings')
-        .update({ is_active: false, updated_at: new Date().toISOString() })
-        .eq('id', listingId)
-        .eq('user_id', user.id) // Security: only deactivate own listings
-
-      if (error) throw error
-
-      // Refresh listings
-      await fetchMyListings()
-
-      return { success: true }
-    } catch (err) {
-      console.error('Error deactivating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to deactivate listing' }
-    }
-  }
-
-  // Reactivate a listing
-  const reactivateListing = async (listingId: string) => {
-    if (!user) return { success: false, error: 'Not authenticated' }
-
-    try {
-      const { error } = await supabase
-        .from('listings')
-        .update({ is_active: true, updated_at: new Date().toISOString() })
-        .eq('id', listingId)
-        .eq('user_id', user.id) // Security: only reactivate own listings
-
-      if (error) throw error
-
-      // Refresh listings
-      await fetchMyListings()
-
-      return { success: true }
-    } catch (err) {
-      console.error('Error reactivating listing:', err)
-      return { success: false, error: err instanceof Error ? err.message : 'Failed to reactivate listing' }
     }
   }
 
@@ -3642,7 +3585,6 @@ function App() {
                             )
                           )
                         `)
-                        .eq('is_active', true)
                         // Mode filtering removed - modes only appear after validation as emergence verbs
                         .eq('profiles.is_giver', true)
                         .eq('profiles.available', true)
@@ -3733,7 +3675,6 @@ function App() {
                           giver_metrics (quality_score)
                         )
                       `)
-                      .eq('is_active', true)
                       .eq('profiles.is_giver', true)
                       .eq('profiles.available', true)
 
@@ -3796,7 +3737,7 @@ function App() {
                     }}
                   >
                     {/* TikTok-style Video Container */}
-                    {(currentListing.listing_video_url || giver.video_url) ? (
+                    {(currentListing.presence_video_url || giver.video_url) ? (
                       <div
                         style={{
                           position: 'relative',
@@ -3813,7 +3754,7 @@ function App() {
                         }}
                       >
                         <video
-                          src={currentListing.listing_video_url || giver.video_url || ''}
+                          src={currentListing.presence_video_url || giver.video_url || ''}
                           autoPlay
                           loop
                           muted
@@ -3852,7 +3793,7 @@ function App() {
                               fontWeight: 600,
                               flexShrink: 0
                             }}>
-                              {!(currentListing.listing_image_url || giver.profile_picture_url) && giver.name[0].toUpperCase()}
+                              {!giver.profile_picture_url && giver.name[0].toUpperCase()}
                             </div>
 
                             <div style={{ flex: 1 }}>
@@ -3863,13 +3804,13 @@ function App() {
                                 )}
                               </h3>
                               <p style={{ fontSize: '0.95rem', margin: '4px 0 0 0', opacity: 0.9 }}>
-                                {currentListing.description || currentListing.topic || giver.bio?.slice(0, 60) + '...' || 'Available now'}
+                                {currentListing.description || currentListing.title || giver.bio?.slice(0, 60) + '...' || 'Available now'}
                               </p>
                             </div>
                           </div>
 
                           <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0 0 0' }}>
-                            ${(currentListing.price_cents / 100).toFixed(0)} per block
+                            ${(currentListing.net_cents / 100).toFixed(0)} per block
                           </p>
                           <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '4px' }}>
                             Block length is {BLOCK_MINUTES} minutes
@@ -3900,10 +3841,10 @@ function App() {
                       >
                         <h3 style={{ fontSize: '1.5rem', marginBottom: '10px', fontWeight: 600 }}>{giver.name}</h3>
                         <p style={{ color: colors.textSecondary, marginBottom: '10px' }}>
-                          {currentListing.description || currentListing.topic || giver.bio || 'Available now'}
+                          {currentListing.description || currentListing.title || giver.bio || 'Available now'}
                         </p>
                         <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
-                          ${(currentListing.price_cents / 100).toFixed(0)} per block
+                          ${(currentListing.net_cents / 100).toFixed(0)} per block
                         </p>
                         <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '15px' }}>
                           Tap to view profile
@@ -4147,7 +4088,7 @@ function App() {
                       {giver.listings.length} {giver.listings.length === 1 ? 'offering' : 'offerings'}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
-                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} per block
+                      ${Math.min(...giver.listings.map(l => l.net_cents / 100))} - ${Math.max(...giver.listings.map(l => l.net_cents / 100))} per block
                     </div>
                   </div>
                 ) : (
@@ -4269,7 +4210,6 @@ function App() {
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
               {selectedGiver.listings.map(listing => {
-                const modeInfo = MODES.find(m => m.value === listing.mode)
                 return (
                   <div
                     key={listing.id}
@@ -4283,20 +4223,12 @@ function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
-                          {listing.topic}
+                          {listing.title}
                         </h4>
-                        <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
-                          {modeInfo?.label || listing.mode}
-                        </p>
-                        {modeInfo && (
-                          <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '8px' }}>
-                            {modeInfo.description}
-                          </p>
-                        )}
                       </div>
                       <div style={{ textAlign: 'right', marginLeft: '15px' }}>
                         <div style={{ fontSize: '1.3rem', fontWeight: 600, color: colors.textPrimary }}>
-                          ${(listing.price_cents / 100).toFixed(0)}
+                          ${(listing.net_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
                           per block
@@ -4451,7 +4383,7 @@ function App() {
 
     // PRICING MODEL: Platform fee (15%) is ADDED ON TOP of giver's net price
     const basePrice = selectedListingForBooking
-      ? selectedListingForBooking.price_cents / 100
+      ? selectedListingForBooking.net_cents / 100
       : (selectedGiver.rate_per_30 ?? 0)
     const activeMinutes = blocksBooked * ACTIVE_MINUTES_PER_BLOCK
 
@@ -4568,7 +4500,6 @@ function App() {
             <div style={{ marginBottom: '20px' }}>
               <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
               {selectedGiver.listings.map(listing => {
-                const modeInfo = MODES.find(m => m.value === listing.mode)
                 return (
                   <div
                     key={listing.id}
@@ -4582,20 +4513,12 @@ function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
                       <div style={{ flex: 1 }}>
                         <h4 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
-                          {listing.topic}
+                          {listing.title}
                         </h4>
-                        <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
-                          {modeInfo?.label || listing.mode}
-                        </p>
-                        {modeInfo && (
-                          <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '8px' }}>
-                            {modeInfo.description}
-                          </p>
-                        )}
                       </div>
                       <div style={{ textAlign: 'right', marginLeft: '15px' }}>
                         <div style={{ fontSize: '1.3rem', fontWeight: 600, color: colors.textPrimary }}>
-                          ${(listing.price_cents / 100).toFixed(0)}
+                          ${(listing.net_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
                           per block
@@ -4676,7 +4599,6 @@ function App() {
                 </p>
                 <div style={{ marginBottom: '20px' }}>
                   {selectedGiver.listings.map(listing => {
-                    const modeInfo = MODES.find(m => m.value === listing.mode)
                     const isSelected = selectedListingForBooking?.id === listing.id
                     return (
                       <div
@@ -4694,14 +4616,11 @@ function App() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px' }}>
-                              {listing.topic}
-                            </div>
-                            <div style={{ fontSize: '0.85rem', color: colors.accent }}>
-                              {modeInfo?.label || listing.mode}
+                              {listing.title || 'Offer'}
                             </div>
                           </div>
                           <div style={{ fontSize: '1.1rem', fontWeight: 600, color: isSelected ? colors.accent : colors.textPrimary }}>
-                            ${(listing.price_cents / 100).toFixed(0)}
+                            ${(listing.net_cents / 100).toFixed(0)}
                           </div>
                         </div>
                       </div>
@@ -7483,7 +7402,7 @@ function App() {
                   Each offer is a different type of conversation you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
                 </p>
                 <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>
-                  {myListings.filter(l => l.is_active).length} active {myListings.filter(l => l.is_active).length === 1 ? 'offer' : 'offers'}
+                  {myListings.length} {myListings.length === 1 ? 'offer' : 'offers'}
                 </p>
                 <div style={{ display: 'flex', gap: '10px' }}>
                   <button
@@ -7639,13 +7558,11 @@ function App() {
                 onClick={() => {
                   // Reset form
                   setListingFormData({
-                    topic: '',
-                    mode: 'mirror',
-                    price_cents: 2500,
+                    title: '',
+                    net_cents: 2500,
                     description: '',
                     selectedCategories: [],
-                    listing_video_url: '',
-                    listing_image_url: '',
+                    presence_video_url: '',
                     presence_video_script: '',
                     requires_approval: true,
                     allow_instant_book: false,
@@ -7673,28 +7590,23 @@ function App() {
               ) : (
                 <>
                   {myListings.map(listing => {
-                    const modeInfo = MODES.find(m => m.value === listing.mode)
                     return (
                       <div
                         key={listing.id}
                         style={{
                           ...cardStyle,
-                          opacity: listing.is_active ? 1 : 0.6,
-                          borderLeft: listing.is_active ? `3px solid ${colors.accent}` : `3px solid ${colors.border}`
+                          borderLeft: `3px solid ${colors.accent}`
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                           <div style={{ flex: 1 }}>
                             <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
-                              {listing.topic}
+                              {listing.title || 'Offer'}
                             </h3>
-                            <p style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '8px' }}>
-                              {modeInfo?.label || listing.mode}
-                            </p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '1.2rem', fontWeight: 600, color: colors.textPrimary }}>
-                              ${(listing.price_cents / 100).toFixed(0)}
+                              ${(listing.net_cents / 100).toFixed(0)}
                             </div>
                             <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
                               per block
@@ -7746,13 +7658,11 @@ function App() {
                             onClick={() => {
                               setSelectedListing(listing)
                               setListingFormData({
-                                topic: listing.topic,
-                                mode: listing.mode,
-                                price_cents: listing.price_cents,
+                                title: listing.title,
+                                net_cents: listing.net_cents,
                                 description: listing.description || '',
                                 selectedCategories: listing.categories || [],
-                                listing_video_url: listing.listing_video_url || '',
-                                listing_image_url: listing.listing_image_url || '',
+                                presence_video_url: listing.presence_video_url || '',
                                 presence_video_script: listing.presence_video_script || '',
                                 requires_approval: listing.requires_approval !== undefined ? listing.requires_approval : true,
                                 allow_instant_book: listing.allow_instant_book || false,
@@ -7764,50 +7674,7 @@ function App() {
                           >
                             Edit
                           </button>
-                          <button
-                            style={{
-                              flex: 1,
-                              padding: '10px',
-                              background: listing.is_active ? colors.bgSecondary : colors.accentSoft,
-                              border: `1px solid ${listing.is_active ? colors.border : colors.accent}`,
-                              borderRadius: '3px',
-                              color: listing.is_active ? colors.textSecondary : colors.accent,
-                              cursor: 'pointer',
-                              fontSize: '0.9rem'
-                            }}
-                            onClick={async () => {
-                              if (listing.is_active) {
-                                if (confirm('Deactivate this listing? It will no longer be visible to seekers.')) {
-                                  const result = await deactivateListing(listing.id)
-                                  if (!result.success) {
-                                    alert(result.error || 'Failed to deactivate listing')
-                                  }
-                                }
-                              } else {
-                                const result = await reactivateListing(listing.id)
-                                if (!result.success) {
-                                  alert(result.error || 'Failed to reactivate listing')
-                                }
-                              }
-                            }}
-                          >
-                            {listing.is_active ? 'Deactivate' : 'Reactivate'}
-                          </button>
                         </div>
-
-                        {!listing.is_active && (
-                          <div style={{
-                            marginTop: '12px',
-                            padding: '8px 12px',
-                            background: 'rgba(255, 200, 100, 0.1)',
-                            border: '1px solid rgba(255, 200, 100, 0.3)',
-                            borderRadius: '6px',
-                            fontSize: '0.8rem',
-                            color: 'rgb(255, 200, 100)'
-                          }}>
-                            Inactive - not visible to seekers
-                          </div>
-                        )}
                       </div>
                     )
                   })}
@@ -7853,7 +7720,7 @@ function App() {
               setListingFormError(null)
 
               // Validation
-              if (listingFormData.price_cents < 1500) {
+              if (listingFormData.net_cents < 1500) {
                 setListingFormError('Minimum price is $15 per block')
                 return
               }
@@ -7862,12 +7729,11 @@ function App() {
               // No validation needed for presence_video_script or listing_video_url
 
               const result = await createListing({
-                topic: '', // No longer used - giver offers themselves, not topics
-                mode: 'vault' as Mode, // Default mode - actual mode emerges after validation
-                price_cents: listingFormData.price_cents,
+                title: '', // No longer used - giver offers themselves, not topics
+                net_cents: listingFormData.net_cents,
                 description: '', // No longer used
                 categories: [], // No longer used - no category filtering
-                listing_video_url: listingFormData.listing_video_url,
+                presence_video_url: listingFormData.presence_video_url,
                 presence_video_script: listingFormData.presence_video_script,
                 requires_approval: listingFormData.requires_approval,
                 allow_instant_book: listingFormData.allow_instant_book,
@@ -7923,10 +7789,10 @@ function App() {
                   type="number"
                   min="15"
                   step="1"
-                  value={listingFormData.price_cents / 100}
+                  value={listingFormData.net_cents / 100}
                   onChange={(e) => {
                     const dollars = parseFloat(e.target.value) || 15
-                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                    setListingFormData({ ...listingFormData, net_cents: Math.round(dollars * 100) })
                   }}
                   style={{
                     flex: 1,
@@ -8004,16 +7870,16 @@ function App() {
               </p>
               <VideoUpload
                 onUpload={async (publicUrl) => {
-                  setListingFormData({ ...listingFormData, listing_video_url: publicUrl })
+                  setListingFormData({ ...listingFormData, presence_video_url: publicUrl })
                 }}
-                currentVideoUrl={listingFormData.listing_video_url || undefined}
+                currentVideoUrl={listingFormData.presence_video_url || undefined}
                 bucketName="listing-videos"
                 maxSizeMB={100}
                 minDurationSeconds={15}
                 maxDurationSeconds={30}
-                buttonText={listingFormData.listing_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (15-30 sec)'}
+                buttonText={listingFormData.presence_video_url ? '✓ Video Uploaded - Change' : 'Upload Video (15-30 sec)'}
               />
-              {listingFormData.listing_video_url && (
+              {listingFormData.presence_video_url && (
                 <p style={{ color: colors.accent, fontSize: '0.85rem', marginTop: '8px' }}>✓ Video ready</p>
               )}
             </div>
@@ -8185,15 +8051,14 @@ function App() {
               setListingFormError(null)
 
               // Validation
-              if (listingFormData.price_cents < 1500) {
+              if (listingFormData.net_cents < 1500) {
                 setListingFormError('Minimum price is $15 per block')
                 return
               }
 
               const result = await updateListing(selectedListing.id, {
-                topic: listingFormData.topic.trim(),
-                mode: listingFormData.mode,
-                price_cents: listingFormData.price_cents,
+                title: listingFormData.title.trim(),
+                net_cents: listingFormData.net_cents,
                 description: listingFormData.description.trim(),
                 categories: listingFormData.selectedCategories
               })
@@ -8209,44 +8074,6 @@ function App() {
               }
             }}
           >
-            {/* STEP A - Type of Attention (Mode) */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                Type of Attention (How you engage) <span style={{ color: colors.accent }}>*</span>
-              </label>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {MODES.map(mode => (
-                  <label
-                    key={mode.value}
-                    style={{
-                      padding: '12px',
-                      background: listingFormData.mode === mode.value ? colors.accentSoft : colors.bgSecondary,
-                      border: `1px solid ${listingFormData.mode === mode.value ? colors.accent : colors.border}`,
-                      borderRadius: '3px',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'start',
-                      gap: '10px'
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="mode"
-                      value={mode.value}
-                      checked={listingFormData.mode === mode.value}
-                      onChange={(e) => setListingFormData({ ...listingFormData, mode: e.target.value as Mode })}
-                      style={{ marginTop: '3px' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '0.95rem', fontWeight: 500, color: colors.textPrimary }}>
-                        {mode.label}
-                      </div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
             {/* STEP 2 - What category? */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
@@ -8295,8 +8122,8 @@ function App() {
                 Specific topics <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <textarea
-                value={listingFormData.topic}
-                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                value={listingFormData.title}
+                onChange={(e) => setListingFormData({ ...listingFormData, title: e.target.value })}
                 placeholder="Separate with commas, e.g., judo, divorce recovery, website building"
                 maxLength={200}
                 style={{
@@ -8314,7 +8141,7 @@ function App() {
                 }}
               />
               <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                Stay within your selected category ({listingFormData.topic.length}/200)
+                Stay within your selected category ({listingFormData.title.length}/200)
               </p>
             </div>
 
@@ -8332,10 +8159,10 @@ function App() {
                   type="number"
                   min="15"
                   step="1"
-                  value={listingFormData.price_cents / 100}
+                  value={listingFormData.net_cents / 100}
                   onChange={(e) => {
                     const dollars = parseFloat(e.target.value) || 15
-                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
+                    setListingFormData({ ...listingFormData, net_cents: Math.round(dollars * 100) })
                   }}
                   style={{
                     flex: 1,
