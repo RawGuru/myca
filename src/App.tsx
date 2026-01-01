@@ -231,6 +231,18 @@ function ImageUpload({
   const { user } = useAuth()
   const uploadId = `image-upload-${bucketName}-${Date.now()}`
 
+  // Local preview state - shows preview immediately after file selection
+  const [localPreviewUrl, setLocalPreviewUrl] = useState<string | null>(null)
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl)
+      }
+    }
+  }, [localPreviewUrl])
+
   const buttonStyle: React.CSSProperties = {
     padding: '12px 24px',
     borderRadius: '3px',
@@ -257,6 +269,11 @@ function ImageUpload({
       alert(`Image must be less than ${maxSizeMB}MB`)
       return
     }
+
+    // Create local preview immediately
+    const blobUrl = URL.createObjectURL(file)
+    setLocalPreviewUrl(blobUrl)
+    console.log('🖼️ Local preview created:', blobUrl)
 
     try {
       // Create unique filename
@@ -292,9 +309,23 @@ function ImageUpload({
       console.log('💾 Calling onUpload callback...')
       await onUpload(publicUrl)
       console.log('✅ Image upload complete!')
+
+      // Clean up local blob URL after server URL is available
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl)
+        setLocalPreviewUrl(null)
+      }
+
       alert('Image uploaded successfully!')
     } catch (err) {
       console.error('❌ ERROR in image upload:', err)
+
+      // Clean up local preview on error
+      if (localPreviewUrl) {
+        URL.revokeObjectURL(localPreviewUrl)
+        setLocalPreviewUrl(null)
+      }
+
       alert(`Failed to upload image: ${err instanceof Error ? err.message : 'Please try again'}`)
     }
   }
@@ -358,11 +389,11 @@ function ImageUpload({
       }}
     >
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', pointerEvents: 'none' }}>
-        {/* Image Preview */}
-        {currentImageUrl ? (
+        {/* Image Preview - shows local preview or server URL */}
+        {(localPreviewUrl || currentImageUrl) ? (
           <div style={{
             ...previewStyle,
-            backgroundImage: `url(${currentImageUrl})`,
+            backgroundImage: `url(${localPreviewUrl || currentImageUrl})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             border: `2px solid ${colors.accent}`
@@ -768,12 +799,28 @@ function VideoUpload({
         {!recordedUrl && !currentVideoUrl && (
           <div style={{ marginBottom: '10px' }}>
             {isRecording ? (
-              <button
-                style={{ ...buttonStyle, margin: 0, background: colors.error, color: '#fff', border: 'none' }}
-                onClick={stopRecording}
-              >
-                ⏹ Stop Recording
-              </button>
+              <>
+                <button
+                  style={{
+                    ...buttonStyle,
+                    margin: 0,
+                    background: (minDurationSeconds && recordingTime < minDurationSeconds) ? colors.border : colors.error,
+                    color: '#fff',
+                    border: 'none',
+                    cursor: (minDurationSeconds && recordingTime < minDurationSeconds) ? 'not-allowed' : 'pointer',
+                    opacity: (minDurationSeconds && recordingTime < minDurationSeconds) ? 0.5 : 1
+                  }}
+                  onClick={stopRecording}
+                  disabled={minDurationSeconds !== undefined && recordingTime < minDurationSeconds}
+                >
+                  ⏹ Stop Recording
+                </button>
+                {minDurationSeconds !== undefined && recordingTime < minDurationSeconds && (
+                  <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
+                    Keep recording... {minDurationSeconds - recordingTime}s until minimum
+                  </p>
+                )}
+              </>
             ) : (
               <button
                 style={{ ...buttonStyle, margin: 0, background: colors.accent, color: '#000', border: 'none' }}
@@ -3639,9 +3686,19 @@ function App() {
                         .eq('is_active', true)
                         // Mode filtering removed - modes only appear after validation as emergence verbs
                         .eq('profiles.is_giver', true)
-                        .eq('profiles.available', true)
 
-                      let filtered = allListings || []
+                      // Get givers with available slots
+                      const { data: availableGivers } = await supabase
+                        .from('giver_availability')
+                        .select('giver_id')
+                        .eq('is_booked', false)
+
+                      const giverIdsWithAvailability = new Set(availableGivers?.map(slot => slot.giver_id) || [])
+
+                      // Filter listings to only include givers with availability
+                      let filtered = (allListings || []).filter(listing =>
+                        giverIdsWithAvailability.has(listing.user_id)
+                      )
 
                       // Category filtering removed - givers offer themselves, not expertise categories
 
@@ -3729,9 +3786,19 @@ function App() {
                       `)
                       .eq('is_active', true)
                       .eq('profiles.is_giver', true)
-                      .eq('profiles.available', true)
 
-                    let filtered = allListings || []
+                    // Get givers with available slots
+                    const { data: availableGivers } = await supabase
+                      .from('giver_availability')
+                      .select('giver_id')
+                      .eq('is_booked', false)
+
+                    const giverIdsWithAvailability = new Set(availableGivers?.map(slot => slot.giver_id) || [])
+
+                    // Filter listings to only include givers with availability
+                    let filtered = (allListings || []).filter(listing =>
+                      giverIdsWithAvailability.has(listing.user_id)
+                    )
                     // Apply time filtering based on selection
                     // (existing filtering logic would go here)
 
