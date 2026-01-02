@@ -7765,6 +7765,18 @@ function App() {
                             <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
                               {listing.topic || 'Offer'}
                             </h3>
+                            {/* Show mode badge */}
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '4px 10px',
+                              background: colors.accentSoft,
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              color: colors.accent,
+                              fontWeight: 500
+                            }}>
+                              {listing.mode?.replace('_', ' ') || 'General'}
+                            </span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <div style={{ fontSize: '1.2rem', fontWeight: 600, color: colors.textPrimary }}>
@@ -7777,33 +7789,12 @@ function App() {
                         </div>
 
                         {listing.description && (
-                          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '12px' }}>
+                          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '12px', lineHeight: '1.5' }}>
                             {listing.description}
                           </p>
                         )}
 
-                        {listing.categories && listing.categories.length > 0 && (
-                          <div style={{ marginBottom: '12px' }}>
-                            {listing.categories.map(cat => {
-                              const catInfo = CATEGORIES.find(c => c.value === cat)
-                              return (
-                                <span
-                                  key={cat}
-                                  style={{
-                                    padding: '4px 10px',
-                                    background: colors.bgSecondary,
-                                    borderRadius: '12px',
-                                    fontSize: '0.75rem',
-                                    color: colors.textSecondary,
-                                    marginRight: '6px'
-                                  }}
-                                >
-                                  {catInfo?.label || cat}
-                                </span>
-                              )
-                            })}
-                          </div>
-                        )}
+                        {/* Removed deprecated categories section - now empty after multi-listing deprecation */}
 
                         <div style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
                           <button
