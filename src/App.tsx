@@ -1471,8 +1471,18 @@ function App() {
 
   // Process payment and confirm booking
   const processPayment = async () => {
-    if (!currentBooking || !user || !userProfile) return
+    console.log('🔵 processPayment called', { currentBooking, user: user?.id, userProfile: userProfile?.id })
 
+    if (!currentBooking || !user || !userProfile) {
+      console.error('❌ processPayment early return:', {
+        hasBooking: !!currentBooking,
+        hasUser: !!user,
+        hasUserProfile: !!userProfile
+      })
+      return
+    }
+
+    console.log('✅ processPayment validation passed, starting payment flow')
     setBookingLoading(true)
     setBookingError('')
 
@@ -1481,10 +1491,17 @@ function App() {
       const grossAmountCents = currentBooking.amount_cents // amount_cents stores gross amount
       const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
 
+      console.log('💰 Payment amounts:', {
+        grossAmountCents,
+        creditsAppliedCents,
+        amountAfterCreditsCents
+      })
+
       let payment_intent_id: string | null = null
 
       // Only process Stripe payment if there's a remaining balance
       if (amountAfterCreditsCents > 0) {
+        console.log('💳 Processing Stripe payment for $' + (amountAfterCreditsCents / 100).toFixed(2))
         // Validate card inputs (basic validation)
         if (!cardNumber || cardNumber.replace(/\s/g, '').length < 15) {
           throw new Error('Please enter a valid card number')
@@ -1584,16 +1601,28 @@ function App() {
       // Only set to 'confirmed' if it was 'pending' (instant book)
       const newStatus = currentBooking.status === 'pending_approval' ? 'pending_approval' : 'confirmed'
 
+      console.log('🔵 Updating booking in database:', {
+        booking_id: currentBooking.id,
+        newStatus,
+        payment_intent_id,
+        videoRoomUrl
+      })
+
       const { error } = await supabase
         .from('bookings')
         .update({
           status: newStatus,
-          stripe_payment_intent_id: payment_intent_id,
+          stripe_payment_id: payment_intent_id, // Fixed: was stripe_payment_intent_id
           video_room_url: videoRoomUrl,
         })
         .eq('id', currentBooking.id)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ Database update error:', error)
+        throw error
+      }
+
+      console.log('✅ Booking updated successfully')
 
       // Send confirmation notification only if auto-confirmed
       if (newStatus === 'confirmed') {
@@ -1613,12 +1642,16 @@ function App() {
       setCardExpiry('')
       setCardCvc('')
 
+      console.log('✅ Payment complete! Redirecting to confirmation screen')
+
       // Go to confirmation
       setScreen('confirmation')
     } catch (err) {
-      console.error('Payment error:', err)
+      console.error('❌ Payment error:', err)
       setBookingError(err instanceof Error ? err.message : 'Payment failed')
     } finally {
+      console.log('🔵 processPayment finished, setting loading to false')
+
       setBookingLoading(false)
     }
   }
