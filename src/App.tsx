@@ -3562,25 +3562,7 @@ function App() {
             {profileLoading ? 'Saving...' : 'Continue to browse'}
           </button>
 
-          <button
-            style={{
-              background: 'none',
-              border: 'none',
-              color: colors.textSecondary,
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              textDecoration: 'underline',
-              padding: 0
-            }}
-            onClick={() => {
-              // Skip profile creation and go straight to discovery
-              setScreen('discovery')
-              setDiscoveryStep('availability')
-              setDiscoveryFilters({ attentionType: null, category: null, availability: null })
-            }}
-          >
-            Skip for now
-          </button>
+          {/* Removed "Skip for now" button - profile creation now required before browsing */}
 
           <Nav />
         </div>
@@ -3590,6 +3572,25 @@ function App() {
 
   // Seeker Discovery Flow (Part 5)
   if (screen === 'discovery') {
+    // Guard: Require profile before browsing
+    // Check if user has a profile (name set)
+    React.useEffect(() => {
+      if (user) {
+        supabase
+          .from('profiles')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (!data?.name) {
+              // No profile - redirect to profile creation
+              console.log('⚠️ No profile found - redirecting to receiverProfile')
+              setScreen('receiverProfile')
+            }
+          })
+      }
+    }, [user])
+
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
