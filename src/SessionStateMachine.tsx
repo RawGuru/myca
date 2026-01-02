@@ -54,12 +54,23 @@ export interface Booking {
   id: string
   seeker_id: string
   giver_id: string
-  listing_id: string
   scheduled_time: string
-  blocks_booked: number
+  duration_minutes: number
   amount_cents: number
-  status: string
+  status: 'pending' | 'pending_approval' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
+  session_intention?: string | null
+  stripe_payment_id: string | null
   video_room_url: string | null
+  created_at?: string
+  giver_joined_at?: string | null
+  seeker_credit_earned?: boolean | null
+  started_at?: string | null
+  ended_at?: string | null
+  elapsed_seconds?: number | null
+  end_reason?: string | null
+  payout_net_cents?: number | null
+  refund_gross_cents?: number | null
+  payout_status?: string | null
 }
 
 interface SessionStateMachineProps {
@@ -691,7 +702,7 @@ export function SessionStateMachine({
               validationAttempts={sessionState.validation_attempts}
               onYes={handleReceiverValidationYes}
               onNo={handleReceiverValidationNo}
-              listingId={booking.listing_id}
+              listingId={null}
             />
           )}
 

@@ -301,7 +301,7 @@ interface ValidationPhaseProps {
   validationAttempts: number
   onYes: (direction: DirectionType, source: 'pre_consented' | 'custom_request', customText?: string) => void
   onNo: () => void
-  listingId: string
+  listingId?: string | null // Optional - multi-listing feature removed
 }
 
 export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, listingId }: ValidationPhaseProps) {
@@ -326,6 +326,9 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, lis
 
     if (listingId) {
       fetchAllowedDirections()
+    } else {
+      // No listing - allow all directions by default (multi-listing feature removed)
+      setAllowedDirections(['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'])
     }
   }, [listingId])
 

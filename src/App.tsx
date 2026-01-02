@@ -83,36 +83,28 @@ export interface Feedback {
   created_at: string
 }
 
-// Booking type (updated for multi-listing)
+// Booking type (matches actual Supabase schema)
 interface Booking {
   id: string
   seeker_id: string
   giver_id: string
-  listing_id: string
   scheduled_time: string
-  blocks_booked: number
   duration_minutes: number
-  amount_cents: number
-  total_amount_cents: number
-  platform_fee_cents: number
-  giver_payout_cents: number
+  amount_cents: number // Gross amount (what receiver pays)
   status: 'pending' | 'pending_approval' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled'
-  session_intention?: string | null  // Receiver's intention for the session
+  session_intention?: string | null
   stripe_payment_id: string | null
-  stripe_payment_intent_id: string | null
   video_room_url: string | null
-  giver_joined_at: string | null
-  seeker_joined_at: string | null
-  giver_left_at: string | null
-  seeker_left_at: string | null
-  session_started_at: string | null
-  session_ended_at: string | null
-  extended_count: number
-  cancelled_by: 'giver' | 'seeker' | 'system' | null
-  cancelled_at: string | null
-  refund_issued: boolean
-  seeker_credit_earned: boolean
-  created_at: string
+  created_at?: string
+  giver_joined_at?: string | null
+  seeker_credit_earned?: boolean | null
+  started_at?: string | null
+  ended_at?: string | null
+  elapsed_seconds?: number | null
+  end_reason?: string | null
+  payout_net_cents?: number | null
+  refund_gross_cents?: number | null
+  payout_status?: string | null
 }
 
 const colors = {
@@ -1414,11 +1406,6 @@ function App() {
       // Calculate GROSS amount (what receiver pays) - add 15% on top, round up
       const grossAmountCents = Math.ceil(netAmountCents / (1 - 0.15))
 
-      // Platform fee is the difference
-      const platformFeeCents = grossAmountCents - netAmountCents
-      const giverPayoutCents = netAmountCents
-      const totalAmountCents = grossAmountCents // For backwards compatibility
-
       // Fetch available credits
       const { totalCents: availableCreditsCents } = await fetchUnusedCredits()
 
@@ -1431,18 +1418,13 @@ function App() {
       const allowInstantBook = selectedListingForBooking?.allow_instant_book || false
       const initialStatus = (requiresApproval && !allowInstantBook) ? 'pending_approval' : 'pending'
 
-      // Create booking record with multi-listing data
+      // Create booking record - use only actual bookings table columns
       console.log('🔍 DEBUG: Creating booking with data:', {
         seeker_id: user.id,
         giver_id: selectedGiver.id,
-        listing_id: selectedListingForBooking?.id || null,
         scheduled_time: scheduledTime,
         duration_minutes: durationMinutes,
-        blocks_booked: blocksBooked,
-        amount_cents: amountCents,
-        total_amount_cents: totalAmountCents,
-        platform_fee_cents: platformFeeCents,
-        giver_payout_cents: giverPayoutCents,
+        amount_cents: grossAmountCents, // Store gross amount (what receiver pays)
         session_intention: sessionIntention || null,
         status: initialStatus,
         stripe_payment_id: null,
@@ -1454,14 +1436,9 @@ function App() {
         .insert({
           seeker_id: user.id,
           giver_id: selectedGiver.id,
-          listing_id: selectedListingForBooking?.id || null,
           scheduled_time: scheduledTime,
           duration_minutes: durationMinutes,
-          blocks_booked: blocksBooked,
-          amount_cents: amountCents,
-          total_amount_cents: totalAmountCents,
-          platform_fee_cents: platformFeeCents,
-          giver_payout_cents: giverPayoutCents,
+          amount_cents: grossAmountCents, // Store gross amount (what receiver pays)
           session_intention: sessionIntention || null,
           status: initialStatus,
           stripe_payment_id: null,
@@ -1501,7 +1478,7 @@ function App() {
 
     try {
       // Calculate amount after credits
-      const grossAmountCents = currentBooking.total_amount_cents
+      const grossAmountCents = currentBooking.amount_cents // amount_cents stores gross amount
       const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
 
       let payment_intent_id: string | null = null
@@ -1627,7 +1604,7 @@ function App() {
       setCurrentBooking({
         ...currentBooking,
         status: newStatus,
-        stripe_payment_intent_id: payment_intent_id,
+        stripe_payment_id: payment_intent_id,
         video_room_url: videoRoomUrl,
       })
 
@@ -2559,9 +2536,9 @@ function App() {
 
     setActiveSession(booking)
 
-    // Time Physics (Phase 5): Active time = (blocks × 30) - 5 = blocks × 25 minutes
-    const blocks = booking.blocks_booked || 1
-    const activeMinutes = blocks * ACTIVE_MINUTES_PER_BLOCK
+    // Time Physics (Phase 5): Active time = duration_minutes - 5 minutes buffer
+    const totalMinutes = booking.duration_minutes || 30
+    const activeMinutes = Math.max(totalMinutes - 5, 25) // Subtract 5 min buffer, minimum 25 min
     setSessionTimeRemaining(activeMinutes * 60) // Convert to seconds
 
     setShowTimeWarning(false)
@@ -2619,24 +2596,8 @@ function App() {
         const isLocalUserLeaving = event.participant.session_id === localParticipant?.session_id
 
         if (isLocalUserLeaving) {
-          // Current user is leaving - track their leave time
-          const leaveTime = new Date().toISOString()
-          const isGiver = user.id === activeSession.giver_id
-
-          // Update only if not already set (first leave time only)
-          if (isGiver && !activeSession.giver_left_at) {
-            await supabase
-              .from('bookings')
-              .update({ giver_left_at: leaveTime })
-              .eq('id', activeSession.id)
-              .is('giver_left_at', null)
-          } else if (!isGiver && !activeSession.seeker_left_at) {
-            await supabase
-              .from('bookings')
-              .update({ seeker_left_at: leaveTime })
-              .eq('id', activeSession.id)
-              .is('seeker_left_at', null)
-          }
+          // Note: Individual participant leave times (giver_left_at, seeker_left_at)
+          // are not tracked in the current schema. Session end time is tracked via ended_at.
         }
       })
 
@@ -4951,8 +4912,8 @@ function App() {
   }
 
   if (screen === 'payment' && currentBooking && selectedGiver && selectedBookingDate) {
-    // PRICING MODEL: Use the total amount from booking (already includes platform fee)
-    const grossAmountCents = currentBooking.total_amount_cents
+    // PRICING MODEL: amount_cents stores gross amount (what receiver pays)
+    const grossAmountCents = currentBooking.amount_cents
     const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
     const totalPayment = amountAfterCreditsCents / 100
     const hasCredits = creditsAppliedCents > 0
