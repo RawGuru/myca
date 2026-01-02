@@ -4620,6 +4620,15 @@ function App() {
                   }}
                 />
               </div>
+            ) : selectedGiver.profile_picture_url ? (
+              <div style={{
+                width: '120px',
+                height: '120px',
+                borderRadius: '50%',
+                background: `url(${selectedGiver.profile_picture_url}) center/cover`,
+                border: `3px solid ${colors.accent}`,
+                margin: '0 auto 20px'
+              }} />
             ) : (
               <div style={{
                 width: '120px',
@@ -4639,17 +4648,6 @@ function App() {
               </div>
             )}
             <div style={{ textAlign: 'center' }}>
-              {/* Profile Picture */}
-              {selectedGiver.profile_picture_url && (
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  background: `url(${selectedGiver.profile_picture_url}) center/cover`,
-                  border: `3px solid ${colors.accent}`,
-                  margin: '0 auto 15px'
-                }} />
-              )}
               <h1 style={{ fontSize: '2rem', marginBottom: '10px', fontWeight: 600 }}>{selectedGiver.name}</h1>
               <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>{selectedGiver.tagline}</p>
               {/* Show listing count or fallback to single rate */}
