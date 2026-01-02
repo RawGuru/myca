@@ -5423,6 +5423,30 @@ function App() {
 
                 {videoStep === 'recording' && (
                   <div>
+                    {/* Guidance banner - show for first 15-30 seconds */}
+                    {recordingTime < 30 && (
+                      <div style={{
+                        padding: '12px 15px',
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderRadius: '8px',
+                        color: colors.accent,
+                        marginBottom: '15px',
+                        fontSize: '0.85rem',
+                        lineHeight: '1.5'
+                      }}>
+                        <div style={{ fontWeight: 600, marginBottom: '6px' }}>💡 What to say:</div>
+                        <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                          <li>Who you are</li>
+                          <li>What kind of presence you offer</li>
+                          <li>Why you want to be here</li>
+                        </ul>
+                        <div style={{ fontSize: '0.8rem', color: colors.textSecondary, marginTop: '8px' }}>
+                          Keep it natural - aim for 15-30 seconds
+                        </div>
+                      </div>
+                    )}
+
                     <div style={{ marginBottom: '20px' }}>
                       <video ref={previewVideoRef} autoPlay playsInline muted style={{ width: '100%', maxHeight: '400px', borderRadius: '12px', background: '#000' }} />
                     </div>
