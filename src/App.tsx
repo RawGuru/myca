@@ -5428,7 +5428,7 @@ function App() {
                   <button
                     onClick={async () => {
                       if (confirm('Delete your current video? You can record a new one.')) {
-                        await supabase.from('givers').update({ video_url: null }).eq('user_id', user.id)
+                        await supabase.from('profiles').update({ video_url: null }).eq('id', user.id)
                         setMyGiverProfile({ ...myGiverProfile, video_url: null })
                       }
                     }}
@@ -5495,7 +5495,7 @@ function App() {
                         onClick={async () => {
                           const url = await uploadVideo()
                           if (url) {
-                            await supabase.from('givers').update({ video_url: url }).eq('user_id', user.id)
+                            await supabase.from('profiles').update({ video_url: url }).eq('id', user.id)
                             setMyGiverProfile({ ...myGiverProfile, video_url: url })
                             setVideoStep('done')
                             setRecordedUrl(null)
