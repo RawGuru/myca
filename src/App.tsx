@@ -1841,55 +1841,28 @@ function App() {
     return v
   }
 
-  // Fetch givers from database with their listings
+  // Fetch givers from database (simplified - multi-listing architecture deprecated)
   const fetchGivers = useCallback(async () => {
     try {
+      console.log('📥 Fetching givers from profiles...')
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*')
         .eq('is_giver', true)
 
-      if (profilesError) throw profilesError
+      if (profilesError) {
+        console.error('❌ Error fetching givers:', profilesError)
+        throw profilesError
+      }
 
+      console.log(`✅ Loaded ${profilesData?.length || 0} giver profiles`)
+
+      // Simplified: Just use profiles directly (multi-listing deprecated)
+      // Each giver has a single profile with rate_per_30, video_url, etc.
       if (profilesData && profilesData.length > 0) {
-        // Fetch active listings for all givers
-        const giverIds = profilesData.map(p => p.id)
-        const { data: listingsData, error: listingsError } = await supabase
-          .from('listings')
-          .select('*')
-          .in('user_id', giverIds)
-          .eq('is_active', true)
-          .order('created_at', { ascending: false })
-
-        if (listingsError) throw listingsError
-
-        // Fetch categories for listings
-        if (listingsData && listingsData.length > 0) {
-          const listingIds = listingsData.map(l => l.id)
-          const { data: categoriesData } = await supabase
-            .from('listing_categories')
-            .select('listing_id, category')
-            .in('listing_id', listingIds)
-
-          // Merge categories into listings
-          const listingsWithCategories = listingsData.map(listing => ({
-            ...listing,
-            categories: categoriesData
-              ?.filter(c => c.listing_id === listing.id)
-              .map(c => c.category as Category) || []
-          }))
-
-          // Attach listings to each giver
-          const giversWithListings = profilesData.map(giver => ({
-            ...giver,
-            listings: listingsWithCategories.filter(l => l.user_id === giver.id)
-          }))
-
-          setGivers(giversWithListings)
-        } else {
-          // No listings yet, just use profiles
-          setGivers(profilesData.map(g => ({ ...g, listings: [] })))
-        }
+        setGivers(profilesData.map(g => ({ ...g, listings: [] })))
+      } else {
+        setGivers([])
       }
     } catch (err) {
       console.error('Error fetching givers:', err)
@@ -2171,34 +2144,29 @@ function App() {
 
     setListingsLoading(true)
     try {
-      // Fetch listings
+      console.log('📥 Fetching my listings...')
+
+      // Fetch listings (without categories - listing_categories deprecated)
       const { data: listingsData, error: listingsError } = await supabase
         .from('listings')
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (listingsError) throw listingsError
+      if (listingsError) {
+        console.error('❌ Error fetching listings:', listingsError)
+        throw listingsError
+      }
 
-      // Fetch categories for each listing
+      console.log(`✅ Loaded ${listingsData?.length || 0} listings`)
+
+      // Simplified: Listings without categories (multi-listing architecture deprecated)
       if (listingsData && listingsData.length > 0) {
-        const listingIds = listingsData.map(l => l.id)
-        const { data: categoriesData, error: categoriesError } = await supabase
-          .from('listing_categories')
-          .select('listing_id, category')
-          .in('listing_id', listingIds)
-
-        if (categoriesError) throw categoriesError
-
-        // Merge categories into listings
-        const listingsWithCategories = listingsData.map(listing => ({
+        const listingsWithoutCategories = listingsData.map(listing => ({
           ...listing,
-          categories: categoriesData
-            ?.filter(c => c.listing_id === listing.id)
-            .map(c => c.category as Category) || []
+          categories: [] // Categories deprecated
         }))
-
-        setMyListings(listingsWithCategories)
+        setMyListings(listingsWithoutCategories)
       } else {
         setMyListings([])
       }
@@ -2253,19 +2221,8 @@ function App() {
 
       if (listingError) throw listingError
 
-      // Insert categories
-      if (listingData.categories.length > 0) {
-        const categoryInserts = listingData.categories.map(category => ({
-          listing_id: newListing.id,
-          category
-        }))
-
-        const { error: categoriesError } = await supabase
-          .from('listing_categories')
-          .insert(categoryInserts)
-
-        if (categoriesError) throw categoriesError
-      }
+      // Categories deprecated - multi-listing architecture no longer in use
+      // Categories were stored in listing_categories table which is being phased out
 
       // Refresh listings
       await fetchMyListings()
@@ -2311,7 +2268,7 @@ function App() {
 
     try {
       // Update listing
-      const { topic, mode, price_cents, description, categories } = updates
+      const { topic, mode, price_cents, description, categories: _categories } = updates
       const listingUpdates: Record<string, unknown> = { updated_at: new Date().toISOString() }
 
       if (topic !== undefined) listingUpdates.topic = topic
@@ -2327,30 +2284,9 @@ function App() {
 
       if (listingError) throw listingError
 
-      // Update categories if provided
-      if (categories !== undefined) {
-        // Delete existing categories
-        const { error: deleteError } = await supabase
-          .from('listing_categories')
-          .delete()
-          .eq('listing_id', listingId)
-
-        if (deleteError) throw deleteError
-
-        // Insert new categories
-        if (categories.length > 0) {
-          const categoryInserts = categories.map(category => ({
-            listing_id: listingId,
-            category
-          }))
-
-          const { error: insertError } = await supabase
-            .from('listing_categories')
-            .insert(categoryInserts)
-
-          if (insertError) throw insertError
-        }
-      }
+      // Categories deprecated - multi-listing architecture no longer in use
+      // Categories were stored in listing_categories table which is being phased out
+      // TODO: If categories are needed, store them directly on the listings table
 
       // Refresh listings
       await fetchMyListings()
