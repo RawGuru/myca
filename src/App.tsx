@@ -3679,10 +3679,7 @@ function App() {
                             linkedin_handle,
                             available,
                             total_sessions_completed,
-                            profile_picture_url,
-                            giver_metrics (
-                              quality_score
-                            )
+                            profile_picture_url
                           )
                         `)
                         .eq('is_active', true)
@@ -3718,25 +3715,20 @@ function App() {
 
                       // Category filtering removed - givers offer themselves, not expertise categories
 
-                      // Sort by: quality_score (primary), total sessions (secondary), recency (tertiary), then randomize
-                      // Note: quality_score is invisible to users, used only for ranking
+                      // Sort by: total sessions (primary), recency (secondary), then randomize
+                      // Note: quality_score sorting removed - giver_metrics not accessible from client
                       filtered.sort((a, b) => {
-                        // Primary: Quality score (if available) - descending
-                        const qualityA = (a.profiles?.giver_metrics as any)?.[0]?.quality_score ?? 0
-                        const qualityB = (b.profiles?.giver_metrics as any)?.[0]?.quality_score ?? 0
-                        if (qualityB !== qualityA) return qualityB - qualityA
-
-                        // Secondary: Total sessions (volume) - descending
+                        // Primary: Total sessions (volume) - descending
                         const sessionsA = a.profiles?.total_sessions_completed ?? 0
                         const sessionsB = b.profiles?.total_sessions_completed ?? 0
                         if (sessionsB !== sessionsA) return sessionsB - sessionsA
 
-                        // Tertiary: Recency (updated_at) - descending
+                        // Secondary: Recency (updated_at) - descending
                         const dateA = new Date(a.updated_at).getTime()
                         const dateB = new Date(b.updated_at).getTime()
                         if (dateB !== dateA) return dateB - dateA
 
-                        // Quaternary: Randomize for variety
+                        // Tertiary: Randomize for variety
                         return Math.random() - 0.5
                       })
 
@@ -3798,8 +3790,7 @@ function App() {
                         profiles!inner (
                           id, name, tagline, bio, video_url, qualities_offered,
                           twitter_handle, instagram_handle, linkedin_handle,
-                          available, total_sessions_completed, profile_picture_url,
-                          giver_metrics (quality_score)
+                          available, total_sessions_completed, profile_picture_url
                         )
                       `)
                       .eq('is_active', true)
