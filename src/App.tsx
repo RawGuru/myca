@@ -1432,6 +1432,23 @@ function App() {
       const initialStatus = (requiresApproval && !allowInstantBook) ? 'pending_approval' : 'pending'
 
       // Create booking record with multi-listing data
+      console.log('🔍 DEBUG: Creating booking with data:', {
+        seeker_id: user.id,
+        giver_id: selectedGiver.id,
+        listing_id: selectedListingForBooking?.id || null,
+        scheduled_time: scheduledTime,
+        duration_minutes: durationMinutes,
+        blocks_booked: blocksBooked,
+        amount_cents: amountCents,
+        total_amount_cents: totalAmountCents,
+        platform_fee_cents: platformFeeCents,
+        giver_payout_cents: giverPayoutCents,
+        session_intention: sessionIntention || null,
+        status: initialStatus,
+        stripe_payment_id: null,
+        video_room_url: null,
+      })
+
       const { data, error } = await supabase
         .from('bookings')
         .insert({
@@ -1453,7 +1470,18 @@ function App() {
         .select()
         .single()
 
-      if (error) throw error
+      console.log('🔍 DEBUG: Booking creation result:', { data, error })
+
+      if (error) {
+        console.error('❌ DEBUG: Booking creation failed:', error)
+        console.error('Error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        })
+        throw error
+      }
 
       setCurrentBooking(data)
       setScreen('payment')
