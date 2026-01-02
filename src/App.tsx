@@ -957,6 +957,7 @@ function App() {
 
   // Video recording state
   const [videoStep, setVideoStep] = useState<'prompt' | 'recording' | 'preview' | 'done'>('done')
+  const [videoJustSaved, setVideoJustSaved] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null)
   const [recordedUrl, setRecordedUrl] = useState<string | null>(null)
@@ -5349,6 +5350,23 @@ function App() {
 
             {myGiverProfile.video_url && !recordedUrl && videoStep === 'done' && (
               <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px', marginBottom: '15px' }}>
+                {videoJustSaved && (
+                  <div style={{
+                    padding: '12px 15px',
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    borderRadius: '8px',
+                    color: '#22c55e',
+                    marginBottom: '15px',
+                    fontSize: '0.9rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>✓</span>
+                    <span>Video saved successfully!</span>
+                  </div>
+                )}
                 <video
                   src={myGiverProfile.video_url}
                   controls
@@ -5360,6 +5378,7 @@ function App() {
                       if (confirm('Delete your current video? You can record a new one.')) {
                         await supabase.from('profiles').update({ video_url: null }).eq('id', user.id)
                         setMyGiverProfile({ ...myGiverProfile, video_url: null })
+                        setVideoJustSaved(false)
                       }
                     }}
                     style={{ ...btnSecondaryStyle, flex: 1, background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' }}
@@ -5367,7 +5386,10 @@ function App() {
                     Delete Video
                   </button>
                   <button
-                    onClick={() => setVideoStep('prompt')}
+                    onClick={() => {
+                      setVideoStep('prompt')
+                      setVideoJustSaved(false)
+                    }}
                     style={{ ...btnStyle, flex: 1 }}
                   >
                     Record New Video
@@ -5425,10 +5447,15 @@ function App() {
                         onClick={async () => {
                           const url = await uploadVideo()
                           if (url) {
+                            console.log('✅ Video saved successfully:', url)
                             await supabase.from('profiles').update({ video_url: url }).eq('id', user.id)
                             setMyGiverProfile({ ...myGiverProfile, video_url: url })
                             setVideoStep('done')
                             setRecordedUrl(null)
+                            setProfileError('') // Clear any errors
+                            setVideoJustSaved(true) // Show success message
+                            // Auto-hide success message after 5 seconds
+                            setTimeout(() => setVideoJustSaved(false), 5000)
                           }
                         }}
                         style={{ ...btnStyle, flex: 1 }}
