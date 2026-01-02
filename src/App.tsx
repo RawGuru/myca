@@ -1100,7 +1100,15 @@ function App() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        // Error code 23505 = unique_violation (duplicate slot)
+        if (error.code === '23505') {
+          alert('This time slot already exists in your availability.')
+        } else {
+          throw error
+        }
+        return
+      }
 
       setAvailabilitySlots(prev => [...prev, data])
       setNewSlotDate('')
@@ -1194,31 +1202,33 @@ function App() {
         return
       }
 
-      // First get existing slots for this date range to avoid duplicates
-      const { data: existing } = await supabase
-        .from('giver_availability')
-        .select('date, time')
-        .eq('giver_id', user.id)
-        .gte('date', bulkStartDate)
-        .lte('date', bulkEndDate)
+      // Best-effort insert: insert each slot individually, skip duplicates
+      const insertedSlots: AvailabilitySlot[] = []
+      let duplicateCount = 0
 
-      const existingSet = new Set(existing?.map(e => `${e.date}-${e.time}`) || [])
-      const newSlots = slotsToInsert.filter(s => !existingSet.has(`${s.date}-${s.time}`))
+      for (const slot of slotsToInsert) {
+        const { data, error } = await supabase
+          .from('giver_availability')
+          .insert(slot)
+          .select()
+          .single()
 
-      if (newSlots.length === 0) {
-        alert('All selected slots already exist in your availability.')
-        return
+        if (error) {
+          // Error code 23505 = unique_violation (duplicate)
+          if (error.code === '23505') {
+            duplicateCount++
+          } else {
+            // Log other errors but continue
+            console.error('Error inserting slot:', error)
+          }
+        } else if (data) {
+          insertedSlots.push(data)
+        }
       }
 
-      // Insert only new slots
-      const { data, error } = await supabase
-        .from('giver_availability')
-        .insert(newSlots)
-        .select()
-
-      if (error) throw error
-
-      setAvailabilitySlots(prev => [...prev, ...data])
+      if (insertedSlots.length > 0) {
+        setAvailabilitySlots(prev => [...prev, ...insertedSlots])
+      }
 
       // Show detailed success message
       const startDateObj = new Date(bulkStartDate + 'T00:00:00')
@@ -1226,12 +1236,11 @@ function App() {
       const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
       const selectedDayNames = Array.from(bulkSelectedDays).sort().map(i => dayNames[i]).join(', ')
 
-      const skippedCount = slotsToInsert.length - newSlots.length
-      const message = `Added ${data.length} new slot${data.length !== 1 ? 's' : ''} from ${startDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ` +
+      const message = `Added ${insertedSlots.length} new slot${insertedSlots.length !== 1 ? 's' : ''} from ${startDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} ` +
         `to ${endDateObj.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}\n` +
         `Days: ${selectedDayNames}\n` +
         `Time: ${formatTimeTo12Hour(bulkStartTime)} - ${formatTimeTo12Hour(bulkEndTime)}` +
-        (skippedCount > 0 ? `\n\n(Skipped ${skippedCount} duplicate slot${skippedCount !== 1 ? 's' : ''})` : '')
+        (duplicateCount > 0 ? `\n\n(Skipped ${duplicateCount} duplicate slot${duplicateCount !== 1 ? 's' : ''})` : '')
 
       alert(message)
     } catch (err) {
