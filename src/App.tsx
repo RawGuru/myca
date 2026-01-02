@@ -297,16 +297,20 @@ function ImageUpload({
       const publicUrl = urlData.publicUrl
       console.log('✅ Public URL:', publicUrl)
 
-      // Call onUpload callback
+      // Call onUpload callback and wait for parent state to update
       console.log('💾 Calling onUpload callback...')
       await onUpload(publicUrl)
-      console.log('✅ Image upload complete!')
+      console.log('✅ onUpload callback complete')
 
-      // Clean up local blob URL after server URL is available
+      // Small delay to ensure parent component has re-rendered with new currentImageUrl
+      await new Promise(resolve => setTimeout(resolve, 100))
+
+      // Clean up local blob URL after server URL is available and parent state updated
       if (localPreviewUrl) {
         URL.revokeObjectURL(localPreviewUrl)
         setLocalPreviewUrl(null)
       }
+      console.log('✅ Image upload complete!')
 
       alert('Image uploaded successfully!')
     } catch (err) {
