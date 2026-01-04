@@ -2116,20 +2116,20 @@ function App() {
 
     try {
       const { data, error } = await supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
 
       if (error) {
         // Profile might not exist yet - that's OK
-        console.log('user_profiles fetch:', error.message)
+        console.log('profiles fetch:', error.message)
         setUserProfile(null)
         return
       }
       setUserProfile(data)
     } catch (err) {
-      console.log('user_profiles error:', err)
+      console.log('profiles error:', err)
       setUserProfile(null)
     }
   }, [user])
@@ -2810,19 +2810,7 @@ function App() {
 
       if (profileError) throw profileError
 
-      // Also create/update user_profiles table for timezone info
-      const { error: userProfileError } = await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          timezone: giverTimezone,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' })
-
-      if (userProfileError) {
-        console.warn('Failed to update user_profiles:', userProfileError)
-        // Don't throw - this is not critical
-      }
+      // Timezone is already updated in profiles table above, no need for separate update
 
       // Refresh givers list and user's giver profile
       await fetchGivers()
@@ -3572,24 +3560,8 @@ function App() {
 
   // Seeker Discovery Flow (Part 5)
   if (screen === 'discovery') {
-    // Guard: Require profile before browsing
-    // Check if user has a profile (name set)
-    React.useEffect(() => {
-      if (user) {
-        supabase
-          .from('profiles')
-          .select('name')
-          .eq('id', user.id)
-          .maybeSingle()
-          .then(({ data }) => {
-            if (!data?.name) {
-              // No profile - redirect to profile creation
-              console.log('⚠️ No profile found - redirecting to receiverProfile')
-              setScreen('receiverProfile')
-            }
-          })
-      }
-    }, [user])
+    // Profile check handled at entry points (Book time, Find a person buttons)
+    // No need for additional guard here - entry points already verify profile exists
 
     return (
       <div style={containerStyle}>
@@ -7258,9 +7230,9 @@ function App() {
               onChange={async (e) => {
                 const newTimezone = e.target.value
                 try {
-                  // Update user_profiles table
+                  // Update profiles table with timezone
                   const { error: profileError } = await supabase
-                    .from('user_profiles')
+                    .from('profiles')
                     .upsert({
                       id: user.id,
                       timezone: newTimezone,
@@ -7268,16 +7240,6 @@ function App() {
                     }, { onConflict: 'id' })
 
                   if (profileError) throw profileError
-
-                  // If giver, also update profiles table
-                  if (myGiverProfile) {
-                    const { error: giverError } = await supabase
-                      .from('profiles')
-                      .update({ timezone: newTimezone })
-                      .eq('id', user.id)
-
-                    if (giverError) throw giverError
-                  }
 
                   // Refresh data
                   await fetchUserProfile()
