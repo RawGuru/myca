@@ -14,6 +14,8 @@ dist-ssr
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .env.local
 .env.*.local
 
@@ -28,3 +30,8 @@ dist-ssr
 *.sln
 *.sw?
 myca-main/
+
+# Local secrets and temp files
+.claude/settings.local.json
+supabase/.temp/
+contract-outputs/
