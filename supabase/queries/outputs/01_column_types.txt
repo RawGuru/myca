@@ -1,0 +1,147 @@
+     table_name     |        column_name         |        data_type         |  udt_name   | is_nullable |                                                      column_default                                                      
+--------------------+----------------------------+--------------------------+-------------+-------------+--------------------------------------------------------------------------------------------------------------------------
+ blocked_users      | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ blocked_users      | blocker_id                 | uuid                     | uuid        | NO          | 
+ blocked_users      | blocked_id                 | uuid                     | uuid        | NO          | 
+ blocked_users      | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ blocked_users      | reason                     | text                     | text        | YES         | 
+ bookings           | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ bookings           | seeker_id                  | uuid                     | uuid        | YES         | 
+ bookings           | giver_id                   | uuid                     | uuid        | YES         | 
+ bookings           | scheduled_time             | timestamp with time zone | timestamptz | NO          | 
+ bookings           | duration_minutes           | integer                  | int4        | NO          | 
+ bookings           | amount_cents               | integer                  | int4        | NO          | 
+ bookings           | status                     | text                     | text        | YES         | 'pending'::text
+ bookings           | stripe_payment_id          | text                     | text        | YES         | 
+ bookings           | video_room_url             | text                     | text        | YES         | 
+ bookings           | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ bookings           | giver_joined_at            | timestamp with time zone | timestamptz | YES         | 
+ bookings           | seeker_credit_earned       | boolean                  | bool        | YES         | false
+ bookings           | started_at                 | timestamp with time zone | timestamptz | YES         | 
+ bookings           | ended_at                   | timestamp with time zone | timestamptz | YES         | 
+ bookings           | elapsed_seconds            | integer                  | int4        | YES         | 
+ bookings           | end_reason                 | text                     | text        | YES         | 
+ bookings           | payout_net_cents           | integer                  | int4        | YES         | 
+ bookings           | refund_gross_cents         | integer                  | int4        | YES         | 
+ bookings           | payout_status              | text                     | text        | YES         | 
+ bookings           | session_intention          | text                     | text        | YES         | 
+ credits            | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ credits            | user_id                    | uuid                     | uuid        | NO          | 
+ credits            | amount_cents               | integer                  | int4        | NO          | 
+ credits            | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ credits            | used_at                    | timestamp with time zone | timestamptz | YES         | 
+ credits            | booking_id                 | uuid                     | uuid        | YES         | 
+ credits            | source_booking_id          | uuid                     | uuid        | YES         | 
+ credits            | reason                     | text                     | text        | YES         | 
+ extensions         | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ extensions         | booking_id                 | uuid                     | uuid        | NO          | 
+ extensions         | extended_at                | timestamp with time zone | timestamptz | YES         | now()
+ extensions         | amount_cents               | integer                  | int4        | NO          | 
+ extensions         | stripe_payment_intent_id   | text                     | text        | YES         | 
+ extensions         | requested_by               | uuid                     | uuid        | YES         | 
+ extensions         | requested_at               | timestamp with time zone | timestamptz | YES         | 
+ extensions         | giver_response             | text                     | text        | YES         | 
+ extensions         | giver_responded_at         | timestamp with time zone | timestamptz | YES         | 
+ extensions         | status                     | text                     | text        | NO          | 'pending'::text
+ extensions         | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ giver_availability | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ giver_availability | giver_id                   | uuid                     | uuid        | NO          | 
+ giver_availability | date                       | date                     | date        | NO          | 
+ giver_availability | time                       | time without time zone   | time        | NO          | 
+ giver_availability | is_booked                  | boolean                  | bool        | YES         | false
+ giver_availability | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ giver_metrics      | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ giver_metrics      | giver_id                   | uuid                     | uuid        | NO          | 
+ giver_metrics      | total_sessions_completed   | integer                  | int4        | YES         | 0
+ giver_metrics      | would_book_again_count     | integer                  | int4        | YES         | 0
+ giver_metrics      | matched_mode_count         | integer                  | int4        | YES         | 0
+ giver_metrics      | quality_score              | numeric                  | numeric     | YES         | 
+ giver_metrics      | updated_at                 | timestamp with time zone | timestamptz | YES         | now()
+ giver_metrics      | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ listing_categories | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ listing_categories | listing_id                 | uuid                     | uuid        | NO          | 
+ listing_categories | category                   | text                     | text        | NO          | 
+ listing_categories | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ listings           | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ listings           | user_id                    | uuid                     | uuid        | NO          | 
+ listings           | topic                      | text                     | text        | YES         | 
+ listings           | mode                       | text                     | text        | NO          | 
+ listings           | price_cents                | integer                  | int4        | NO          | 
+ listings           | description                | text                     | text        | YES         | 
+ listings           | specific_topics            | text                     | text        | YES         | 
+ listings           | is_active                  | boolean                  | bool        | YES         | true
+ listings           | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ listings           | updated_at                 | timestamp with time zone | timestamptz | YES         | now()
+ listings           | directions_allowed         | ARRAY                    | _text       | YES         | ARRAY['go_deeper'::text, 'hear_perspective'::text, 'think_together'::text, 'build_next_step'::text, 'end_cleanly'::text]
+ listings           | boundaries                 | text                     | text        | YES         | 
+ listings           | allow_instant_book         | boolean                  | bool        | YES         | false
+ listings           | requires_approval          | boolean                  | bool        | YES         | true
+ profiles           | id                         | uuid                     | uuid        | NO          | 
+ profiles           | email                      | text                     | text        | NO          | 
+ profiles           | name                       | text                     | text        | YES         | 
+ profiles           | bio                        | text                     | text        | YES         | 
+ profiles           | tagline                    | text                     | text        | YES         | 
+ profiles           | video_url                  | text                     | text        | YES         | 
+ profiles           | rate_per_30                | integer                  | int4        | YES         | 25
+ profiles           | qualities_offered          | ARRAY                    | _text       | YES         | '{}'::text[]
+ profiles           | is_giver                   | boolean                  | bool        | YES         | false
+ profiles           | available                  | boolean                  | bool        | YES         | true
+ profiles           | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ profiles           | updated_at                 | timestamp with time zone | timestamptz | YES         | now()
+ profiles           | availability_schedule      | jsonb                    | jsonb       | YES         | 
+ profiles           | stripe_account_id          | text                     | text        | YES         | 
+ profiles           | stripe_onboarding_complete | boolean                  | bool        | YES         | false
+ profiles           | timezone                   | text                     | text        | YES         | 'America/New_York'::text
+ profiles           | profile_picture_url        | text                     | text        | YES         | 
+ profiles           | photo_url                  | text                     | text        | YES         | 
+ profiles           | sessions_completed         | integer                  | int4        | YES         | 0
+ profiles           | age_verified_at            | timestamp with time zone | timestamptz | YES         | 
+ qualities_received | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ qualities_received | giver_id                   | uuid                     | uuid        | YES         | 
+ qualities_received | quality_name               | text                     | text        | NO          | 
+ qualities_received | count                      | integer                  | int4        | YES         | 1
+ reflections        | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ reflections        | booking_id                 | uuid                     | uuid        | YES         | 
+ reflections        | giver_id                   | uuid                     | uuid        | YES         | 
+ reflections        | seeker_id                  | uuid                     | uuid        | YES         | 
+ reflections        | text                       | text                     | text        | YES         | 
+ reflections        | qualities_selected         | ARRAY                    | _text       | YES         | '{}'::text[]
+ reflections        | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ saved_givers       | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ saved_givers       | seeker_id                  | uuid                     | uuid        | YES         | 
+ saved_givers       | giver_id                   | text                     | text        | NO          | 
+ saved_givers       | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ session_milestones | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ session_milestones | booking_id                 | uuid                     | uuid        | NO          | 
+ session_milestones | event_type                 | text                     | text        | NO          | 
+ session_milestones | user_id                    | uuid                     | uuid        | YES         | 
+ session_milestones | metadata                   | jsonb                    | jsonb       | YES         | 
+ session_milestones | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ session_states     | id                         | uuid                     | uuid        | NO          | gen_random_uuid()
+ session_states     | booking_id                 | uuid                     | uuid        | NO          | 
+ session_states     | current_phase              | text                     | text        | NO          | 'transmission'::text
+ session_states     | validation_attempts        | integer                  | int4        | YES         | 0
+ session_states     | emergence_verb             | text                     | text        | YES         | 
+ session_states     | extension_pending          | boolean                  | bool        | YES         | false
+ session_states     | extension_id               | uuid                     | uuid        | YES         | 
+ session_states     | started_at                 | timestamp with time zone | timestamptz | NO          | now()
+ session_states     | transmission_started_at    | timestamp with time zone | timestamptz | YES         | 
+ session_states     | reflection_started_at      | timestamp with time zone | timestamptz | YES         | 
+ session_states     | validation_started_at      | timestamp with time zone | timestamptz | YES         | 
+ session_states     | emergence_started_at       | timestamp with time zone | timestamptz | YES         | 
+ session_states     | ended_at                   | timestamp with time zone | timestamptz | YES         | 
+ session_states     | end_reason                 | text                     | text        | YES         | 
+ session_states     | updated_at                 | timestamp with time zone | timestamptz | YES         | now()
+ session_states     | updated_by                 | uuid                     | uuid        | YES         | 
+ session_states     | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ session_states     | direction_selected         | text                     | text        | YES         | 
+ session_states     | direction_source           | text                     | text        | YES         | 
+ session_states     | direction_request_text     | text                     | text        | YES         | 
+ session_states     | direction_giver_response   | text                     | text        | YES         | 
+ session_states     | direction_started_at       | timestamp with time zone | timestamptz | YES         | 
+ user_profiles      | id                         | uuid                     | uuid        | NO          | 
+ user_profiles      | timezone                   | text                     | text        | YES         | 'America/New_York'::text
+ user_profiles      | created_at                 | timestamp with time zone | timestamptz | YES         | now()
+ user_profiles      | updated_at                 | timestamp with time zone | timestamptz | YES         | now()
+(143 rows)
+
