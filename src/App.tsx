@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from './hooks/useAuth'
-import { supabase } from './lib/supabase'
+import { supabase, forbidden403Count } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import Auth from './components/Auth'
@@ -924,6 +924,7 @@ function App() {
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
+  const [stripeState, setStripeState] = useState<{ hasStripeAccountId: boolean; onboardingComplete: boolean; isGiver: boolean } | null>(null)
   const [_showGiverOverlay, setShowGiverOverlay] = useState(false) // Old overlay system (setter still used, to be removed)
   const [_extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // Old extension UI (setter still used, to be removed)
 
@@ -1986,14 +1987,36 @@ function App() {
 
       // Merge public and private data
       setMyGiverProfile({ ...publicData, ...privateData })
+
+      // Log and set stripe state
+      const stripeStateData = {
+        hasStripeAccountId: !!privateData?.stripe_account_id,
+        onboardingComplete: !!privateData?.stripe_onboarding_complete,
+        isGiver: !!publicData?.is_giver
+      }
+      console.log('STRIPE_STATE', stripeStateData)
+      setStripeState(stripeStateData)
     } catch {
       setMyGiverProfile(null)
+      setStripeState(null)
     }
   }, [user])
 
   useEffect(() => {
     fetchMyGiverProfile()
   }, [fetchMyGiverProfile])
+
+  // Log 403 count on app boot
+  useEffect(() => {
+    console.log('403_COUNT_SO_FAR (app boot):', forbidden403Count)
+  }, [])
+
+  // Log 403 count when entering sessions screen
+  useEffect(() => {
+    if (screen === 'sessions') {
+      console.log('403_COUNT_SO_FAR (sessions screen):', forbidden403Count)
+    }
+  }, [screen])
 
   // Check for shareable giver link on load
   useEffect(() => {
@@ -2075,6 +2098,12 @@ function App() {
         })
         throw error
       }
+
+      // Log successful response (body keys only, no secrets)
+      console.log('✅ create-connect-account response:', {
+        responseKeys: data ? Object.keys(data) : [],
+        hasOnboardingUrl: !!data?.onboarding_url
+      })
 
       if (!data?.onboarding_url) {
         throw new Error('No onboarding URL received')
@@ -3275,7 +3304,7 @@ function App() {
         padding: '2px 5px',
         borderRadius: '3px'
       }}>
-        v2-bookings
+        v3-profiles-stripe-debug
       </div>
       <nav style={navStyle}>
         {[
@@ -7072,16 +7101,26 @@ function App() {
               opacity: 0.6,
               fontFamily: 'monospace'
             }}>
-              build: 2026-01-11-fix-bookings-v2
+              build: v3-profiles-stripe-debug
             </div>
+            {stripeState && (
+              <div style={{
+                fontSize: '0.6rem',
+                color: colors.textMuted,
+                opacity: 0.5,
+                fontFamily: 'monospace',
+                marginTop: '3px'
+              }}>
+                STRIPE_STATE {JSON.stringify(stripeState)}
+              </div>
+            )}
           </div>
 
-          {/* Giver payout status card - Only show if user is a giver and setup required */}
+          {/* Giver payout status card - Only show if is_giver true AND hasStripeAccountId false */}
           {(() => {
-            if (!myGiverProfile) return null
-            if (myGiverProfile.is_giver !== true) return null
-            const needsPayoutSetup = !myGiverProfile.stripe_account_id
-            if (!needsPayoutSetup) return null
+            if (!stripeState) return null
+            if (stripeState.isGiver !== true) return null
+            if (stripeState.hasStripeAccountId !== false) return null
 
             return (
               <div style={{
