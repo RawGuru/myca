@@ -39,11 +39,17 @@ serve(async (req) => {
       )
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client for auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
+    )
+
+    // Initialize Supabase service role client for database updates
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     // Verify user is authenticated
@@ -71,8 +77,8 @@ serve(async (req) => {
       )
     }
 
-    // Get user's Connect account ID
-    const { data: profile } = await supabaseClient
+    // Get user's Connect account ID (use admin for read)
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('stripe_account_id')
       .eq('id', user_id)
@@ -97,13 +103,18 @@ serve(async (req) => {
 
     const onboardingComplete = account.details_submitted && account.charges_enabled
 
-    // Update database if status changed
-    await supabaseClient
+    // Update database with onboarding status (service role)
+    const { error: updateError } = await supabaseAdmin
       .from('profiles')
       .update({
+        stripe_account_id: profile.stripe_account_id,
         stripe_onboarding_complete: onboardingComplete,
       })
       .eq('id', user_id)
+
+    if (updateError) {
+      console.error('Failed to update onboarding status:', updateError)
+    }
 
     return new Response(
       JSON.stringify({

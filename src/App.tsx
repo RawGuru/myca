@@ -2141,18 +2141,16 @@ function App() {
         throw error
       }
 
+      // Log check-connect-status response
+      console.log('✅ check-connect-status response:', {
+        onboarding_complete: data?.onboarding_complete,
+        details_submitted: data?.details_submitted,
+        charges_enabled: data?.charges_enabled
+      })
+
       if (data?.onboarding_complete) {
-        // Refresh profile to get updated status
-        const { data: profile } = await supabase
-          .from('profiles_public')
-          .select('*')
-          .eq('id', user.id)
-          .single()
-
-        if (profile) {
-          setMyGiverProfile(profile as Giver)
-        }
-
+        // Refetch profile to get updated stripe fields
+        await fetchMyGiverProfile()
         return true
       }
 

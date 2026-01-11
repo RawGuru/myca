@@ -42,11 +42,17 @@ serve(async (req) => {
       )
     }
 
-    // Initialize Supabase client
+    // Initialize Supabase client for auth
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
+    )
+
+    // Initialize Supabase service role client for database updates
+    const supabaseAdmin = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
     // Verify user is authenticated
@@ -74,8 +80,8 @@ serve(async (req) => {
       )
     }
 
-    // Check if user already has a Connect account
-    const { data: profile } = await supabaseClient
+    // Check if user already has a Connect account (use admin for read)
+    const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('stripe_account_id, stripe_onboarding_complete')
       .eq('id', user_id)
@@ -100,14 +106,19 @@ serve(async (req) => {
 
       accountId = account.id
 
-      // Save account ID to database
-      await supabaseClient
+      // Save account ID to database immediately (service role)
+      const { error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           stripe_account_id: accountId,
           stripe_onboarding_complete: false,
         })
         .eq('id', user_id)
+
+      if (updateError) {
+        console.error('Failed to save stripe_account_id:', updateError)
+        throw new Error('Failed to save Connect account ID')
+      }
     }
 
     // Create Account Link for onboarding
