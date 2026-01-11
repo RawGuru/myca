@@ -922,6 +922,7 @@ function App() {
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
+  const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [_showGiverOverlay, setShowGiverOverlay] = useState(false) // Old overlay system (setter still used, to be removed)
   const [_extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // Old extension UI (setter still used, to be removed)
 
@@ -1887,15 +1888,31 @@ function App() {
     }
 
     try {
-      const { data, error } = await supabase
+      // Fetch public profile data
+      const { data: publicData, error: publicError } = await supabase
         .from('profiles_public')
         .select('*')
         .eq('id', user.id)
         .eq('is_giver', true)
         .single()
 
-      if (error && error.code !== 'PGRST116') throw error // PGRST116 = no rows
-      setMyGiverProfile(data || null)
+      if (publicError && publicError.code !== 'PGRST116') throw publicError
+
+      if (!publicData) {
+        setMyGiverProfile(null)
+        return
+      }
+
+      // Fetch private fields (stripe_account_id, stripe_onboarding_complete) from profiles table
+      // This requires profiles_select_own policy to be in place
+      const { data: privateData } = await supabase
+        .from('profiles')
+        .select('stripe_account_id, stripe_onboarding_complete')
+        .eq('id', user.id)
+        .single()
+
+      // Merge public and private data
+      setMyGiverProfile({ ...publicData, ...privateData })
     } catch {
       setMyGiverProfile(null)
     }
@@ -2043,8 +2060,11 @@ function App() {
 
   // Fetch user's bookings
   const fetchUserBookings = useCallback(async () => {
+    console.log('🚨 BOOKING_FETCH_START', { screen, userId: user?.id })
+
     if (!user) {
       setUserBookings([])
+      setBookingsFetchError(null)
       return
     }
 
@@ -2053,19 +2073,36 @@ function App() {
         .from('bookings')
         .select('*')
         .or(`seeker_id.eq.${user.id},giver_id.eq.${user.id}`)
-        .in('status', ['confirmed', 'pending'])
-        .order('scheduled_time', { ascending: true })
+        .order('created_at', { ascending: false })
 
-      if (error) throw error
+      console.log('🚨 BOOKING_FETCH_RESULT', {
+        error: error ? { code: error.code, message: error.message } : null,
+        dataLength: data?.length || 0
+      })
+
+      if (error) {
+        setBookingsFetchError(error)
+        throw error
+      }
+
+      setBookingsFetchError(null)
       setUserBookings(data || [])
-    } catch {
+    } catch (err) {
+      console.error('BOOKING_FETCH_ERROR:', err)
       setUserBookings([])
     }
-  }, [user])
+  }, [user, screen])
 
   useEffect(() => {
     fetchUserBookings()
   }, [fetchUserBookings])
+
+  // Trigger fetch when entering sessions/debug-bookings screen
+  useEffect(() => {
+    if (screen === 'sessions' || screen === 'debug-bookings') {
+      fetchUserBookings()
+    }
+  }, [screen, fetchUserBookings])
 
   // Auto-refresh sessions and confirmation pages
   useEffect(() => {
@@ -3115,6 +3152,22 @@ function App() {
 
   const Nav = () => (
     <>
+      {/* Build tag - visible on all screens with nav */}
+      <div style={{
+        position: 'fixed',
+        bottom: '75px',
+        right: '10px',
+        fontSize: '0.6rem',
+        color: colors.textMuted,
+        opacity: 0.4,
+        fontFamily: 'monospace',
+        zIndex: 9999,
+        background: colors.bgPrimary,
+        padding: '2px 5px',
+        borderRadius: '3px'
+      }}>
+        v2-bookings
+      </div>
       <nav style={navStyle}>
         {[
           { id: 'browse', icon: '🔍', label: 'Find' },
@@ -3371,32 +3424,7 @@ function App() {
             Uninterrupted conversation. Check for understanding, then move forward in the direction you choose.
           </p>
           <div style={{ width: '100%', maxWidth: '340px' }}>
-            <button style={btnStyle} onClick={() => {
-              // Check if user has a profile (name set)
-              if (user) {
-                // Fetch user profile to check if they have a name
-                supabase
-                  .from('profiles_public')
-                  .select('name')
-                  .eq('id', user.id)
-                  .maybeSingle()
-                  .then(({ data }) => {
-                    if (data?.name) {
-                      // User has a profile, go DIRECTLY to discovery feed
-                      setDiscoveryStep('feed')
-                      setDiscoveryFilters({ attentionType: null, category: null, availability: 'anytime' })
-                      setScreen('discovery')
-                    } else {
-                      // User doesn't have a profile, go to receiver profile creation
-                      setScreen('receiverProfile')
-                    }
-                  })
-              } else {
-                // Not logged in, require auth first
-                setReturnToScreen('receiverProfile')
-                setNeedsAuth(true)
-              }
-            }}>Find a person</button>
+            <button style={btnStyle} onClick={() => setScreen('browse')}>Find a person</button>
             <button
               style={{ ...btnSecondaryStyle, marginBottom: '20px' }}
               onClick={() => {
@@ -3438,6 +3466,50 @@ function App() {
             )}
           </div>
           {user && <Nav />}
+        </div>
+      </div>
+    )
+  }
+
+  // DEBUG ROUTE: Raw bookings data
+  if (screen === 'debug-bookings') {
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <button
+            onClick={() => setScreen('sessions')}
+            style={{ marginBottom: '20px', padding: '10px', cursor: 'pointer' }}
+          >
+            ← Back to Sessions
+          </button>
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>Debug: Raw Bookings Data</h2>
+          <div style={{
+            fontSize: '0.75rem',
+            fontFamily: 'monospace',
+            background: colors.bgSecondary,
+            padding: '15px',
+            borderRadius: '8px',
+            overflowX: 'auto',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all'
+          }}>
+            <div style={{ marginBottom: '15px', color: colors.accent }}>
+              User ID: {user?.id}
+            </div>
+            <div style={{ marginBottom: '15px', color: colors.accent }}>
+              Total Bookings: {userBookings.length}
+            </div>
+            {JSON.stringify(userBookings.map(b => ({
+              id: b.id,
+              status: b.status,
+              scheduled_time: b.scheduled_time,
+              seeker_id: b.seeker_id,
+              giver_id: b.giver_id,
+              amount_cents: b.amount_cents,
+              stripe_payment_id: b.stripe_payment_id,
+              video_room_url: b.video_room_url ? 'set' : 'null'
+            })), null, 2)}
+          </div>
         </div>
       </div>
     )
@@ -3572,7 +3644,7 @@ function App() {
             <button
               onClick={() => {
                 if (discoveryStep === 'availability') {
-                  setScreen('welcome')
+                  setScreen('browse')
                 } else if (discoveryStep === 'feed') {
                   setDiscoveryStep('availability')
                 }
@@ -4060,7 +4132,7 @@ function App() {
             </button>
           </div>
 
-          {givers.filter(g => !showSavedOnly || savedGiverIds.has(g.id)).map(giver => (
+          {givers.filter(g => g.id !== user?.id && (!showSavedOnly || savedGiverIds.has(g.id))).map(giver => (
             <div key={giver.id} style={cardStyle} onClick={() => { setSelectedGiver(giver); setScreen('profile'); }}>
               <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
                 {giver.video_url ? (
@@ -6868,31 +6940,51 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>Your Calls</h2>
-
-          {/* Giver payout status card */}
-          {myGiverProfile && (
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Your Calls</h2>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <button
+              onClick={() => setScreen('debug-bookings')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: colors.textMuted,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                marginBottom: '5px',
+                width: '100%'
+              }}
+            >
+              [DEV] View Raw Bookings Data
+            </button>
             <div style={{
-              ...cardStyle,
-              cursor: 'default',
-              marginBottom: '25px',
-              background: myGiverProfile.stripe_onboarding_complete
-                ? `linear-gradient(135deg, rgba(74, 156, 109, 0.1), ${colors.bgCard})`
-                : `linear-gradient(135deg, rgba(201, 166, 107, 0.1), ${colors.bgCard})`
+              fontSize: '0.65rem',
+              color: colors.textMuted,
+              opacity: 0.6,
+              fontFamily: 'monospace'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div>
-                  <h4 style={{ fontSize: '0.95rem', marginBottom: '5px' }}>Giver Payouts</h4>
-                  {myGiverProfile.stripe_onboarding_complete ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: colors.success }}>
-                      <span>✓</span>
-                      <span style={{ fontSize: '0.85rem' }}>Connected</span>
-                    </div>
-                  ) : (
+              build: 2026-01-11-fix-bookings-v2
+            </div>
+          </div>
+
+          {/* Giver payout status card - Only show if setup required */}
+          {(() => {
+            if (!myGiverProfile) return null
+            const needsPayoutSetup = !myGiverProfile.stripe_account_id
+            if (!needsPayoutSetup) return null
+
+            return (
+              <div style={{
+                ...cardStyle,
+                cursor: 'default',
+                marginBottom: '25px',
+                background: `linear-gradient(135deg, rgba(201, 166, 107, 0.1), ${colors.bgCard})`
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <h4 style={{ fontSize: '0.95rem', marginBottom: '5px' }}>Giver Payouts</h4>
                     <p style={{ fontSize: '0.85rem', color: colors.accent }}>Setup required</p>
-                  )}
-                </div>
-                {!myGiverProfile.stripe_onboarding_complete && (
+                  </div>
                   <button
                     style={{
                       padding: '8px 16px',
@@ -6908,22 +7000,31 @@ function App() {
                   >
                     Set Up
                   </button>
-                )}
-                {myGiverProfile.stripe_onboarding_complete && (
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.85rem', color: colors.textSecondary }}>You receive</p>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 600, color: colors.success }}>
-                      ${myGiverProfile.rate_per_30}
-                    </p>
-                  </div>
-                )}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Bookings list */}
           {userBookings.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: colors.textMuted }}>
+              {bookingsFetchError && (
+                <div style={{
+                  background: 'rgba(220,38,38,0.1)',
+                  border: '1px solid rgba(220,38,38,0.3)',
+                  color: '#f87171',
+                  padding: '10px',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  fontSize: '0.85rem',
+                  fontFamily: 'monospace',
+                  textAlign: 'left'
+                }}>
+                  <strong>[DEV ERROR]</strong><br/>
+                  Code: {bookingsFetchError.code}<br/>
+                  Message: {bookingsFetchError.message}
+                </div>
+              )}
               <div style={{ fontSize: '3rem', marginBottom: '20px' }}>📅</div>
               <p style={{ marginBottom: '10px' }}>No bookings yet</p>
               <p style={{ fontSize: '0.85rem', marginBottom: '30px' }}>
@@ -6940,10 +7041,15 @@ function App() {
             </div>
           ) : (
             <div>
-              <h3 style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '15px' }}>
-                Upcoming Calls
-              </h3>
-              {userBookings.map(booking => {
+              {/* As Seeker section */}
+              {(() => {
+                const seekerBookings = userBookings.filter(b => b.seeker_id === user?.id)
+                return seekerBookings.length > 0 ? (
+                  <div style={{ marginBottom: '30px' }}>
+                    <h3 style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '15px' }}>
+                      As Seeker ({seekerBookings.length})
+                    </h3>
+                    {seekerBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
                 const isGiver = booking.giver_id === user?.id
                 const joinable = isSessionJoinable(booking)
@@ -7149,12 +7255,188 @@ function App() {
                   </div>
                 )
               })}
+                  </div>
+                ) : null
+              })()}
+
+              {/* As Giver section */}
+              {(() => {
+                const giverBookings = userBookings.filter(b => b.giver_id === user?.id)
+                return giverBookings.length > 0 ? (
+                  <div>
+                    <h3 style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '15px' }}>
+                      As Giver ({giverBookings.length})
+                    </h3>
+                    {giverBookings.map(booking => {
+                const scheduledDate = new Date(booking.scheduled_time)
+                const isGiver = booking.giver_id === user?.id
+                const joinable = isSessionJoinable(booking)
+                const isPast = scheduledDate.getTime() + 30 * 60 * 1000 < Date.now()
+
+                return (
+                  <div
+                    key={booking.id}
+                    style={{
+                      ...cardStyle,
+                      cursor: 'default',
+                      opacity: isPast ? 0.6 : 1,
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
+                      <div>
+                        <div style={{
+                          fontSize: '0.75rem',
+                          color: isGiver ? colors.success : colors.accent,
+                          marginBottom: '5px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px',
+                        }}>
+                          {isGiver ? 'You are giving' : 'You booked'}
+                        </div>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 500 }}>
+                          {BLOCK_MINUTES}-minute booking
+                        </div>
+                      </div>
+                      <div style={{
+                        padding: '4px 10px',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        background: booking.status === 'confirmed' ? colors.accentSoft : colors.bgSecondary,
+                        color: booking.status === 'confirmed' ? colors.accent : colors.textMuted,
+                      }}>
+                        {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      padding: '12px',
+                      background: colors.bgSecondary,
+                      borderRadius: '10px',
+                      marginBottom: '15px',
+                    }}>
+                      <div style={{ fontSize: '1.5rem' }}>📅</div>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>
+                          {scheduledDate.toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
+                        </div>
+                        <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                          {scheduledDate.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}
+                          {userProfile && ` (${getTimezoneAbbr(userProfile.timezone)})`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {booking.status === 'confirmed' && booking.video_room_url && (
+                      <button
+                        onClick={() => joinable && joinSession(booking)}
+                        disabled={!joinable}
+                        style={{
+                          width: '100%',
+                          padding: '14px',
+                          borderRadius: '10px',
+                          border: 'none',
+                          fontSize: '1rem',
+                          fontWeight: 500,
+                          cursor: joinable ? 'pointer' : 'not-allowed',
+                          background: joinable ? colors.success : colors.bgSecondary,
+                          color: joinable ? '#fff' : colors.textMuted,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '10px',
+                        }}
+                      >
+                        {joinable ? (
+                          <>
+                            <span>🎥</span>
+                            Join Session
+                          </>
+                        ) : isPast ? (
+                          'Session ended'
+                        ) : (
+                          `Opens at ${scheduledDate.toLocaleTimeString('en-US', {
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true,
+                          })}`
+                        )}
+                      </button>
+                    )}
+
+                    {booking.status === 'pending' && !isPast && (
+                      <>
+                      <button
+                          onClick={async () => {
+                            const isGiver = user && user.id === booking.giver_id
+                            const message = isGiver
+                              ? 'Cancel this booking? The guest will receive a full refund. You will not be paid.'
+                              : 'Cancel this booking? Your payment will still go to the host. No refund.'
+
+                            if (confirm(message)) {
+                              const { error } = await supabase
+                                .from('bookings')
+                                .update({
+                                  status: 'cancelled',
+                                  cancelled_by: isGiver ? 'giver' : 'seeker',
+                                  cancelled_at: new Date().toISOString(),
+                                  refund_to_seeker: isGiver ? true : false
+                                })
+                                .eq('id', booking.id)
+
+                              if (!error) {
+                                await sendNotification('cancellation', booking.id)
+                                await fetchUserBookings()
+
+                                if (isGiver) {
+                                  alert('Booking cancelled. The guest will be refunded.')
+                                } else {
+                                  alert('Booking cancelled. Your payment has been forfeited to the host.')
+                                }
+                              } else {
+                                console.error('Cancellation error:', error)
+                                alert('Failed to cancel booking. Please try again.')
+                              }
+                            }
+                          }}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: '10px',
+                          border: `1px solid rgba(220,38,38,0.3)`,
+                          background: 'rgba(220,38,38,0.1)',
+                          color: '#f87171',
+                          cursor: 'pointer',
+                          marginTop: '10px',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        Cancel Session
+                      </button>
+                      </>
+                    )}
+                  </div>
+                )
+              })}
+                  </div>
+                ) : null
+              })()}
 
               <button
                 style={{ ...btnSecondaryStyle, marginTop: '20px' }}
-                onClick={() => setScreen(myGiverProfile ? 'editGiverProfile' : 'browse')}
+                onClick={() => setScreen('browse')}
               >
-                {myGiverProfile ? 'Manage Availability' : 'Book More Time'}
+                Book More Time
               </button>
             </div>
           )}
