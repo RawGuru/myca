@@ -3,11 +3,33 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = 'https://ksramckuggspsqymcjpo.supabase.co'
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTMwODgsImV4cCI6MjA4MTgyOTA4OH0.CszijxFZU09QKH2aJbv6TjniWUJ1muJDnHXSe_u8DJc'
 
+// Custom fetch wrapper to log 403 errors
+const originalFetch = window.fetch
+const interceptedFetch: typeof fetch = async (input, init) => {
+  const response = await originalFetch(input, init)
+
+  if (response.status === 403) {
+    const url = typeof input === 'string' ? input : (input instanceof Request ? input.url : String(input))
+    const method = init?.method || 'GET'
+    console.error('🚨 403 FORBIDDEN - GLOBAL INTERCEPTOR', {
+      method,
+      url,
+      status: response.status,
+      statusText: response.statusText
+    })
+  }
+
+  return response
+}
+
 export const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
+  },
+  global: {
+    fetch: interceptedFetch
   }
 })
 

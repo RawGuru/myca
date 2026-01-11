@@ -140,6 +140,7 @@ interface Giver {
   bio?: string | null
   video_url?: string | null
   available?: boolean
+  is_giver?: boolean
   stripe_account_id?: string | null
   stripe_onboarding_complete?: boolean
   timezone?: string
@@ -1889,12 +1890,43 @@ function App() {
 
     try {
       // Fetch public profile data
+      console.log('🔍 CALLSITE: fetchMyGiverProfile/public profiles_public - fetching giver profile')
       const { data: publicData, error: publicError } = await supabase
         .from('profiles_public')
         .select('*')
         .eq('id', user.id)
         .eq('is_giver', true)
         .single()
+
+      // Explicit error logging for profiles_public fetch
+      if (publicError && publicError.code !== 'PGRST116') {
+        console.error('🚨 ERROR: fetchMyGiverProfile/public profiles_public', {
+          callsite: 'fetchMyGiverProfile/public profiles_public',
+          table: 'profiles_public',
+          selectFields: '*',
+          filter: `id.eq.${user.id}, is_giver.eq.true`,
+          errorCode: publicError.code,
+          errorMessage: publicError.message,
+          errorDetails: publicError.details,
+          errorHint: publicError.hint,
+          fullError: publicError
+        })
+      }
+
+      // 403 Error Detection for profiles_public
+      if (publicError && (publicError.code === '403' || publicError.code === 'PGRST301' || (publicError as any).status === 403)) {
+        console.error('🚨 403 FORBIDDEN ERROR DETECTED', {
+          callsite: 'fetchMyGiverProfile/public profiles_public',
+          table: 'profiles_public',
+          selectFields: '*',
+          filter: `id.eq.${user.id}, is_giver.eq.true`,
+          errorCode: publicError.code,
+          errorMessage: publicError.message,
+          errorDetails: publicError.details,
+          errorHint: publicError.hint,
+          fullError: publicError
+        })
+      }
 
       if (publicError && publicError.code !== 'PGRST116') throw publicError
 
@@ -1905,11 +1937,42 @@ function App() {
 
       // Fetch private fields (stripe_account_id, stripe_onboarding_complete) from profiles table
       // This requires profiles_select_own policy to be in place
-      const { data: privateData } = await supabase
+      console.log('🔍 CALLSITE: fetchMyGiverProfile/private profiles - fetching stripe fields')
+      const { data: privateData, error: privateError } = await supabase
         .from('profiles')
         .select('stripe_account_id, stripe_onboarding_complete')
         .eq('id', user.id)
         .single()
+
+      // Explicit error logging for profiles private fetch
+      if (privateError) {
+        console.error('🚨 ERROR: fetchMyGiverProfile/private profiles', {
+          callsite: 'fetchMyGiverProfile/private profiles',
+          table: 'profiles',
+          selectFields: 'stripe_account_id, stripe_onboarding_complete',
+          filter: `id.eq.${user.id}`,
+          errorCode: privateError.code,
+          errorMessage: privateError.message,
+          errorDetails: privateError.details,
+          errorHint: privateError.hint,
+          fullError: privateError
+        })
+      }
+
+      // 403 Error Detection for profiles
+      if (privateError && (privateError.code === '403' || privateError.code === 'PGRST301' || (privateError as any).status === 403)) {
+        console.error('🚨 403 FORBIDDEN ERROR DETECTED', {
+          callsite: 'fetchMyGiverProfile/private profiles',
+          table: 'profiles',
+          selectFields: 'stripe_account_id, stripe_onboarding_complete',
+          filter: `id.eq.${user.id}`,
+          errorCode: privateError.code,
+          errorMessage: privateError.message,
+          errorDetails: privateError.details,
+          errorHint: privateError.hint,
+          fullError: privateError
+        })
+      }
 
       // Merge public and private data
       setMyGiverProfile({ ...publicData, ...privateData })
@@ -1981,6 +2044,7 @@ function App() {
 
     try {
       // Call edge function to create Stripe Connect account
+      console.log('🔍 CALLSITE: create-connect-account - invoking edge function')
       const { data, error } = await supabase.functions.invoke('create-connect-account', {
         body: {
           email: user.email,
@@ -1990,7 +2054,17 @@ function App() {
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('🚨 ERROR: create-connect-account', {
+          callsite: 'create-connect-account',
+          function: 'create-connect-account',
+          errorCode: (error as any).code,
+          errorMessage: (error as any).message || error,
+          errorDetails: (error as any).details,
+          fullError: error
+        })
+        throw error
+      }
 
       if (!data?.onboarding_url) {
         throw new Error('No onboarding URL received')
@@ -2009,13 +2083,24 @@ function App() {
     if (!user) return
 
     try {
+      console.log('🔍 CALLSITE: check-connect-status - invoking edge function')
       const { data, error } = await supabase.functions.invoke('check-connect-status', {
         body: {
           user_id: user.id,
         },
       })
 
-      if (error) throw error
+      if (error) {
+        console.error('🚨 ERROR: check-connect-status', {
+          callsite: 'check-connect-status',
+          function: 'check-connect-status',
+          errorCode: (error as any).code,
+          errorMessage: (error as any).message || error,
+          errorDetails: (error as any).details,
+          fullError: error
+        })
+        throw error
+      }
 
       if (data?.onboarding_complete) {
         // Refresh profile to get updated status
@@ -2079,6 +2164,20 @@ function App() {
         error: error ? { code: error.code, message: error.message } : null,
         dataLength: data?.length || 0
       })
+
+      // 403 Error Detection
+      if (error && (error.code === '403' || error.code === 'PGRST301' || (error as any).status === 403)) {
+        console.error('🚨 403 FORBIDDEN ERROR DETECTED', {
+          table: 'bookings',
+          selectFields: '*',
+          filter: `or(seeker_id.eq.${user.id},giver_id.eq.${user.id})`,
+          errorCode: error.code,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          fullError: error
+        })
+      }
 
       if (error) {
         setBookingsFetchError(error)
@@ -6967,9 +7066,10 @@ function App() {
             </div>
           </div>
 
-          {/* Giver payout status card - Only show if setup required */}
+          {/* Giver payout status card - Only show if user is a giver and setup required */}
           {(() => {
             if (!myGiverProfile) return null
+            if (myGiverProfile.is_giver !== true) return null
             const needsPayoutSetup = !myGiverProfile.stripe_account_id
             if (!needsPayoutSetup) return null
 
@@ -7051,7 +7151,7 @@ function App() {
                     </h3>
                     {seekerBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
-                const isGiver = booking.giver_id === user?.id
+                const isSeeker = booking.seeker_id === user?.id
                 const joinable = isSessionJoinable(booking)
                 const isPast = scheduledDate.getTime() + 30 * 60 * 1000 < Date.now()
 
@@ -7068,12 +7168,12 @@ function App() {
                       <div>
                         <div style={{
                           fontSize: '0.75rem',
-                          color: isGiver ? colors.success : colors.accent,
+                          color: isSeeker ? colors.accent : colors.success,
                           marginBottom: '5px',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
                         }}>
-                          {isGiver ? 'You are giving' : 'You booked'}
+                          {isSeeker ? 'You booked' : 'You are giving'}
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 500 }}>
                           {BLOCK_MINUTES}-minute booking
@@ -7217,7 +7317,7 @@ function App() {
                     )}
 
                     {/* Feedback status for completed sessions (Phase 8) */}
-                    {booking.status === 'completed' && !isGiver && (
+                    {booking.status === 'completed' && isSeeker && (
                       <div style={{
                         marginTop: '15px',
                         padding: '12px',
@@ -7269,7 +7369,7 @@ function App() {
                     </h3>
                     {giverBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
-                const isGiver = booking.giver_id === user?.id
+                const isSeeker = booking.seeker_id === user?.id
                 const joinable = isSessionJoinable(booking)
                 const isPast = scheduledDate.getTime() + 30 * 60 * 1000 < Date.now()
 
@@ -7286,12 +7386,12 @@ function App() {
                       <div>
                         <div style={{
                           fontSize: '0.75rem',
-                          color: isGiver ? colors.success : colors.accent,
+                          color: isSeeker ? colors.accent : colors.success,
                           marginBottom: '5px',
                           textTransform: 'uppercase',
                           letterSpacing: '0.5px',
                         }}>
-                          {isGiver ? 'You are giving' : 'You booked'}
+                          {isSeeker ? 'You booked' : 'You are giving'}
                         </div>
                         <div style={{ fontSize: '1.1rem', fontWeight: 500 }}>
                           {BLOCK_MINUTES}-minute booking
