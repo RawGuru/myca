@@ -1935,8 +1935,18 @@ function App() {
         return
       }
 
+      // Auth timing guard: Only fetch private fields if session exists
+      // This prevents 403 errors when auth is not fully ready
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        console.log('⏸️ fetchMyGiverProfile: No session yet, skipping private profiles fetch. Will retry on auth state change.')
+        setMyGiverProfile(publicData as Giver)
+        return
+      }
+
       // Fetch private fields (stripe_account_id, stripe_onboarding_complete) from profiles table
-      // This requires profiles_select_own policy to be in place
+      // This requires profiles_select_own policy to be in place AND authenticated session
       console.log('🔍 CALLSITE: fetchMyGiverProfile/private profiles - fetching stripe fields')
       const { data: privateData, error: privateError } = await supabase
         .from('profiles')
