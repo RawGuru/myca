@@ -1025,7 +1025,7 @@ function App() {
     try {
       // Check if profile exists
       const { data: existing, error: fetchError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id, is_giver')
         .eq('id', user.id)
         .maybeSingle()
@@ -1851,7 +1851,7 @@ function App() {
     try {
       console.log('📥 Fetching givers from profiles...')
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('*')
         .eq('is_giver', true)
 
@@ -1888,7 +1888,7 @@ function App() {
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('*')
         .eq('id', user.id)
         .eq('is_giver', true)
@@ -1912,7 +1912,7 @@ function App() {
     if (giverId) {
       // Fetch this giver and show their profile
       supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('*')
         .eq('id', giverId)
         .eq('is_giver', true)
@@ -2003,7 +2003,7 @@ function App() {
       if (data?.onboarding_complete) {
         // Refresh profile to get updated status
         const { data: profile } = await supabase
-          .from('profiles')
+          .from('profiles_public')
           .select('*')
           .eq('id', user.id)
           .single()
@@ -2116,7 +2116,7 @@ function App() {
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('*')
         .eq('id', user.id)
         .maybeSingle()
@@ -2392,7 +2392,7 @@ function App() {
   useEffect(() => {
     if (screen === 'welcome' && user) {
       supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('name, is_giver')
         .eq('id', user.id)
         .maybeSingle()
@@ -2773,7 +2773,7 @@ function App() {
     try {
       // Check if user already has a giver profile
       const { data: existing } = await supabase
-        .from('profiles')
+        .from('profiles_public')
         .select('id')
         .eq('id', user.id)
         .eq('is_giver', true)
@@ -3243,7 +3243,7 @@ function App() {
                 // Check if user has completed receiver profile
                 if (user) {
                   supabase
-                    .from('profiles')
+                    .from('profiles_public')
                     .select('name')
                     .eq('id', user.id)
                     .maybeSingle()
@@ -3376,7 +3376,7 @@ function App() {
               if (user) {
                 // Fetch user profile to check if they have a name
                 supabase
-                  .from('profiles')
+                  .from('profiles_public')
                   .select('name')
                   .eq('id', user.id)
                   .maybeSingle()

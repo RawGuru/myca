@@ -19,8 +19,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          blocker_id?: string
-          blocked_id?: string
+          blocker_id: string
+          blocked_id: string
           created_at?: string | null
           reason?: string | null
         }
@@ -59,9 +59,9 @@ export interface Database {
           id?: string
           seeker_id?: string | null
           giver_id?: string | null
-          scheduled_time?: string
-          duration_minutes?: number
-          amount_cents?: number
+          scheduled_time: string
+          duration_minutes: number
+          amount_cents: number
           status?: string | null
           stripe_payment_id?: string | null
           video_room_url?: string | null
@@ -113,8 +113,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id?: string
-          amount_cents?: number
+          user_id: string
+          amount_cents: number
           created_at?: string | null
           used_at?: string | null
           booking_id?: string | null
@@ -148,9 +148,9 @@ export interface Database {
         }
         Insert: {
           id?: string
-          booking_id?: string
+          booking_id: string
           extended_at?: string | null
-          amount_cents?: number
+          amount_cents: number
           stripe_payment_intent_id?: string | null
           requested_by?: string | null
           requested_at?: string | null
@@ -177,24 +177,24 @@ export interface Database {
         Row: {
           id: string
           giver_id: string
-          date: unknown
-          time: unknown
+          date: string
+          time: string
           is_booked: boolean | null
           created_at: string | null
         }
         Insert: {
           id?: string
-          giver_id?: string
-          date?: unknown
-          time?: unknown
+          giver_id: string
+          date: string
+          time: string
           is_booked?: boolean | null
           created_at?: string | null
         }
         Update: {
           id?: string
           giver_id?: string
-          date?: unknown
-          time?: unknown
+          date?: string
+          time?: string
           is_booked?: boolean | null
           created_at?: string | null
         }
@@ -206,17 +206,17 @@ export interface Database {
           total_sessions_completed: number | null
           would_book_again_count: number | null
           matched_mode_count: number | null
-          quality_score: unknown | null
+          quality_score: number | null
           updated_at: string | null
           created_at: string | null
         }
         Insert: {
           id?: string
-          giver_id?: string
+          giver_id: string
           total_sessions_completed?: number | null
           would_book_again_count?: number | null
           matched_mode_count?: number | null
-          quality_score?: unknown | null
+          quality_score?: number | null
           updated_at?: string | null
           created_at?: string | null
         }
@@ -226,7 +226,7 @@ export interface Database {
           total_sessions_completed?: number | null
           would_book_again_count?: number | null
           matched_mode_count?: number | null
-          quality_score?: unknown | null
+          quality_score?: number | null
           updated_at?: string | null
           created_at?: string | null
         }
@@ -240,8 +240,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          listing_id?: string
-          category?: string
+          listing_id: string
+          category: string
           created_at?: string | null
         }
         Update: {
@@ -270,10 +270,10 @@ export interface Database {
         }
         Insert: {
           id?: string
-          user_id?: string
+          user_id: string
           topic?: string | null
-          mode?: string
-          price_cents?: number
+          mode: string
+          price_cents: number
           description?: string | null
           specific_topics?: string | null
           is_active?: boolean | null
@@ -325,8 +325,8 @@ export interface Database {
           age_verified_at: string | null
         }
         Insert: {
-          id?: string
-          email?: string
+          id: string
+          email: string
           name?: string | null
           bio?: string | null
           tagline?: string | null
@@ -379,7 +379,7 @@ export interface Database {
         Insert: {
           id?: string
           giver_id?: string | null
-          quality_name?: string
+          quality_name: string
           count?: number | null
         }
         Update: {
@@ -428,7 +428,7 @@ export interface Database {
         Insert: {
           id?: string
           seeker_id?: string | null
-          giver_id?: string
+          giver_id: string
           created_at?: string | null
         }
         Update: {
@@ -449,8 +449,8 @@ export interface Database {
         }
         Insert: {
           id?: string
-          booking_id?: string
-          event_type?: string
+          booking_id: string
+          event_type: string
           user_id?: string | null
           metadata?: Json | null
           created_at?: string | null
@@ -491,7 +491,7 @@ export interface Database {
         }
         Insert: {
           id?: string
-          booking_id?: string
+          booking_id: string
           current_phase?: string
           validation_attempts?: number | null
           emergence_verb?: string | null
@@ -546,7 +546,7 @@ export interface Database {
           updated_at: string | null
         }
         Insert: {
-          id?: string
+          id: string
           timezone?: string | null
           created_at?: string | null
           updated_at?: string | null
