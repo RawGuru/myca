@@ -35,3 +35,4 @@ myca-main/
 .claude/settings.local.json
 supabase/.temp/
 contract-outputs/
+supabase/queries/outputs/
