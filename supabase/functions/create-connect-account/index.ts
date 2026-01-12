@@ -124,8 +124,8 @@ serve(async (req) => {
     // Create Account Link for onboarding
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: refresh_url || `${req.headers.get('origin')}/giver-onboarding`,
-      return_url: return_url || `${req.headers.get('origin')}/giver-dashboard`,
+      refresh_url: refresh_url || 'https://myca-six.vercel.app/#/bookings',
+      return_url: return_url || 'https://myca-six.vercel.app/#/payout-setup-complete',
       type: 'account_onboarding',
     })
 

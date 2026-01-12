@@ -2048,21 +2048,23 @@ function App() {
     }
   }, [])
 
-  // Check if returning from Stripe Connect onboarding
+  // Check if returning from Stripe Connect onboarding (hash routing)
   useEffect(() => {
     const checkOnboardingReturn = async () => {
-      const path = window.location.pathname
-      if (path.includes('payout-setup-complete') && user) {
+      const hash = window.location.hash
+      if (hash.includes('payout-setup-complete') && user) {
+        console.log('🔍 Detected return from Stripe onboarding, checking Connect status...')
         // Check Connect status
         const complete = await checkStripeConnectStatus()
         if (complete) {
+          console.log('✅ Onboarding complete, redirecting to payoutSetupComplete screen')
           setScreen('payoutSetupComplete')
         } else {
-          // Onboarding not complete, redirect back to setup
+          console.log('⚠️ Onboarding not complete, redirecting back to payoutSetup')
           setScreen('payoutSetup')
         }
-        // Clean up URL
-        window.history.replaceState({}, '', '/')
+        // Clean up URL hash
+        window.location.hash = '#/bookings'
       }
     }
     checkOnboardingReturn()
@@ -2082,8 +2084,8 @@ function App() {
         body: {
           email: user.email,
           user_id: user.id,
-          refresh_url: `${window.location.origin}/giver-onboarding`,
-          return_url: `${window.location.origin}/payout-setup-complete`,
+          refresh_url: `${window.location.origin}/#/bookings`,
+          return_url: `${window.location.origin}/#/payout-setup-complete`,
         },
       })
 
