@@ -3,12 +3,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2023-10-16',
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || ''
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -91,19 +87,32 @@ serve(async (req) => {
 
     // Create new Connect account if doesn't exist
     if (!accountId) {
-      const account = await stripe.accounts.create({
-        type: 'express',
-        email: email,
-        capabilities: {
-          card_payments: { requested: true },
-          transfers: { requested: true },
-        },
-        business_type: 'individual',
-        metadata: {
-          user_id: user_id,
-        },
+      // Create account using Stripe REST API
+      const accountParams = new URLSearchParams({
+        'type': 'express',
+        'email': email,
+        'capabilities[card_payments][requested]': 'true',
+        'capabilities[transfers][requested]': 'true',
+        'business_type': 'individual',
+        'metadata[user_id]': user_id
       })
 
+      const accountResponse = await fetch('https://api.stripe.com/v1/accounts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: accountParams.toString()
+      })
+
+      if (!accountResponse.ok) {
+        const errorText = await accountResponse.text()
+        console.error('Stripe account creation error:', errorText)
+        throw new Error(`Failed to create Stripe account: ${accountResponse.status}`)
+      }
+
+      const account = await accountResponse.json()
       accountId = account.id
 
       // Save account ID to database immediately (service role)
@@ -121,13 +130,30 @@ serve(async (req) => {
       }
     }
 
-    // Create Account Link for onboarding
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: refresh_url || 'https://myca-six.vercel.app/#/bookings',
-      return_url: return_url || 'https://myca-six.vercel.app/#/payout-setup-complete',
-      type: 'account_onboarding',
+    // Create Account Link for onboarding using Stripe REST API
+    const linkParams = new URLSearchParams({
+      'account': accountId,
+      'refresh_url': refresh_url || 'https://myca-six.vercel.app/#/bookings',
+      'return_url': return_url || 'https://myca-six.vercel.app/#/payout-setup-complete',
+      'type': 'account_onboarding'
     })
+
+    const linkResponse = await fetch('https://api.stripe.com/v1/account_links', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: linkParams.toString()
+    })
+
+    if (!linkResponse.ok) {
+      const errorText = await linkResponse.text()
+      console.error('Stripe account link creation error:', errorText)
+      throw new Error(`Failed to create account link: ${linkResponse.status}`)
+    }
+
+    const accountLink = await linkResponse.json()
 
     return new Response(
       JSON.stringify({

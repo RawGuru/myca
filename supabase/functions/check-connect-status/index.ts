@@ -3,12 +3,8 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import Stripe from 'https://esm.sh/stripe@14.11.0?target=deno'
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
-  apiVersion: '2023-10-16',
-  httpClient: Stripe.createFetchHttpClient(),
-})
+const STRIPE_SECRET_KEY = Deno.env.get('STRIPE_SECRET_KEY') || ''
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -115,10 +111,26 @@ serve(async (req) => {
       )
     }
 
-    // Retrieve account from Stripe
-    const account = await stripe.accounts.retrieve(profile.stripe_account_id)
+    // Retrieve account from Stripe using REST API
+    const stripeResponse = await fetch(`https://api.stripe.com/v1/accounts/${profile.stripe_account_id}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${STRIPE_SECRET_KEY}`
+      }
+    })
 
-    const onboardingComplete = account.details_submitted && account.charges_enabled
+    if (!stripeResponse.ok) {
+      const errorText = await stripeResponse.text()
+      console.error('[CHECK-CONNECT-STATUS] Stripe API error', {
+        status: stripeResponse.status,
+        error: errorText
+      })
+      throw new Error(`Stripe API error: ${stripeResponse.status}`)
+    }
+
+    const account = await stripeResponse.json()
+
+    const onboardingComplete = account.details_submitted && account.charges_enabled && account.payouts_enabled
 
     console.log('[CHECK-CONNECT-STATUS] Retrieved account from Stripe', {
       user_id,
