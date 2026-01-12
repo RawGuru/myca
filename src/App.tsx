@@ -937,6 +937,7 @@ function App() {
   const dailyCallRef = useRef<DailyCall | null>(null)
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
+  const stripeReturnHandledRef = useRef(false)
 
   // Giver profile form state
   const [giverName, setGiverName] = useState('')
@@ -2048,9 +2049,26 @@ function App() {
     }
   }, [])
 
+  // Helper: Wait for session user (doesn't depend on React state)
+  const waitForSessionUser = async () => {
+    const maxAttempts = 60 // 60 * 500ms = 30 seconds
+    for (let i = 0; i < maxAttempts; i++) {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        return session.user
+      }
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
+    console.error('❌ [STRIPE RETURN] Session user not loaded after 30 seconds')
+    return null
+  }
+
   // Check if returning from Stripe Connect onboarding (hash routing)
   useEffect(() => {
     const checkOnboardingReturn = async () => {
+      // Guard: only run once per page load
+      if (stripeReturnHandledRef.current) return
+
       const hash = window.location.hash
       const currentUrl = window.location.href
 
@@ -2062,59 +2080,37 @@ function App() {
       })
 
       if (hash.includes('payout-setup-complete')) {
-        if (!user) {
-          console.log('⏳ [STRIPE RETURN] User not loaded yet, will retry...')
-          // Retry for up to 5 seconds until user exists
-          let retries = 0
-          const maxRetries = 10 // 10 retries * 500ms = 5 seconds
-          const retryInterval = setInterval(async () => {
-            retries++
-            console.log(`🔄 [STRIPE RETURN] Retry ${retries}/${maxRetries}, checking for user...`)
+        stripeReturnHandledRef.current = true
 
-            if (user) {
-              clearInterval(retryInterval)
-              console.log('✅ [STRIPE RETURN] User loaded, proceeding with check-connect-status', {
-                userId: (user as any).id,
-                currentUrl
-              })
-              // Check Connect status
-              const complete = await checkStripeConnectStatus()
-              if (complete) {
-                console.log('✅ [STRIPE RETURN] Onboarding complete, redirecting to payoutSetupComplete screen')
-                setScreen('payoutSetupComplete')
-              } else {
-                console.log('⚠️ [STRIPE RETURN] Onboarding not complete, redirecting back to payoutSetup')
-                setScreen('payoutSetup')
-              }
-              // Clean up URL hash
-              window.location.hash = '#/bookings'
-            } else if (retries >= maxRetries) {
-              clearInterval(retryInterval)
-              console.error('❌ [STRIPE RETURN] User not loaded after 5 seconds, giving up')
-              window.location.hash = '#/bookings'
-            }
-          }, 500)
-        } else {
-          console.log('✅ [STRIPE RETURN] User already loaded, calling check-connect-status immediately', {
-            userId: user.id,
-            currentUrl
-          })
-          // Check Connect status
-          const complete = await checkStripeConnectStatus()
-          if (complete) {
-            console.log('✅ [STRIPE RETURN] Onboarding complete, redirecting to payoutSetupComplete screen')
-            setScreen('payoutSetupComplete')
-          } else {
-            console.log('⚠️ [STRIPE RETURN] Onboarding not complete, redirecting back to payoutSetup')
-            setScreen('payoutSetup')
-          }
-          // Clean up URL hash
+        console.log('⏳ [STRIPE RETURN] Waiting for session user...')
+        const sessionUser = await waitForSessionUser()
+
+        if (!sessionUser) {
+          // Timed out, stop here
           window.location.hash = '#/bookings'
+          return
         }
+
+        console.log('✅ [STRIPE RETURN] Session user loaded, proceeding with check-connect-status', {
+          userId: sessionUser.id,
+          currentUrl
+        })
+
+        // Check Connect status
+        const complete = await checkStripeConnectStatus(sessionUser.id)
+        if (complete) {
+          console.log('✅ [STRIPE RETURN] Onboarding complete, redirecting to payoutSetupComplete screen')
+          setScreen('payoutSetupComplete')
+        } else {
+          console.log('⚠️ [STRIPE RETURN] Onboarding not complete, redirecting back to payoutSetup')
+          setScreen('payoutSetup')
+        }
+        // Clean up URL hash
+        window.location.hash = '#/bookings'
       }
     }
     checkOnboardingReturn()
-  }, [user])
+  }, [])
 
   // Start Stripe Connect onboarding
   const startStripeConnect = async () => {
@@ -2166,14 +2162,15 @@ function App() {
   }
 
   // Check Stripe Connect status (called when returning from onboarding)
-  const checkStripeConnectStatus = async () => {
-    if (!user) return
+  const checkStripeConnectStatus = async (userId?: string) => {
+    const effectiveUserId = userId || user?.id
+    if (!effectiveUserId) return
 
     try {
       console.log('🔍 CALLSITE: check-connect-status - invoking edge function')
       const { data, error } = await supabase.functions.invoke('check-connect-status', {
         body: {
-          user_id: user.id,
+          user_id: effectiveUserId,
         },
       })
 
