@@ -53,6 +53,30 @@ serve(async (req) => {
           }
 
           console.log(`Booking ${booking_id} confirmed`)
+
+          // Send confirmation emails
+          try {
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-booking-emails`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                booking_id,
+                event: 'confirmed',
+              }),
+            })
+
+            if (!emailResponse.ok) {
+              console.error('Failed to send booking emails:', await emailResponse.text())
+            } else {
+              console.log('Booking confirmation emails sent')
+            }
+          } catch (emailError) {
+            console.error('Error sending booking emails:', emailError)
+            // Don't throw - emails are nice-to-have, not critical
+          }
         } else if (type === 'extension') {
           // Update extension record
           const { error } = await supabase
@@ -87,6 +111,27 @@ serve(async (req) => {
             .from('bookings')
             .update({ status: 'cancelled', cancelled_by: 'system' })
             .eq('id', booking_id)
+
+          // Send cancellation emails
+          try {
+            const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-booking-emails`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${supabaseServiceKey}`,
+              },
+              body: JSON.stringify({
+                booking_id,
+                event: 'cancelled',
+              }),
+            })
+
+            if (!emailResponse.ok) {
+              console.error('Failed to send cancellation emails:', await emailResponse.text())
+            }
+          } catch (emailError) {
+            console.error('Error sending cancellation emails:', emailError)
+          }
         }
         break
       }

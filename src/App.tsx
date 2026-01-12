@@ -1470,6 +1470,21 @@ function App() {
       }
 
       setCurrentBooking(data)
+
+      // Send booking creation emails
+      try {
+        await supabase.functions.invoke('send-booking-emails', {
+          body: {
+            booking_id: data.id,
+            event: initialStatus === 'pending_approval' ? 'pending_approval' : 'created',
+          },
+        })
+        console.log('✅ Booking creation emails sent')
+      } catch (emailError) {
+        console.error('⚠️ Failed to send booking emails:', emailError)
+        // Don't block the booking flow if emails fail
+      }
+
       setScreen('payment')
     } catch (err) {
       setBookingError(err instanceof Error ? err.message : 'Failed to create booking')
@@ -7275,10 +7290,22 @@ function App() {
                         padding: '4px 10px',
                         borderRadius: '12px',
                         fontSize: '0.75rem',
-                        background: booking.status === 'confirmed' ? colors.accentSoft : colors.bgSecondary,
-                        color: booking.status === 'confirmed' ? colors.accent : colors.textMuted,
+                        background: booking.status === 'confirmed'
+                          ? colors.accentSoft
+                          : booking.status === 'pending_approval'
+                          ? 'rgba(251,191,36,0.15)'
+                          : colors.bgSecondary,
+                        color: booking.status === 'confirmed'
+                          ? colors.accent
+                          : booking.status === 'pending_approval'
+                          ? '#f59e0b'
+                          : colors.textMuted,
                       }}>
-                        {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
+                        {booking.status === 'confirmed'
+                          ? 'Confirmed'
+                          : booking.status === 'pending_approval'
+                          ? 'Pending Approval'
+                          : booking.status}
                       </div>
                     </div>
 
@@ -7453,7 +7480,15 @@ function App() {
 
               {/* As Giver section */}
               {(() => {
-                const giverBookings = userBookings.filter(b => b.giver_id === user?.id)
+                const giverBookings = userBookings
+                  .filter(b => b.giver_id === user?.id)
+                  .sort((a, b) => {
+                    // Sort pending_approval first
+                    if (a.status === 'pending_approval' && b.status !== 'pending_approval') return -1
+                    if (a.status !== 'pending_approval' && b.status === 'pending_approval') return 1
+                    // Then by scheduled time
+                    return new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime()
+                  })
                 return giverBookings.length > 0 ? (
                   <div>
                     <h3 style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '15px' }}>
@@ -7468,10 +7503,23 @@ function App() {
                 return (
                   <div
                     key={booking.id}
+                    onClick={() => {
+                      // Make card clickable - could navigate to booking details
+                      console.log('Clicked giver booking:', booking.id)
+                    }}
                     style={{
                       ...cardStyle,
-                      cursor: 'default',
+                      cursor: 'pointer',
                       opacity: isPast ? 0.6 : 1,
+                      transition: 'transform 0.2s, box-shadow 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)'
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.boxShadow = 'none'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
@@ -7493,10 +7541,22 @@ function App() {
                         padding: '4px 10px',
                         borderRadius: '12px',
                         fontSize: '0.75rem',
-                        background: booking.status === 'confirmed' ? colors.accentSoft : colors.bgSecondary,
-                        color: booking.status === 'confirmed' ? colors.accent : colors.textMuted,
+                        background: booking.status === 'confirmed'
+                          ? colors.accentSoft
+                          : booking.status === 'pending_approval'
+                          ? 'rgba(251,191,36,0.15)'
+                          : colors.bgSecondary,
+                        color: booking.status === 'confirmed'
+                          ? colors.accent
+                          : booking.status === 'pending_approval'
+                          ? '#f59e0b'
+                          : colors.textMuted,
                       }}>
-                        {booking.status === 'confirmed' ? 'Confirmed' : booking.status}
+                        {booking.status === 'confirmed'
+                          ? 'Confirmed'
+                          : booking.status === 'pending_approval'
+                          ? 'Pending Approval'
+                          : booking.status}
                       </div>
                     </div>
 
@@ -7566,10 +7626,110 @@ function App() {
                       </button>
                     )}
 
+                    {booking.status === 'pending_approval' && !isPast && (
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (confirm('Approve this booking?')) {
+                              const { error } = await supabase
+                                .from('bookings')
+                                .update({
+                                  status: 'confirmed',
+                                  approved_at: new Date().toISOString(),
+                                })
+                                .eq('id', booking.id)
+
+                              if (!error) {
+                                // Send confirmation emails
+                                try {
+                                  await supabase.functions.invoke('send-booking-emails', {
+                                    body: {
+                                      booking_id: booking.id,
+                                      event: 'confirmed',
+                                    },
+                                  })
+                                } catch (emailError) {
+                                  console.error('Failed to send confirmation emails:', emailError)
+                                }
+                                await fetchUserBookings()
+                                alert('Booking approved!')
+                              } else {
+                                console.error('Approval error:', error)
+                                alert('Failed to approve booking. Please try again.')
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: '10px',
+                            border: `1px solid rgba(34,197,94,0.3)`,
+                            background: 'rgba(34,197,94,0.1)',
+                            color: '#22c55e',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ✓ Approve
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation()
+                            if (confirm('Decline this booking? The guest will be refunded.')) {
+                              const { error } = await supabase
+                                .from('bookings')
+                                .update({
+                                  status: 'cancelled',
+                                  cancelled_by: 'giver',
+                                  cancelled_at: new Date().toISOString(),
+                                  refund_to_seeker: true
+                                })
+                                .eq('id', booking.id)
+
+                              if (!error) {
+                                // Send cancellation emails
+                                try {
+                                  await supabase.functions.invoke('send-booking-emails', {
+                                    body: {
+                                      booking_id: booking.id,
+                                      event: 'cancelled',
+                                    },
+                                  })
+                                } catch (emailError) {
+                                  console.error('Failed to send cancellation emails:', emailError)
+                                }
+                                await fetchUserBookings()
+                                alert('Booking declined. The guest will be refunded.')
+                              } else {
+                                console.error('Decline error:', error)
+                                alert('Failed to decline booking. Please try again.')
+                              }
+                            }
+                          }}
+                          style={{
+                            flex: 1,
+                            padding: '12px',
+                            borderRadius: '10px',
+                            border: `1px solid rgba(220,38,38,0.3)`,
+                            background: 'rgba(220,38,38,0.1)',
+                            color: '#f87171',
+                            cursor: 'pointer',
+                            fontSize: '0.9rem',
+                            fontWeight: 500,
+                          }}
+                        >
+                          ✕ Decline
+                        </button>
+                      </div>
+                    )}
+
                     {booking.status === 'pending' && !isPast && (
                       <>
                       <button
-                          onClick={async () => {
+                          onClick={async (e) => {
+                            e.stopPropagation()
                             const isGiver = user && user.id === booking.giver_id
                             const message = isGiver
                               ? 'Cancel this booking? The guest will receive a full refund. You will not be paid.'
