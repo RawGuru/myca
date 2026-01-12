@@ -66,8 +66,18 @@ serve(async (req) => {
 
     const { user_id }: StatusCheckRequest = await req.json()
 
+    console.log('[CHECK-CONNECT-STATUS] Function invoked', {
+      user_id,
+      authenticated_user_id: user.id,
+      timestamp: new Date().toISOString()
+    })
+
     // Validate user_id matches authenticated user
     if (user_id !== user.id) {
+      console.error('[CHECK-CONNECT-STATUS] User ID mismatch', {
+        requested_user_id: user_id,
+        authenticated_user_id: user.id
+      })
       return new Response(
         JSON.stringify({ error: 'User ID mismatch' }),
         {
@@ -84,7 +94,14 @@ serve(async (req) => {
       .eq('id', user_id)
       .single()
 
+    console.log('[CHECK-CONNECT-STATUS] Retrieved profile from DB', {
+      user_id,
+      stripe_account_id: profile?.stripe_account_id || 'NULL',
+      has_account_id: !!profile?.stripe_account_id
+    })
+
     if (!profile?.stripe_account_id) {
+      console.log('[CHECK-CONNECT-STATUS] No stripe_account_id found, returning incomplete')
       return new Response(
         JSON.stringify({
           onboarding_complete: false,
@@ -103,6 +120,15 @@ serve(async (req) => {
 
     const onboardingComplete = account.details_submitted && account.charges_enabled
 
+    console.log('[CHECK-CONNECT-STATUS] Retrieved account from Stripe', {
+      user_id,
+      stripe_account_id: profile.stripe_account_id,
+      details_submitted: account.details_submitted,
+      charges_enabled: account.charges_enabled,
+      payouts_enabled: account.payouts_enabled,
+      onboarding_complete: onboardingComplete
+    })
+
     // Update database with onboarding status (service role)
     const { error: updateError } = await supabaseAdmin
       .from('profiles')
@@ -113,7 +139,16 @@ serve(async (req) => {
       .eq('id', user_id)
 
     if (updateError) {
-      console.error('Failed to update onboarding status:', updateError)
+      console.error('[CHECK-CONNECT-STATUS] Failed to update onboarding status', {
+        user_id,
+        error: updateError
+      })
+    } else {
+      console.log('[CHECK-CONNECT-STATUS] Successfully updated DB', {
+        user_id,
+        stripe_account_id: profile.stripe_account_id,
+        stripe_onboarding_complete: onboardingComplete
+      })
     }
 
     return new Response(

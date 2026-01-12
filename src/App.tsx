@@ -2052,19 +2052,65 @@ function App() {
   useEffect(() => {
     const checkOnboardingReturn = async () => {
       const hash = window.location.hash
-      if (hash.includes('payout-setup-complete') && user) {
-        console.log('🔍 Detected return from Stripe onboarding, checking Connect status...')
-        // Check Connect status
-        const complete = await checkStripeConnectStatus()
-        if (complete) {
-          console.log('✅ Onboarding complete, redirecting to payoutSetupComplete screen')
-          setScreen('payoutSetupComplete')
+      const currentUrl = window.location.href
+
+      console.log('🔍 [STRIPE RETURN] Checking for payout-setup-complete hash', {
+        hash,
+        currentUrl,
+        hasUser: !!user,
+        userId: user?.id || 'NO_USER_YET'
+      })
+
+      if (hash.includes('payout-setup-complete')) {
+        if (!user) {
+          console.log('⏳ [STRIPE RETURN] User not loaded yet, will retry...')
+          // Retry for up to 5 seconds until user exists
+          let retries = 0
+          const maxRetries = 10 // 10 retries * 500ms = 5 seconds
+          const retryInterval = setInterval(async () => {
+            retries++
+            console.log(`🔄 [STRIPE RETURN] Retry ${retries}/${maxRetries}, checking for user...`)
+
+            if (user) {
+              clearInterval(retryInterval)
+              console.log('✅ [STRIPE RETURN] User loaded, proceeding with check-connect-status', {
+                userId: user.id,
+                currentUrl
+              })
+              // Check Connect status
+              const complete = await checkStripeConnectStatus()
+              if (complete) {
+                console.log('✅ [STRIPE RETURN] Onboarding complete, redirecting to payoutSetupComplete screen')
+                setScreen('payoutSetupComplete')
+              } else {
+                console.log('⚠️ [STRIPE RETURN] Onboarding not complete, redirecting back to payoutSetup')
+                setScreen('payoutSetup')
+              }
+              // Clean up URL hash
+              window.location.hash = '#/bookings'
+            } else if (retries >= maxRetries) {
+              clearInterval(retryInterval)
+              console.error('❌ [STRIPE RETURN] User not loaded after 5 seconds, giving up')
+              window.location.hash = '#/bookings'
+            }
+          }, 500)
         } else {
-          console.log('⚠️ Onboarding not complete, redirecting back to payoutSetup')
-          setScreen('payoutSetup')
+          console.log('✅ [STRIPE RETURN] User already loaded, calling check-connect-status immediately', {
+            userId: user.id,
+            currentUrl
+          })
+          // Check Connect status
+          const complete = await checkStripeConnectStatus()
+          if (complete) {
+            console.log('✅ [STRIPE RETURN] Onboarding complete, redirecting to payoutSetupComplete screen')
+            setScreen('payoutSetupComplete')
+          } else {
+            console.log('⚠️ [STRIPE RETURN] Onboarding not complete, redirecting back to payoutSetup')
+            setScreen('payoutSetup')
+          }
+          // Clean up URL hash
+          window.location.hash = '#/bookings'
         }
-        // Clean up URL hash
-        window.location.hash = '#/bookings'
       }
     }
     checkOnboardingReturn()
