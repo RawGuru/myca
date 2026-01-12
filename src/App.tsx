@@ -2074,7 +2074,7 @@ function App() {
             if (user) {
               clearInterval(retryInterval)
               console.log('✅ [STRIPE RETURN] User loaded, proceeding with check-connect-status', {
-                userId: user.id,
+                userId: (user as any).id,
                 currentUrl
               })
               // Check Connect status
