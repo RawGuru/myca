@@ -7636,7 +7636,6 @@ function App() {
                                 .from('bookings')
                                 .update({
                                   status: 'confirmed',
-                                  approved_at: new Date().toISOString(),
                                 })
                                 .eq('id', booking.id)
 
