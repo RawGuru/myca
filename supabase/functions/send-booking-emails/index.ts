@@ -138,40 +138,23 @@ serve(async (req) => {
     )
 
     // Send emails to both parties
-    const results = {
-      giverEmail: { success: false, error: '' },
-      seekerEmail: { success: false, error: '' },
-    }
-
     // Send to giver
     const giverResult = await sendEmail(giver.email, giverSubject, giverHtml)
-    results.giverEmail = giverResult
+    console.log('[BOOKING EMAILS] Giver result:', giverResult)
 
     // Send to seeker
     const seekerResult = await sendEmail(seeker.email, seekerSubject, seekerHtml)
-    results.seekerEmail = seekerResult
+    console.log('[BOOKING EMAILS] Seeker result:', seekerResult)
 
-    // Log results
-    if (giverResult.testModeBlocked) {
-      console.log('[BOOKING EMAILS] Giver email blocked by Resend test-mode')
-    }
-    if (seekerResult.testModeBlocked) {
-      console.log('[BOOKING EMAILS] Seeker email blocked by Resend test-mode')
-    }
-    console.log('[BOOKING EMAILS] Results:', results)
-
-    // Return 200 even if one recipient fails, but include errors in response
+    // Return 200 with full results (even if one fails, for observability)
     const allSuccessful = giverResult.success && seekerResult.success
-    const errors = []
-    if (!giverResult.success) errors.push(`Giver: ${giverResult.error}`)
-    if (!seekerResult.success) errors.push(`Seeker: ${seekerResult.error}`)
 
     return new Response(
       JSON.stringify({
         success: allSuccessful,
         partial: !allSuccessful && (giverResult.success || seekerResult.success),
-        results,
-        errors: errors.length > 0 ? errors : undefined,
+        giver: giverResult,
+        seeker: seekerResult,
       }),
       {
         status: 200,
