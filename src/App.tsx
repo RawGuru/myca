@@ -2718,6 +2718,10 @@ function App() {
       return
     }
 
+    // Log room URL for both giver and seeker
+    const userRole = user?.id === booking.giver_id ? 'GIVER' : 'SEEKER'
+    console.log(`[${userRole}] Joining Daily room:`, booking.video_room_url)
+
     // Track when giver joins (for lateness detection)
     if (user && user.id === booking.giver_id) {
       const joinTime = new Date()
@@ -2808,9 +2812,22 @@ function App() {
         }
       })
 
+      const userRole = user?.id === activeSession.giver_id ? 'GIVER' : 'SEEKER'
+      console.log(`[${userRole}] Joining room:`, activeSession.video_room_url)
+
       await call.join({ url: activeSession.video_room_url })
+
+      console.log(`[${userRole}] Successfully joined room`)
     } catch (err) {
-      console.error('Failed to join call:', err)
+      // Make audio level observer and other non-critical errors non-fatal
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      if (errorMessage.includes('audio level observer') || errorMessage.includes('AudioLevelObserver')) {
+        console.warn('[Daily] Audio level observer failed (non-fatal):', errorMessage)
+        // Continue - this is not critical for the session
+      } else {
+        console.error('[Daily] Failed to join call:', err)
+        alert('Failed to join video session. Please refresh and try again.')
+      }
     }
   }, [activeSession, user])
 

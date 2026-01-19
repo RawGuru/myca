@@ -28,6 +28,35 @@ Sentry.init({
 
   // Session replay - 100% of sessions with errors
   replaysOnErrorSampleRate: 1.0,
+
+  // Filter out noise and non-critical errors
+  beforeSend(event, hint) {
+    const error = hint.originalException
+
+    // Ignore 429 rate limit errors (Sentry ingest noise)
+    if (error instanceof Error) {
+      const message = error.message || ''
+      if (message.includes('429') || message.includes('rate limit')) {
+        return null // Don't send to Sentry
+      }
+
+      // Ignore audio level observer errors (non-critical Daily.co warnings)
+      if (message.includes('audio level observer') || message.includes('AudioLevelObserver')) {
+        return null
+      }
+    }
+
+    // Check for HTTP errors in event data
+    if (event.exception?.values) {
+      for (const exception of event.exception.values) {
+        if (exception.value?.includes('429') || exception.value?.includes('rate limit')) {
+          return null
+        }
+      }
+    }
+
+    return event
+  },
 })
 
 createRoot(document.getElementById('root')!).render(
