@@ -4,6 +4,7 @@
 export interface EmailResult {
   success: boolean
   error?: string
+  testModeBlocked?: boolean // true if blocked by Resend test-mode restrictions
 }
 
 export async function sendEmail(
@@ -36,6 +37,17 @@ export async function sendEmail(
 
     if (!response.ok) {
       const errorData = await response.text()
+
+      // Handle 403 as test-mode restriction (not a real failure)
+      if (response.status === 403) {
+        console.log(`[EMAIL] Blocked by Resend test-mode for ${to}`)
+        return {
+          success: true,
+          testModeBlocked: true,
+          error: 'Blocked by Resend test-mode restriction'
+        }
+      }
+
       console.error(`[EMAIL] Resend API error: ${response.status} - ${errorData}`)
       return { success: false, error: `Resend API error: ${response.status}` }
     }

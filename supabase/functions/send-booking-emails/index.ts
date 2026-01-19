@@ -152,6 +152,12 @@ serve(async (req) => {
     results.seekerEmail = seekerResult
 
     // Log results
+    if (giverResult.testModeBlocked) {
+      console.log('[BOOKING EMAILS] Giver email blocked by Resend test-mode')
+    }
+    if (seekerResult.testModeBlocked) {
+      console.log('[BOOKING EMAILS] Seeker email blocked by Resend test-mode')
+    }
     console.log('[BOOKING EMAILS] Results:', results)
 
     // Return 200 even if one recipient fails, but include errors in response
