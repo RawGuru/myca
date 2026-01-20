@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef, Component, ErrorInfo, ReactNode } from 'react'
 import { useAuth } from './hooks/useAuth'
 import { supabase, forbidden403Count } from './lib/supabase'
 import DailyIframe, { DailyCall } from '@daily-co/daily-js'
@@ -7,6 +7,124 @@ import { loadStripe, Stripe } from '@stripe/stripe-js'
 import Auth from './components/Auth'
 import { SessionStateMachine } from './SessionStateMachine'
 import { ReceiverInitiatedExtension } from './components/session/ReceiverInitiatedExtension'
+
+// Error Boundary Component
+interface ErrorBoundaryProps {
+  children: ReactNode
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean
+  error: Error | null
+  errorInfo: ErrorInfo | null
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props)
+    this.state = { hasError: false, error: null, errorInfo: null }
+  }
+
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[ErrorBoundary] Caught error:', error)
+    console.error('[ErrorBoundary] Error info:', errorInfo)
+    this.setState({ errorInfo })
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const colors = {
+        bgPrimary: '#0a0a0a',
+        bgSecondary: '#1a1a1a',
+        textPrimary: '#f5f5f5',
+        textMuted: '#888',
+        border: '#333',
+        accent: '#c9a66b'
+      }
+
+      return (
+        <div style={{
+          minHeight: '100vh',
+          background: colors.bgPrimary,
+          color: colors.textPrimary,
+          padding: '20px'
+        }}>
+          <div style={{
+            maxWidth: '800px',
+            margin: '0 auto',
+            padding: '40px 20px'
+          }}>
+            <h1 style={{
+              fontSize: '1.8rem',
+              fontWeight: 700,
+              marginBottom: '20px',
+              color: '#ef4444'
+            }}>
+              Email Events crashed
+            </h1>
+
+            <div style={{
+              padding: '20px',
+              marginBottom: '20px',
+              background: colors.bgSecondary,
+              border: `1px solid ${colors.border}`,
+              borderRadius: '8px'
+            }}>
+              <div style={{ marginBottom: '10px' }}>
+                <strong>Error:</strong> {this.state.error?.message || 'Unknown error'}
+              </div>
+
+              <details style={{ marginTop: '20px' }}>
+                <summary style={{
+                  cursor: 'pointer',
+                  color: colors.accent,
+                  marginBottom: '10px'
+                }}>
+                  Show component stack
+                </summary>
+                <pre style={{
+                  background: colors.bgPrimary,
+                  padding: '15px',
+                  borderRadius: '4px',
+                  overflow: 'auto',
+                  fontSize: '0.85rem',
+                  lineHeight: 1.4
+                }}>
+                  {this.state.errorInfo?.componentStack}
+                </pre>
+              </details>
+            </div>
+
+            <button
+              onClick={() => {
+                window.location.hash = '#/sessions'
+                window.location.reload()
+              }}
+              style={{
+                padding: '12px 24px',
+                background: colors.accent,
+                border: 'none',
+                borderRadius: '8px',
+                color: colors.bgPrimary,
+                fontSize: '1rem',
+                fontWeight: 600,
+                cursor: 'pointer'
+              }}
+            >
+              Back to Sessions
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
 
 const SUPABASE_URL = 'https://ksramckuggspsqymcjpo.supabase.co'
 
@@ -3763,14 +3881,16 @@ function App() {
     // Fetch email events on mount
     useEffect(() => {
       const fetchEmailEvents = async () => {
-        console.log('[Email Events] Fetching email events, filter:', emailEventsFilter)
+        console.log('[Email Events] start, filter:', emailEventsFilter || '(none)')
         setEmailEventsLoading(true)
         setEmailEventsError(null)
+        setEmailEvents([]) // Reset to empty array
 
         try {
+          // Explicit column selection to catch missing columns early
           let query = supabase
             .from('email_events')
-            .select('*')
+            .select('id,created_at,booking_id,event,recipient,role,provider,provider_message_id,http_status,success,error_message')
             .order('created_at', { ascending: false })
             .limit(50)
 
@@ -3779,21 +3899,44 @@ function App() {
             query = query.eq('booking_id', emailEventsFilter)
           }
 
+          console.log('[Email Events] executing query...')
           const { data, error } = await query
 
           if (error) {
-            console.error('[Email Events] Fetch error:', error)
-            throw error
+            console.error('[Email Events] error:', error)
+            console.error('[Email Events] error details:', JSON.stringify(error, null, 2))
+
+            // Detailed error message for UI
+            const errorDetails = {
+              message: error.message,
+              code: error.code,
+              details: error.details,
+              hint: error.hint
+            }
+            throw new Error(`${error.message}\n\nDetails: ${JSON.stringify(errorDetails, null, 2)}`)
           }
 
-          console.log('[Email Events] Fetched', data?.length || 0, 'events')
-          setEmailEvents(data || [])
+          // Never assume data is an array
+          const events = Array.isArray(data) ? data : []
+          console.log('[Email Events] ok count:', events.length)
+
+          setEmailEvents(events)
         } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch email events'
-          console.error('[Email Events] Error:', errorMsg)
+          console.error('[Email Events] error:', err)
+
+          // Comprehensive error message for UI
+          let errorMsg = 'Failed to fetch email events'
+          if (err instanceof Error) {
+            errorMsg = err.message
+          } else if (typeof err === 'object' && err !== null) {
+            errorMsg = `${errorMsg}\n\n${JSON.stringify(err, null, 2)}`
+          }
+
           setEmailEventsError(errorMsg)
+          setEmailEvents([]) // Ensure empty array on error
         } finally {
           setEmailEventsLoading(false)
+          console.log('[Email Events] fetch complete')
         }
       }
 
@@ -3801,27 +3944,28 @@ function App() {
     }, [emailEventsFilter])
 
     return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative' }}>
-          <button
-            onClick={() => {
-              setScreen('sessions')
-              setEmailEventsFilter('')
-              window.location.hash = '#/sessions'
-            }}
-            style={{ marginBottom: '20px', padding: '10px', cursor: 'pointer' }}
-          >
-            ← Back to Sessions
-          </button>
+      <ErrorBoundary>
+        <div style={containerStyle}>
+          <div style={{ ...screenStyle, position: 'relative' }}>
+            <button
+              onClick={() => {
+                setScreen('sessions')
+                setEmailEventsFilter('')
+                window.location.hash = '#/sessions'
+              }}
+              style={{ marginBottom: '20px', padding: '10px', cursor: 'pointer' }}
+            >
+              ← Back to Sessions
+            </button>
 
-          <h1 style={{
-            fontSize: '1.8rem',
-            fontWeight: 700,
-            marginBottom: '10px',
-            color: colors.textPrimary
-          }}>
-            Email Events
-          </h1>
+            <h1 style={{
+              fontSize: '1.8rem',
+              fontWeight: 700,
+              marginBottom: '10px',
+              color: colors.textPrimary
+            }}>
+              Email Events
+            </h1>
 
           <p style={{
             fontSize: '0.9rem',
@@ -3880,68 +4024,77 @@ function App() {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                {emailEvents.map((event) => (
-              <div
-                key={event.id}
-                style={{
-                  background: colors.bgSecondary,
-                  padding: '15px',
-                  borderRadius: '8px',
-                  borderLeft: `4px solid ${event.success ? '#10b981' : '#ef4444'}`
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <div>
-                    <strong style={{ color: colors.accent }}>
-                      {event.event}
-                    </strong>
-                    {' '}→ {event.role}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                    {new Date(event.created_at).toLocaleString()}
-                  </div>
-                </div>
+                {Array.isArray(emailEvents) && emailEvents.map((event) => {
+                  // Safe property access with fallbacks
+                  const eventId = event?.id || Math.random().toString()
+                  const eventName = event?.event || 'unknown'
+                  const eventRole = event?.role || 'unknown'
+                  const eventSuccess = event?.success === true
+                  const createdAt = event?.created_at || new Date().toISOString()
 
-                <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
-                  <strong>Recipient:</strong> {event.recipient}
-                </div>
+                  return (
+                    <div
+                      key={eventId}
+                      style={{
+                        background: colors.bgSecondary,
+                        padding: '15px',
+                        borderRadius: '8px',
+                        borderLeft: `4px solid ${eventSuccess ? '#10b981' : '#ef4444'}`
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <div>
+                          <strong style={{ color: colors.accent }}>
+                            {eventName}
+                          </strong>
+                          {' '}→ {eventRole}
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                          {new Date(createdAt).toLocaleString()}
+                        </div>
+                      </div>
 
-                <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
-                  <strong>Status:</strong>{' '}
-                  <span style={{ color: event.success ? '#10b981' : '#ef4444' }}>
-                    {event.success ? '✓ Success' : '✗ Failed'}
-                  </span>
-                  {' '}(HTTP {event.http_status})
-                </div>
+                      <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                        <strong>Recipient:</strong> {event?.recipient || 'N/A'}
+                      </div>
 
-                {event.provider_message_id && (
-                  <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
-                    <strong>Message ID:</strong> {event.provider_message_id}
-                  </div>
-                )}
+                      <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                        <strong>Status:</strong>{' '}
+                        <span style={{ color: eventSuccess ? '#10b981' : '#ef4444' }}>
+                          {eventSuccess ? '✓ Success' : '✗ Failed'}
+                        </span>
+                        {' '}(HTTP {event?.http_status || 'N/A'})
+                      </div>
 
-                {event.error_message && (
-                  <div style={{
-                    fontSize: '0.85rem',
-                    marginTop: '10px',
-                    padding: '10px',
-                    background: colors.bgPrimary,
-                    borderRadius: '4px',
-                    color: '#ef4444'
-                  }}>
-                    <strong>Error:</strong> {event.error_message}
-                  </div>
-                )}
+                      {event?.provider_message_id && (
+                        <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                          <strong>Message ID:</strong> {event.provider_message_id}
+                        </div>
+                      )}
 
-                <div style={{
-                  fontSize: '0.75rem',
-                  marginTop: '10px',
-                  color: colors.textMuted
-                }}>
-                  Booking: {event.booking_id}
-                </div>
-              </div>
-                ))}
+                      {event?.error_message && (
+                        <div style={{
+                          fontSize: '0.85rem',
+                          marginTop: '10px',
+                          padding: '10px',
+                          background: colors.bgPrimary,
+                          borderRadius: '4px',
+                          color: '#ef4444'
+                        }}>
+                          <strong>Error:</strong> {event.error_message}
+                        </div>
+                      )}
+
+                      <div style={{
+                        fontSize: '0.75rem',
+                        marginTop: '10px',
+                        color: colors.textMuted
+                      }}>
+                        Booking: {event?.booking_id || 'N/A'}
+                      </div>
+                    </div>
+                  )
+                })}
 
                 {emailEvents.length === 0 && (
                   <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
@@ -3951,8 +4104,9 @@ function App() {
               </div>
             </>
           )}
+          </div>
         </div>
-      </div>
+      </ErrorBoundary>
     )
   }
 
