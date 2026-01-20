@@ -142,9 +142,53 @@ serve(async (req) => {
     const giverResult = await sendEmail(giver.email, giverSubject, giverHtml)
     console.log('[BOOKING EMAILS] Giver result:', giverResult)
 
+    // Audit trail: record giver email attempt
+    try {
+      await supabaseClient.from('email_events').insert({
+        booking_id: booking.id,
+        event,
+        recipient: giverResult.recipient,
+        role: 'giver',
+        provider: 'resend',
+        provider_message_id: giverResult.providerMessageId,
+        http_status: giverResult.httpStatus,
+        success: giverResult.success,
+        error_message: giverResult.errorMessage,
+        payload: {
+          subject: giverSubject,
+          result: giverResult
+        }
+      })
+    } catch (auditError) {
+      console.error('[BOOKING EMAILS] Failed to record giver email audit:', auditError)
+      // Don't throw - audit failure should not block email flow
+    }
+
     // Send to seeker
     const seekerResult = await sendEmail(seeker.email, seekerSubject, seekerHtml)
     console.log('[BOOKING EMAILS] Seeker result:', seekerResult)
+
+    // Audit trail: record seeker email attempt
+    try {
+      await supabaseClient.from('email_events').insert({
+        booking_id: booking.id,
+        event,
+        recipient: seekerResult.recipient,
+        role: 'seeker',
+        provider: 'resend',
+        provider_message_id: seekerResult.providerMessageId,
+        http_status: seekerResult.httpStatus,
+        success: seekerResult.success,
+        error_message: seekerResult.errorMessage,
+        payload: {
+          subject: seekerSubject,
+          result: seekerResult
+        }
+      })
+    } catch (auditError) {
+      console.error('[BOOKING EMAILS] Failed to record seeker email audit:', auditError)
+      // Don't throw - audit failure should not block email flow
+    }
 
     // Return 200 with full results (even if one fails, for observability)
     const allSuccessful = giverResult.success && seekerResult.success
@@ -153,8 +197,20 @@ serve(async (req) => {
       JSON.stringify({
         success: allSuccessful,
         partial: !allSuccessful && (giverResult.success || seekerResult.success),
-        giver: giverResult,
-        seeker: seekerResult,
+        giver: {
+          success: giverResult.success,
+          httpStatus: giverResult.httpStatus,
+          providerMessageId: giverResult.providerMessageId,
+          errorMessage: giverResult.errorMessage,
+          recipient: giverResult.recipient
+        },
+        seeker: {
+          success: seekerResult.success,
+          httpStatus: seekerResult.httpStatus,
+          providerMessageId: seekerResult.providerMessageId,
+          errorMessage: seekerResult.errorMessage,
+          recipient: seekerResult.recipient
+        },
       }),
       {
         status: 200,

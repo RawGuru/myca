@@ -924,6 +924,8 @@ function App() {
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
+  const [emailEvents, setEmailEvents] = useState<any[]>([])
+  const [emailEventsFilter, setEmailEventsFilter] = useState('')
   const [stripeState, setStripeState] = useState<{ hasStripeAccountId: boolean; onboardingComplete: boolean; isGiver: boolean } | null>(null)
   const [_showGiverOverlay, setShowGiverOverlay] = useState(false) // Old overlay system (setter still used, to be removed)
   const [_extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // Old extension UI (setter still used, to be removed)
@@ -3722,6 +3724,146 @@ function App() {
               stripe_payment_id: b.stripe_payment_id,
               video_room_url: b.video_room_url ? 'set' : 'null'
             })), null, 2)}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ADMIN ROUTE: Email Events Audit Trail
+  if (screen === 'admin/email-events') {
+    // Fetch email events on mount
+    useEffect(() => {
+      const fetchEmailEvents = async () => {
+        try {
+          let query = supabase
+            .from('email_events')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(50)
+
+          // Filter by booking_id if provided
+          if (emailEventsFilter) {
+            query = query.eq('booking_id', emailEventsFilter)
+          }
+
+          const { data, error } = await query
+
+          if (error) throw error
+          setEmailEvents(data || [])
+        } catch (err) {
+          console.error('Failed to fetch email events:', err)
+        }
+      }
+
+      fetchEmailEvents()
+    }, [emailEventsFilter])
+
+    return (
+      <div style={containerStyle}>
+        <div style={{ ...screenStyle, position: 'relative' }}>
+          <button
+            onClick={() => {
+              setScreen('sessions')
+              setEmailEventsFilter('')
+            }}
+            style={{ marginBottom: '20px', padding: '10px', cursor: 'pointer' }}
+          >
+            ← Back to Sessions
+          </button>
+          <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>Email Events Audit Trail</h2>
+
+          <div style={{ marginBottom: '20px' }}>
+            <input
+              type="text"
+              placeholder="Filter by booking ID (optional)"
+              value={emailEventsFilter}
+              onChange={(e) => setEmailEventsFilter(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '8px',
+                border: `1px solid ${colors.border}`,
+                background: colors.bgSecondary,
+                color: colors.textPrimary,
+                fontSize: '0.9rem'
+              }}
+            />
+          </div>
+
+          <div style={{ fontSize: '0.85rem', marginBottom: '20px', color: colors.textMuted }}>
+            Showing last {emailEvents.length} events
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+            {emailEvents.map((event) => (
+              <div
+                key={event.id}
+                style={{
+                  background: colors.bgSecondary,
+                  padding: '15px',
+                  borderRadius: '8px',
+                  borderLeft: `4px solid ${event.success ? '#10b981' : '#ef4444'}`
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <div>
+                    <strong style={{ color: colors.accent }}>
+                      {event.event}
+                    </strong>
+                    {' '}→ {event.role}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                    {new Date(event.created_at).toLocaleString()}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                  <strong>Recipient:</strong> {event.recipient}
+                </div>
+
+                <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                  <strong>Status:</strong>{' '}
+                  <span style={{ color: event.success ? '#10b981' : '#ef4444' }}>
+                    {event.success ? '✓ Success' : '✗ Failed'}
+                  </span>
+                  {' '}(HTTP {event.http_status})
+                </div>
+
+                {event.provider_message_id && (
+                  <div style={{ fontSize: '0.85rem', marginBottom: '5px' }}>
+                    <strong>Message ID:</strong> {event.provider_message_id}
+                  </div>
+                )}
+
+                {event.error_message && (
+                  <div style={{
+                    fontSize: '0.85rem',
+                    marginTop: '10px',
+                    padding: '10px',
+                    background: colors.bgPrimary,
+                    borderRadius: '4px',
+                    color: '#ef4444'
+                  }}>
+                    <strong>Error:</strong> {event.error_message}
+                  </div>
+                )}
+
+                <div style={{
+                  fontSize: '0.75rem',
+                  marginTop: '10px',
+                  color: colors.textMuted
+                }}>
+                  Booking: {event.booking_id}
+                </div>
+              </div>
+            ))}
+
+            {emailEvents.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
+                No email events found
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -7169,6 +7311,21 @@ function App() {
               }}
             >
               [DEV] View Raw Bookings Data
+            </button>
+            <button
+              onClick={() => setScreen('admin/email-events')}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: colors.textMuted,
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                textDecoration: 'underline',
+                marginBottom: '5px',
+                width: '100%'
+              }}
+            >
+              [ADMIN] Email Events Audit Trail
             </button>
             <div style={{
               fontSize: '0.65rem',
