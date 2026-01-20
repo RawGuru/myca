@@ -57,6 +57,12 @@ serve(async (req) => {
 
     console.log(`[BOOKING EMAILS] Processing ${event} for booking ${booking_id}`)
 
+    // Log Resend key type (test vs production)
+    const resendKey = Deno.env.get('RESEND_API_KEY') || ''
+    const keyType = resendKey.startsWith('re_') ? 'PRODUCTION' : 'UNKNOWN'
+    const maskedKey = resendKey.length > 4 ? `****${resendKey.slice(-4)}` : '****'
+    console.log(`[BOOKING EMAILS] Resend API Key: ${keyType} (${maskedKey})`)
+
     // Initialize Supabase client with service role key for full access
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
