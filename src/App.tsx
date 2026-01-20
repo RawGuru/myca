@@ -926,6 +926,8 @@ function App() {
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [emailEvents, setEmailEvents] = useState<any[]>([])
   const [emailEventsFilter, setEmailEventsFilter] = useState('')
+  const [emailEventsLoading, setEmailEventsLoading] = useState(false)
+  const [emailEventsError, setEmailEventsError] = useState<string | null>(null)
   const [stripeState, setStripeState] = useState<{ hasStripeAccountId: boolean; onboardingComplete: boolean; isGiver: boolean } | null>(null)
   const [_showGiverOverlay, setShowGiverOverlay] = useState(false) // Old overlay system (setter still used, to be removed)
   const [_extensionTimeRemaining, setExtensionTimeRemaining] = useState(60) // Old extension UI (setter still used, to be removed)
@@ -2035,6 +2037,32 @@ function App() {
       console.log('403_COUNT_SO_FAR (sessions screen):', forbidden403Count)
     }
   }, [screen])
+
+  // Hash router: map URL hashes to screen states
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash
+      console.log('[Hash Router] Hash changed:', hash)
+
+      // Map hash routes to screen states
+      if (hash === '#/admin/email-events' || hash === '#/emailEvents') {
+        console.log('[Hash Router] Setting screen to emailEvents')
+        setScreen('emailEvents')
+      } else if (hash === '#/sessions') {
+        setScreen('sessions')
+      } else if (hash === '#/bookings') {
+        setScreen('sessions')
+      }
+      // Add more mappings as needed
+    }
+
+    // Handle initial hash on mount
+    handleHashChange()
+
+    // Listen for hash changes
+    window.addEventListener('hashchange', handleHashChange)
+    return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
 
   // Check for shareable giver link on load
   useEffect(() => {
@@ -3731,10 +3759,14 @@ function App() {
   }
 
   // ADMIN ROUTE: Email Events Audit Trail
-  if (screen === 'admin/email-events') {
+  if (screen === 'emailEvents') {
     // Fetch email events on mount
     useEffect(() => {
       const fetchEmailEvents = async () => {
+        console.log('[Email Events] Fetching email events, filter:', emailEventsFilter)
+        setEmailEventsLoading(true)
+        setEmailEventsError(null)
+
         try {
           let query = supabase
             .from('email_events')
@@ -3749,10 +3781,19 @@ function App() {
 
           const { data, error } = await query
 
-          if (error) throw error
+          if (error) {
+            console.error('[Email Events] Fetch error:', error)
+            throw error
+          }
+
+          console.log('[Email Events] Fetched', data?.length || 0, 'events')
           setEmailEvents(data || [])
         } catch (err) {
-          console.error('Failed to fetch email events:', err)
+          const errorMsg = err instanceof Error ? err.message : 'Failed to fetch email events'
+          console.error('[Email Events] Error:', errorMsg)
+          setEmailEventsError(errorMsg)
+        } finally {
+          setEmailEventsLoading(false)
         }
       }
 
@@ -3766,12 +3807,29 @@ function App() {
             onClick={() => {
               setScreen('sessions')
               setEmailEventsFilter('')
+              window.location.hash = '#/sessions'
             }}
             style={{ marginBottom: '20px', padding: '10px', cursor: 'pointer' }}
           >
             ← Back to Sessions
           </button>
-          <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>Email Events Audit Trail</h2>
+
+          <h1 style={{
+            fontSize: '1.8rem',
+            fontWeight: 700,
+            marginBottom: '10px',
+            color: colors.textPrimary
+          }}>
+            Email Events
+          </h1>
+
+          <p style={{
+            fontSize: '0.9rem',
+            marginBottom: '20px',
+            color: colors.textMuted
+          }}>
+            Email audit trail - all send attempts with provider details
+          </p>
 
           <div style={{ marginBottom: '20px' }}>
             <input
@@ -3791,12 +3849,38 @@ function App() {
             />
           </div>
 
-          <div style={{ fontSize: '0.85rem', marginBottom: '20px', color: colors.textMuted }}>
-            Showing last {emailEvents.length} events
-          </div>
+          {emailEventsLoading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px',
+              color: colors.textMuted,
+              fontSize: '1rem'
+            }}>
+              Loading email events...
+            </div>
+          )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-            {emailEvents.map((event) => (
+          {emailEventsError && (
+            <div style={{
+              padding: '20px',
+              marginBottom: '20px',
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: '8px',
+              color: '#ef4444'
+            }}>
+              <strong>Error:</strong> {emailEventsError}
+            </div>
+          )}
+
+          {!emailEventsLoading && !emailEventsError && (
+            <>
+              <div style={{ fontSize: '0.85rem', marginBottom: '20px', color: colors.textMuted }}>
+                Showing {emailEvents.length} event{emailEvents.length !== 1 ? 's' : ''}
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                {emailEvents.map((event) => (
               <div
                 key={event.id}
                 style={{
@@ -3857,14 +3941,16 @@ function App() {
                   Booking: {event.booking_id}
                 </div>
               </div>
-            ))}
+                ))}
 
-            {emailEvents.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
-                No email events found
+                {emailEvents.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '40px', color: colors.textMuted }}>
+                    No email events found
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
     )
@@ -7313,7 +7399,10 @@ function App() {
               [DEV] View Raw Bookings Data
             </button>
             <button
-              onClick={() => setScreen('admin/email-events')}
+              onClick={() => {
+                setScreen('emailEvents')
+                window.location.hash = '#/admin/email-events'
+              }}
               style={{
                 background: 'none',
                 border: 'none',
