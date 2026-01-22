@@ -675,59 +675,54 @@ export function SessionStateMachine({
         </div>
       )}
 
-      {/* Temporary placeholder - phase UI components will go here */}
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-        {/* Phase Indicator - always visible */}
-        <PhaseIndicator currentPhase={sessionState.current_phase} />
+      {/* Phase Indicator - always visible at top */}
+      <PhaseIndicator currentPhase={sessionState.current_phase} />
 
-        {/* Phase-specific UI */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {sessionState.current_phase === 'transmission' && (
-            <TransmissionPhase
-              userRole={userRole}
-              onDone={handleReceiverDoneTransmission}
-            />
-          )}
+      {/* Phase-specific UI - rendered as fixed overlays */}
+      {sessionState.current_phase === 'transmission' && (
+        <TransmissionPhase
+          userRole={userRole}
+          onDone={handleReceiverDoneTransmission}
+        />
+      )}
 
-          {sessionState.current_phase === 'reflection' && (
-            <ReflectionPhase
-              userRole={userRole}
-              onDone={handleGiverDoneReflection}
-            />
-          )}
+      {sessionState.current_phase === 'reflection' && (
+        <ReflectionPhase
+          userRole={userRole}
+          onDone={handleGiverDoneReflection}
+        />
+      )}
 
-          {sessionState.current_phase === 'validation' && (
-            <ValidationPhase
-              userRole={userRole}
-              validationAttempts={sessionState.validation_attempts}
-              onYes={handleReceiverValidationYes}
-              onNo={handleReceiverValidationNo}
-              listingId={null}
-            />
-          )}
+      {sessionState.current_phase === 'validation' && (
+        <ValidationPhase
+          userRole={userRole}
+          validationAttempts={sessionState.validation_attempts}
+          onYes={handleReceiverValidationYes}
+          onNo={handleReceiverValidationNo}
+          listingId={null}
+        />
+      )}
 
-          {sessionState.current_phase === 'direction' && (
-            <DirectionPhase
-              userRole={userRole}
-              directionSelected={sessionState.direction_selected}
-              directionSource={sessionState.direction_source}
-              directionRequestText={sessionState.direction_request_text}
-              directionGiverResponse={sessionState.direction_giver_response}
-              sessionTimeRemaining={sessionTimeRemaining}
-              onRequestExtension={onRequestExtension}
-              onGiverCustomDirectionResponse={handleGiverCustomDirectionResponse}
-              onSafetyExit={handleGiverSafetyExit}
-              dailyCall={dailyCall}
-            />
-          )}
+      {sessionState.current_phase === 'direction' && (
+        <DirectionPhase
+          userRole={userRole}
+          directionSelected={sessionState.direction_selected}
+          directionSource={sessionState.direction_source}
+          directionRequestText={sessionState.direction_request_text}
+          directionGiverResponse={sessionState.direction_giver_response}
+          sessionTimeRemaining={sessionTimeRemaining}
+          onRequestExtension={onRequestExtension}
+          onGiverCustomDirectionResponse={handleGiverCustomDirectionResponse}
+          onSafetyExit={handleGiverSafetyExit}
+          dailyCall={dailyCall}
+        />
+      )}
 
-          {sessionState.current_phase === 'ended' && (
-            <SessionEndedSummary
-              endReason={sessionState.end_reason || 'completed'}
-            />
-          )}
-        </div>
-      </div>
+      {sessionState.current_phase === 'ended' && (
+        <SessionEndedSummary
+          endReason={sessionState.end_reason || 'completed'}
+        />
+      )}
     </div>
   )
 }

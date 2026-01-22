@@ -2916,7 +2916,22 @@ function App() {
 
   // Start the Daily call
   const startDailyCall = useCallback(async () => {
-    if (!activeSession?.video_room_url || !videoContainerRef.current) return
+    if (!activeSession?.video_room_url || !videoContainerRef.current) {
+      console.log('[Daily Video] Cannot start: missing video_room_url or container')
+      return
+    }
+
+    // Debug: Log container info
+    const container = videoContainerRef.current
+    const rect = container.getBoundingClientRect()
+    console.log('[Daily Video] Rendering Daily video container')
+    console.log('[Daily Video] Container dimensions:', {
+      width: rect.width,
+      height: rect.height,
+      top: rect.top,
+      left: rect.left
+    })
+    console.log('[Daily Video] Container element:', container)
 
     try {
       // Destroy existing call if any
@@ -2925,6 +2940,7 @@ function App() {
       }
 
       // Create new Daily call
+      console.log('[Daily Video] Creating Daily iframe...')
       const call = DailyIframe.createFrame(videoContainerRef.current, {
         iframeStyle: {
           width: '100%',
@@ -2936,6 +2952,7 @@ function App() {
         showFullscreenButton: true,
       })
 
+      console.log('[Daily Video] Daily iframe created:', call ? 'SUCCESS' : 'FAILED')
       dailyCallRef.current = call
 
       // Show giver overlay when both participants join
@@ -7366,30 +7383,18 @@ function App() {
           }}
         />
 
-        {/* SessionStateMachine overlay (foreground layer) */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          zIndex: 10,
-          pointerEvents: 'none', // Allow clicks to pass through to video
-        }}>
-          <div style={{ pointerEvents: 'auto' }}> {/* Re-enable pointer events for UI elements */}
-            <SessionStateMachine
-              booking={activeSession}
-              dailyCall={dailyCallRef.current}
-              userRole={userRole}
-              userId={user.id}
-              sessionTimeRemaining={_sessionTimeRemaining}
-              onSessionEnd={() => leaveSession(false)}
-              onRequestExtension={() => {
-                console.log('Extension requested from SessionStateMachine')
-              }}
-            />
-          </div>
-        </div>
+        {/* SessionStateMachine overlay (UI layer - doesn't block video) */}
+        <SessionStateMachine
+          booking={activeSession}
+          dailyCall={dailyCallRef.current}
+          userRole={userRole}
+          userId={user.id}
+          sessionTimeRemaining={_sessionTimeRemaining}
+          onSessionEnd={() => leaveSession(false)}
+          onRequestExtension={() => {
+            console.log('Extension requested from SessionStateMachine')
+          }}
+        />
 
         {/* Receiver-Initiated Extension System */}
         <ReceiverInitiatedExtension

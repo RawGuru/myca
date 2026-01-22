@@ -23,18 +23,19 @@ const colors = {
 }
 
 const overlayStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 0,
+  position: 'fixed',
+  bottom: 0,
   left: 0,
   right: 0,
-  bottom: 0,
-  background: 'rgba(10, 10, 10, 0.95)',
-  zIndex: 100,
-  padding: '40px 20px',
+  background: 'rgba(10, 10, 10, 0.85)',
+  zIndex: 50,
+  padding: '20px',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
+  maxHeight: '40vh', // Don't cover more than 40% of screen
+  overflow: 'auto',
 }
 
 const buttonStyle: React.CSSProperties = {
