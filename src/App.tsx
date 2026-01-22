@@ -1040,6 +1040,13 @@ function App() {
   const [_sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds (internal only, not displayed)
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
+
+  // Server-controlled session state (for phase tracking and mute rules)
+  const [_serverSessionState, setServerSessionState] = useState<{
+    phase: string
+    giver_can_speak: boolean
+    seconds_remaining_in_phase: number
+  } | null>(null)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [emailEvents, setEmailEvents] = useState<any[]>([])
@@ -3095,6 +3102,59 @@ function App() {
       startDailyCall()
     }
   }, [screen, activeSession, startDailyCall])
+
+  // Poll server session state every 10 seconds for phase tracking and mute enforcement
+  useEffect(() => {
+    if (screen !== 'videoSession' || !activeSession || !user) return
+
+    const pollSessionState = async () => {
+      try {
+        console.log('[Session State Poll] Fetching server state for booking:', activeSession.id)
+
+        const { data, error } = await supabase.functions.invoke('get-session-state', {
+          body: { booking_id: activeSession.id }
+        })
+
+        if (error) {
+          console.error('[Session State Poll] Error:', error)
+          return
+        }
+
+        console.log('[Session State Poll] Server state:', data)
+        setServerSessionState(data)
+
+        // Enforce mute rules for giver
+        if (user.id === activeSession.giver_id && dailyCallRef.current) {
+          const shouldBeMuted = !data.giver_can_speak
+
+          console.log(`[Session State Poll] Giver mute enforcement: shouldBeMuted=${shouldBeMuted}, phase=${data.phase}`)
+
+          if (shouldBeMuted) {
+            // Transmission phase: force giver mute
+            try {
+              await dailyCallRef.current.setLocalAudio(false)
+              console.log('[Session State Poll] Giver muted (transmission phase)')
+            } catch (err) {
+              console.error('[Session State Poll] Failed to mute giver:', err)
+            }
+          } else {
+            // Other phases: giver can speak (but don't force unmute, respect user's choice)
+            console.log('[Session State Poll] Giver can speak (not transmission phase)')
+          }
+        }
+      } catch (err) {
+        console.error('[Session State Poll] Exception:', err)
+      }
+    }
+
+    // Poll immediately on mount
+    pollSessionState()
+
+    // Then poll every 10 seconds
+    const interval = setInterval(pollSessionState, 10000)
+
+    return () => clearInterval(interval)
+  }, [screen, activeSession, user, dailyCallRef])
 
   // Check if a booking is joinable (at or after scheduled time, within 30-min window)
   const isSessionJoinable = (booking: Booking) => {
