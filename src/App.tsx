@@ -2868,14 +2868,38 @@ function App() {
 
   // Join a video session
   const joinSession = async (booking: Booking) => {
-    if (!booking.video_room_url) {
-      console.error('No video room URL')
-      return
+    let roomUrl = booking.video_room_url
+
+    // If room doesn't exist, create it now (fallback for failed creation at booking time)
+    if (!roomUrl) {
+      console.log('[Join Session] No video room URL found, creating room now...')
+      try {
+        roomUrl = await createDailyRoom()
+        console.log('[Join Session] Room created:', roomUrl)
+
+        // Update booking with room URL
+        const { error } = await supabase
+          .from('bookings')
+          .update({ video_room_url: roomUrl })
+          .eq('id', booking.id)
+
+        if (error) {
+          console.error('[Join Session] Failed to update booking with room URL:', error)
+          throw new Error('Failed to save video room URL')
+        }
+
+        // Update local booking object
+        booking.video_room_url = roomUrl
+      } catch (err) {
+        console.error('[Join Session] Failed to create video room:', err)
+        alert('Failed to create video room. Please try again or contact support.')
+        return
+      }
     }
 
     // Log room URL for both giver and seeker
     const userRole = user?.id === booking.giver_id ? 'GIVER' : 'SEEKER'
-    console.log(`[${userRole}] Joining Daily room:`, booking.video_room_url)
+    console.log(`[${userRole}] Joining Daily room:`, roomUrl)
 
     // Track when giver joins (for lateness detection)
     if (user && user.id === booking.giver_id) {
