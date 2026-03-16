@@ -2762,7 +2762,7 @@ function App() {
 
   // Load existing availability for existing givers
   useEffect(() => {
-    if (user && myGiverProfile && (screen === 'editVideo' || screen === 'userProfile')) {
+    if (user && myGiverProfile && (screen === 'editVideo' || screen === 'userProfile' || screen === 'manageAvailability')) {
       supabase
         .from('giver_availability')
         .select('*')
@@ -3637,9 +3637,22 @@ function App() {
 
   const SignOutButton = () => user ? (
     <button
-      onClick={async () => {
-        await signOut()
-        setScreen('welcome')
+      type="button"
+      onClick={async (e) => {
+        e.preventDefault()
+        try {
+          const { error } = await signOut()
+          if (error) {
+            console.error('Sign out error:', error)
+            alert('Failed to sign out. Please try again.')
+            return
+          }
+          setScreen('welcome')
+          window.location.reload()
+        } catch (err) {
+          console.error('Sign out exception:', err)
+          alert('Failed to sign out. Please try again.')
+        }
       }}
       style={{
         position: 'absolute',
@@ -8982,8 +8995,17 @@ function App() {
               {/* Manage Availability Button */}
               <button
                 style={{
-                  ...btnSecondaryStyle,
+                  padding: '16px 24px',
+                  borderRadius: '3px',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  border: `2px solid ${colors.accent}`,
+                  width: '100%',
+                  background: colors.bgSecondary,
+                  color: colors.accent,
                   marginBottom: '20px',
+                  letterSpacing: '0.01em',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
