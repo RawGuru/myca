@@ -1005,7 +1005,7 @@ function VideoUpload({
 }
 
 function App() {
-  const { user, loading, signOut } = useAuth()
+  const { user, loading } = useAuth()
   const [screen, setScreen] = useState('welcome')
   const [needsAuth, setNeedsAuth] = useState(false)
   const [returnToScreen, setReturnToScreen] = useState('')
@@ -3638,21 +3638,13 @@ function App() {
   const SignOutButton = () => user ? (
     <button
       type="button"
-      onClick={async (e) => {
+      onClick={(e) => {
         e.preventDefault()
-        try {
-          const { error } = await signOut()
-          if (error) {
-            console.error('Sign out error:', error)
-            alert('Failed to sign out. Please try again.')
-            return
-          }
-          setScreen('welcome')
-          window.location.reload()
-        } catch (err) {
-          console.error('Sign out exception:', err)
-          alert('Failed to sign out. Please try again.')
-        }
+        // Force sign out by clearing all storage and reloading
+        // This bypasses any Supabase auth.signOut() issues
+        localStorage.clear()
+        sessionStorage.clear()
+        window.location.href = '/'
       }}
       style={{
         position: 'absolute',
