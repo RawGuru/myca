@@ -2397,7 +2397,7 @@ function App() {
 
   // Fetch user's bookings
   const fetchUserBookings = useCallback(async () => {
-    console.log('🚨 BOOKING_FETCH_START', { screen, userId: user?.id })
+    console.log('🚨 BOOKING_FETCH_START', { userId: user?.id })
 
     if (!user) {
       setUserBookings([])
@@ -2442,7 +2442,7 @@ function App() {
       console.error('BOOKING_FETCH_ERROR:', err)
       setUserBookings([])
     }
-  }, [user, screen])
+  }, [user])
 
   useEffect(() => {
     fetchUserBookings()
@@ -6351,6 +6351,22 @@ function App() {
       )
     }
 
+    // If user already has a giver profile, redirect to editVideo for availability management
+    if (myGiverProfile) {
+      return (
+        <div style={containerStyle}>
+          <div style={screenStyle}>
+            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+              <p style={{ color: colors.textPrimary, marginBottom: '15px', fontSize: '1.1rem' }}>You already have a giver profile</p>
+              <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Manage your video and availability from your profile settings</p>
+              <button style={btnStyle} onClick={() => setScreen('editVideo')}>Manage Availability & Video</button>
+              <button style={{ ...btnSecondaryStyle, marginTop: '10px' }} onClick={() => setScreen('manageListings')}>Back to My Offers</button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, position: 'relative' }}>
@@ -7075,7 +7091,7 @@ function App() {
                         }}
                       >
                         <span style={{ color: colors.textPrimary }}>
-                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeWithTz(slot.time, myGiverProfile?.timezone || 'America/New_York')}
+                          {new Date(slot.date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeWithTz(slot.time, giverTimezone)}
                         </span>
                         <button
                           onClick={() => removeAvailabilitySlot(slot.id)}
