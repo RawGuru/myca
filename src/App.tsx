@@ -8806,7 +8806,7 @@ function App() {
               <button
                 style={{
                   ...btnStyle,
-                  marginBottom: '20px',
+                  marginBottom: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -8831,6 +8831,22 @@ function App() {
               >
                 <span style={{ fontSize: '1.2rem' }}>+</span>
                 Create New Offer
+              </button>
+
+              {/* Manage Availability Button */}
+              <button
+                style={{
+                  ...btnSecondaryStyle,
+                  marginBottom: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+                onClick={() => setScreen('editVideo')}
+              >
+                <span style={{ fontSize: '1rem' }}>📅</span>
+                Manage Availability
               </button>
 
               {/* Offers List */}
