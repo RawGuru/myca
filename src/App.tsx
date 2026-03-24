@@ -2868,14 +2868,19 @@ function App() {
 
   // Join a video session
   const joinSession = async (booking: Booking) => {
+    console.log('========================================')
+    console.log('JOIN SESSION: User clicked Join Session button')
+    console.log('JOIN SESSION: booking id:', booking.id)
+    console.log('JOIN SESSION: booking video_room_url:', booking.video_room_url)
+
     let roomUrl = booking.video_room_url
 
     // If room doesn't exist, create it now (fallback for failed creation at booking time)
     if (!roomUrl) {
-      console.log('[Join Session] No video room URL found, creating room now...')
+      console.log('JOIN SESSION: No video room URL found, creating room now...')
       try {
         roomUrl = await createDailyRoom()
-        console.log('[Join Session] Room created:', roomUrl)
+        console.log('JOIN SESSION: Room created:', roomUrl)
 
         // Update booking with room URL
         const { error } = await supabase
@@ -2884,14 +2889,15 @@ function App() {
           .eq('id', booking.id)
 
         if (error) {
-          console.error('[Join Session] Failed to update booking with room URL:', error)
+          console.error('JOIN SESSION: Failed to update booking with room URL:', error)
           throw new Error('Failed to save video room URL')
         }
 
         // Update local booking object
         booking.video_room_url = roomUrl
+        console.log('JOIN SESSION: Updated booking object with room URL')
       } catch (err) {
-        console.error('[Join Session] Failed to create video room:', err)
+        console.error('JOIN SESSION: Failed to create video room:', err)
         alert('Failed to create video room. Please try again or contact support.')
         return
       }
@@ -2899,7 +2905,8 @@ function App() {
 
     // Log room URL for both giver and seeker
     const userRole = user?.id === booking.giver_id ? 'GIVER' : 'SEEKER'
-    console.log(`[${userRole}] Joining Daily room:`, roomUrl)
+    console.log(`JOIN SESSION: User role is ${userRole}`)
+    console.log(`JOIN SESSION: Final room URL:`, roomUrl)
 
     // Track when giver joins (for lateness detection)
     if (user && user.id === booking.giver_id) {
@@ -2924,6 +2931,7 @@ function App() {
         .eq('id', booking.id)
     }
 
+    console.log('JOIN SESSION: Setting activeSession state')
     setActiveSession(booking)
 
     // Time Physics (Phase 5): Active time = duration_minutes - 5 minutes buffer
@@ -2935,36 +2943,51 @@ function App() {
     setShowCountdown(false)
     setExtensionTimeRemaining(60)
 
+    console.log('JOIN SESSION: Setting screen to videoSession')
     setScreen('videoSession')
+    console.log('JOIN SESSION: joinSession completed')
+    console.log('========================================')
   }
 
   // Start the Daily call
   const startDailyCall = useCallback(async () => {
+    console.log('========================================')
+    console.log('DAILY: startDailyCall invoked')
+    console.log('DAILY: booking id:', activeSession?.id)
+    console.log('DAILY: room URL:', activeSession?.video_room_url)
+    console.log('DAILY: videoContainerRef.current exists:', !!videoContainerRef.current)
+
     if (!activeSession?.video_room_url || !videoContainerRef.current) {
-      console.log('[Daily Video] Cannot start: missing video_room_url or container')
+      console.error('DAILY: Cannot start - missing room URL or container')
+      console.error('DAILY: - video_room_url:', activeSession?.video_room_url)
+      console.error('DAILY: - container ref:', videoContainerRef.current)
       return
     }
 
-    // Debug: Log container info
+    // Container diagnostics
     const container = videoContainerRef.current
     const rect = container.getBoundingClientRect()
-    console.log('[Daily Video] Rendering Daily video container')
-    console.log('[Daily Video] Container dimensions:', {
-      width: rect.width,
-      height: rect.height,
-      top: rect.top,
-      left: rect.left
+    console.log('DAILY: container ref found')
+    console.log('DAILY: container size:', rect.width, 'x', rect.height)
+    console.log('DAILY: container position:', 'top:', rect.top, 'left:', rect.left)
+    console.log('DAILY: container computed style:', {
+      display: getComputedStyle(container).display,
+      visibility: getComputedStyle(container).visibility,
+      opacity: getComputedStyle(container).opacity,
+      zIndex: getComputedStyle(container).zIndex,
+      position: getComputedStyle(container).position
     })
-    console.log('[Daily Video] Container element:', container)
 
     try {
       // Destroy existing call if any
       if (dailyCallRef.current) {
+        console.log('DAILY: destroying existing call object')
         await dailyCallRef.current.destroy()
+        console.log('DAILY: existing call destroyed')
       }
 
       // Create new Daily call
-      console.log('[Daily Video] Creating Daily iframe...')
+      console.log('DAILY: creating Daily iframe with createFrame()')
       const call = DailyIframe.createFrame(videoContainerRef.current, {
         iframeStyle: {
           width: '100%',
@@ -2976,14 +2999,29 @@ function App() {
         showFullscreenButton: true,
       })
 
-      console.log('[Daily Video] Daily iframe created:', call ? 'SUCCESS' : 'FAILED')
+      console.log('DAILY: frame/call object created:', !!call)
+      console.log('DAILY: call object type:', typeof call)
+
+      // Check if iframe was actually inserted into DOM
+      const iframes = container.querySelectorAll('iframe')
+      console.log('DAILY: iframe count inside container after mount:', iframes.length)
+      if (iframes.length > 0) {
+        console.log('DAILY: iframe element found:', iframes[0])
+        console.log('DAILY: iframe src:', iframes[0].src)
+        console.log('DAILY: iframe size:', iframes[0].offsetWidth, 'x', iframes[0].offsetHeight)
+      } else {
+        console.error('DAILY: NO IFRAME FOUND IN CONTAINER AFTER createFrame()')
+      }
+
       dailyCallRef.current = call
 
       // Show giver overlay when both participants join
       if (user && user.id === activeSession.giver_id) {
-        call.on('participant-joined', () => {
+        call.on('participant-joined', (event) => {
+          console.log('DAILY: participant-joined event:', event?.participant?.user_name || 'unknown')
           const participants = call.participants()
           const participantCount = Object.keys(participants).length
+          console.log('DAILY: total participants now:', participantCount)
 
           // When both are present (local + 1 remote)
           if (participantCount >= 2) {
@@ -2996,6 +3034,7 @@ function App() {
 
       // Track when participants leave (for both giver and seeker)
       call.on('participant-left', async (event) => {
+        console.log('DAILY: participant-left event:', event?.participant?.user_name || 'unknown')
         if (!user || !activeSession) return
 
         // Identify who left based on their session_id
@@ -3008,23 +3047,51 @@ function App() {
         }
       })
 
+      // Track local media events
+      call.on('camera-error', (event) => {
+        console.error('DAILY: camera-error event:', event)
+      })
+
+      call.on('started-camera', () => {
+        console.log('DAILY: started-camera event - local video started')
+      })
+
+      call.on('access-state-updated', (event) => {
+        console.log('DAILY: access-state-updated:', event)
+      })
+
       const userRole = user?.id === activeSession.giver_id ? 'GIVER' : 'SEEKER'
-      console.log(`[${userRole}] Joining room:`, activeSession.video_room_url)
+      console.log('DAILY: requesting join() as', userRole)
+      console.log('DAILY: join URL:', activeSession.video_room_url)
 
       await call.join({ url: activeSession.video_room_url })
 
-      console.log(`[${userRole}] Successfully joined room`)
+      console.log('DAILY: join succeeded for', userRole)
+
+      // Log participants after join
+      const participants = call.participants()
+      console.log('DAILY: participants after join:', Object.keys(participants).length)
+      console.log('DAILY: local participant:', participants.local)
+
     } catch (err) {
+      console.error('DAILY: EXCEPTION in startDailyCall')
+      console.error('DAILY: error type:', err instanceof Error ? err.constructor.name : typeof err)
+      console.error('DAILY: error message:', err instanceof Error ? err.message : String(err))
+      console.error('DAILY: full error:', err)
+
       // Make audio level observer and other non-critical errors non-fatal
       const errorMessage = err instanceof Error ? err.message : String(err)
       if (errorMessage.includes('audio level observer') || errorMessage.includes('AudioLevelObserver')) {
-        console.warn('[Daily] Audio level observer failed (non-fatal):', errorMessage)
+        console.warn('DAILY: Audio level observer failed (non-fatal):', errorMessage)
         // Continue - this is not critical for the session
       } else {
-        console.error('[Daily] Failed to join call:', err)
+        console.error('DAILY: FATAL ERROR - showing alert to user')
         alert('Failed to join video session. Please refresh and try again.')
       }
     }
+
+    console.log('DAILY: startDailyCall completed')
+    console.log('========================================')
   }, [activeSession, user])
 
   // Leave the video session
@@ -3139,8 +3206,16 @@ function App() {
 
   // Start Daily call when entering video session
   useEffect(() => {
+    console.log('USEEFFECT: Daily initialization useEffect fired')
+    console.log('USEEFFECT: screen =', screen)
+    console.log('USEEFFECT: activeSession?.id =', activeSession?.id)
+    console.log('USEEFFECT: condition check:', screen === 'videoSession' && !!activeSession)
+
     if (screen === 'videoSession' && activeSession) {
+      console.log('USEEFFECT: Calling startDailyCall()')
       startDailyCall()
+    } else {
+      console.log('USEEFFECT: Skipping startDailyCall - condition not met')
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeSession?.id])
