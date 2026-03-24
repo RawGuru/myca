@@ -208,9 +208,15 @@ export function SessionStateMachine({
   const { connectionStatus } = useSessionRealtime(
     booking.id,
     useCallback((newState: SessionState) => {
+      console.log('[SessionStateMachine] Realtime state update received')
       setSessionState(newState)
     }, [])
   )
+
+  // Log connection status changes
+  useEffect(() => {
+    console.log('[SessionStateMachine] Realtime connectionStatus changed to:', connectionStatus)
+  }, [connectionStatus])
 
   // Initialize or fetch session state on mount
   useEffect(() => {

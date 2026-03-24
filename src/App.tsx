@@ -8,6 +8,25 @@ import Auth from './components/Auth'
 import { SessionStateMachine } from './SessionStateMachine'
 import { ReceiverInitiatedExtension } from './components/session/ReceiverInitiatedExtension'
 
+// Video session wrapper to track mount/unmount
+function VideoSessionWrapper({ children }: { children: ReactNode }) {
+  useEffect(() => {
+    const mountTime = new Date().toISOString()
+    console.log('========================================')
+    console.log('VIDEO SESSION WRAPPER: Component MOUNTED at', mountTime)
+    console.log('========================================')
+
+    return () => {
+      const unmountTime = new Date().toISOString()
+      console.log('========================================')
+      console.log('VIDEO SESSION WRAPPER: Component UNMOUNTING at', unmountTime)
+      console.log('========================================')
+    }
+  }, [])
+
+  return <>{children}</>
+}
+
 // Error Boundary Component
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -2992,8 +3011,9 @@ function App() {
         iframeStyle: {
           width: '100%',
           height: '100%',
-          border: '0',
-          borderRadius: '3px',
+          border: '5px solid lime', // TEMP DEBUG: Make iframe visible
+          borderRadius: '0',
+          boxSizing: 'border-box',
         },
         showLeaveButton: false,
         showFullscreenButton: true,
@@ -3073,6 +3093,39 @@ function App() {
       console.log('DAILY: participants after join:', Object.keys(participants).length)
       console.log('DAILY: local participant:', participants.local)
 
+      // Start monitoring iframe existence over time
+      console.log('DAILY: Starting iframe monitoring (10 checks over 10 seconds)')
+      const monitoringIntervals = [1000, 2000, 3000, 5000, 7000, 10000, 15000, 20000, 30000, 60000]
+      monitoringIntervals.forEach((delay) => {
+        setTimeout(() => {
+          if (!videoContainerRef.current) {
+            console.error(`DAILY MONITOR [${delay/1000}s]: videoContainerRef.current is NULL!`)
+            return
+          }
+
+          const container = videoContainerRef.current
+          const iframes = container.querySelectorAll('iframe')
+          const rect = container.getBoundingClientRect()
+
+          console.log(`DAILY MONITOR [${delay/1000}s]: iframe count =`, iframes.length)
+          console.log(`DAILY MONITOR [${delay/1000}s]: container size =`, rect.width, 'x', rect.height)
+          console.log(`DAILY MONITOR [${delay/1000}s]: container children =`, container.children.length)
+          console.log(`DAILY MONITOR [${delay/1000}s]: dailyCallRef.current exists =`, !!dailyCallRef.current)
+
+          if (iframes.length > 0) {
+            const iframe = iframes[0] as HTMLIFrameElement
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe src =`, iframe.src)
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe size =`, iframe.offsetWidth, 'x', iframe.offsetHeight)
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe display =`, getComputedStyle(iframe).display)
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe visibility =`, getComputedStyle(iframe).visibility)
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe opacity =`, getComputedStyle(iframe).opacity)
+            console.log(`DAILY MONITOR [${delay/1000}s]: iframe zIndex =`, getComputedStyle(iframe).zIndex)
+          } else {
+            console.error(`DAILY MONITOR [${delay/1000}s]: NO IFRAME FOUND IN CONTAINER!`)
+          }
+        }, delay)
+      })
+
     } catch (err) {
       console.error('DAILY: EXCEPTION in startDailyCall')
       console.error('DAILY: error type:', err instanceof Error ? err.constructor.name : typeof err)
@@ -3096,10 +3149,17 @@ function App() {
 
   // Leave the video session
   const leaveSession = async (markComplete: boolean = false) => {
+    console.log('========================================')
+    console.log('LEAVE SESSION: leaveSession called, markComplete =', markComplete)
+
     // Destroy Daily call
     if (dailyCallRef.current) {
+      console.log('LEAVE SESSION: Destroying Daily call object')
       await dailyCallRef.current.destroy()
       dailyCallRef.current = null
+      console.log('LEAVE SESSION: Daily call destroyed and ref set to null')
+    } else {
+      console.log('LEAVE SESSION: No Daily call to destroy (already null)')
     }
 
     // Store session for potential feedback
@@ -3206,10 +3266,14 @@ function App() {
 
   // Start Daily call when entering video session
   useEffect(() => {
-    console.log('USEEFFECT: Daily initialization useEffect fired')
+    const timestamp = new Date().toISOString()
+    console.log('========================================')
+    console.log('USEEFFECT: Daily initialization useEffect fired at', timestamp)
     console.log('USEEFFECT: screen =', screen)
     console.log('USEEFFECT: activeSession?.id =', activeSession?.id)
+    console.log('USEEFFECT: activeSession full object =', activeSession)
     console.log('USEEFFECT: condition check:', screen === 'videoSession' && !!activeSession)
+    console.log('USEEFFECT: dailyCallRef.current exists =', !!dailyCallRef.current)
 
     if (screen === 'videoSession' && activeSession) {
       console.log('USEEFFECT: Calling startDailyCall()')
@@ -3217,6 +3281,9 @@ function App() {
     } else {
       console.log('USEEFFECT: Skipping startDailyCall - condition not met')
     }
+    console.log('========================================')
+
+    // NOTE: No cleanup function here - we rely on startDailyCall to destroy existing call
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeSession?.id])
 
@@ -7628,27 +7695,34 @@ function App() {
   if (screen === 'videoSession' && activeSession && user) {
     const userRole = user.id === activeSession.seeker_id ? 'receiver' : 'giver'
 
+    console.log('RENDER: Video session screen is rendering')
+    console.log('RENDER: activeSession.id =', activeSession.id)
+    console.log('RENDER: userRole =', userRole)
+
     return (
-      <div style={{
-        maxWidth: '100%',
-        height: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-        background: colors.bgSecondary,
-      }}>
-        {/* Daily video container (background layer) */}
-        <div
-          ref={videoContainerRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            background: colors.bgSecondary,
-            zIndex: 1,
-          }}
-        />
+      <VideoSessionWrapper>
+        <div style={{
+          maxWidth: '100%',
+          height: '100vh',
+          position: 'relative',
+          overflow: 'hidden',
+          background: colors.bgSecondary,
+        }}>
+          {/* Daily video container (background layer) */}
+          <div
+            ref={videoContainerRef}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              background: colors.bgSecondary,
+              zIndex: 1,
+              border: '5px solid red', // TEMP DEBUG: Make container visible
+              boxSizing: 'border-box',
+            }}
+          />
 
         {/* SessionStateMachine overlay (UI layer - doesn't block video) */}
         <SessionStateMachine
@@ -7711,7 +7785,8 @@ function App() {
             Leave Session
           </button>
         </div>
-      </div>
+        </div>
+      </VideoSessionWrapper>
     )
   }
 
