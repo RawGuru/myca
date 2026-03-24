@@ -2043,8 +2043,13 @@ function App() {
   }, [])
 
   useEffect(() => {
+    // Skip during active video session to avoid rerenders
+    if (screen === 'videoSession' && activeSession) {
+      console.log('SUSPEND: Skipping fetchGivers - active session in progress')
+      return
+    }
     fetchGivers()
-  }, [fetchGivers])
+  }, [fetchGivers, screen, activeSession])
 
   // Fetch current user's giver profile
   const fetchMyGiverProfile = useCallback(async () => {
@@ -2167,8 +2172,13 @@ function App() {
   }, [user])
 
   useEffect(() => {
+    // Skip during active video session to avoid rerenders
+    if (screen === 'videoSession' && activeSession) {
+      console.log('SUSPEND: Skipping fetchMyGiverProfile - active session in progress')
+      return
+    }
     fetchMyGiverProfile()
-  }, [fetchMyGiverProfile])
+  }, [fetchMyGiverProfile, screen, activeSession])
 
   // Log 403 count on app boot
   useEffect(() => {
@@ -2464,25 +2474,38 @@ function App() {
   }, [user])
 
   useEffect(() => {
+    // Skip during active video session to avoid rerenders
+    if (screen === 'videoSession' && activeSession) {
+      console.log('SUSPEND: Skipping fetchUserBookings - active session in progress')
+      return
+    }
     fetchUserBookings()
-  }, [fetchUserBookings])
+  }, [fetchUserBookings, screen, activeSession])
 
   // Trigger fetch when entering sessions/debug-bookings screen
   useEffect(() => {
+    // Skip during active video session
+    if (screen === 'videoSession' && activeSession) {
+      return
+    }
     if (screen === 'sessions' || screen === 'debug-bookings') {
       fetchUserBookings()
     }
-  }, [screen, fetchUserBookings])
+  }, [screen, fetchUserBookings, activeSession])
 
   // Auto-refresh sessions and confirmation pages
   useEffect(() => {
+    // Skip during active video session
+    if (screen === 'videoSession' && activeSession) {
+      return
+    }
     if (screen === 'sessions' || screen === 'confirmation') {
       const interval = setInterval(() => {
         fetchUserBookings()
       }, 10000) // Check every 10 seconds to update join button availability
       return () => clearInterval(interval)
     }
-  }, [screen, fetchUserBookings])
+  }, [screen, fetchUserBookings, activeSession])
 
   // Fetch saved givers (private saves for seekers)
   const fetchSavedGivers = useCallback(async () => {
@@ -7695,9 +7718,14 @@ function App() {
   if (screen === 'videoSession' && activeSession && user) {
     const userRole = user.id === activeSession.seeker_id ? 'receiver' : 'giver'
 
+    console.log('========================================')
+    console.log('🔴🔴🔴 ACTIVE VIDEO BRANCH HIT 🔴🔴🔴')
     console.log('RENDER: Video session screen is rendering')
     console.log('RENDER: activeSession.id =', activeSession.id)
     console.log('RENDER: userRole =', userRole)
+    console.log('RENDER: About to return JSX with VideoSessionWrapper')
+    console.log('🔴🔴🔴 ACTIVE VIDEO BRANCH HIT 🔴🔴🔴')
+    console.log('========================================')
 
     return (
       <VideoSessionWrapper>
@@ -7708,6 +7736,24 @@ function App() {
           overflow: 'hidden',
           background: colors.bgSecondary,
         }}>
+          {/* THIS IS THE ACTIVE VIDEO BRANCH - TOP OF VISIBLE CONTAINER */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            padding: '20px',
+            background: 'magenta',
+            color: 'white',
+            fontSize: '24px',
+            fontWeight: 'bold',
+            zIndex: 9999,
+            textAlign: 'center',
+            border: '10px solid cyan',
+          }}>
+            ⚠️ THIS IS THE ACTIVE VIDEO BRANCH ⚠️
+          </div>
+
           {/* Daily video container (background layer) */}
           <div
             ref={videoContainerRef}
@@ -7721,8 +7767,31 @@ function App() {
               zIndex: 1,
               border: '5px solid red', // TEMP DEBUG: Make container visible
               boxSizing: 'border-box',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-          />
+          >
+            {/* UNMISTAKABLE DEBUG TEXT */}
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'yellow',
+              color: 'black',
+              padding: '40px',
+              fontSize: '32px',
+              fontWeight: 'bold',
+              zIndex: 999,
+              border: '10px solid red',
+              textAlign: 'center',
+            }}>
+              DAILY CONTAINER ACTIVE<br/>
+              Container ID: {activeSession.id.slice(0,8)}<br/>
+              Role: {userRole}
+            </div>
+          </div>
 
         {/* SessionStateMachine overlay (UI layer - doesn't block video) */}
         <SessionStateMachine
