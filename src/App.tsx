@@ -3142,7 +3142,8 @@ function App() {
     if (screen === 'videoSession' && activeSession) {
       startDailyCall()
     }
-  }, [screen, activeSession, startDailyCall])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen, activeSession?.id])
 
   // Poll server session state every 10 seconds for phase tracking and mute enforcement
   useEffect(() => {
