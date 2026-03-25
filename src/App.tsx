@@ -3108,17 +3108,7 @@ function App() {
       // Join meeting manually AFTER all event listeners are attached
       // This ensures joined-meeting event is always caught
       console.log('DAILY: All event listeners attached, now joining meeting...')
-
-      // Request camera/mic permissions first to skip prejoin screen
-      console.log('DAILY: Starting camera to skip prejoin UI...')
-      await call.startCamera()
-      console.log('DAILY: Camera started, proceeding to join')
-
-      await call.join({
-        url: activeSession.video_room_url,
-        userName: user?.email?.split('@')[0] || 'Guest',
-        subscribeToTracksAutomatically: true
-      })
+      await call.join({ url: activeSession.video_room_url })
       console.log('DAILY: join() completed')
 
       // Diagnostic: Check actual meeting state after join resolves
