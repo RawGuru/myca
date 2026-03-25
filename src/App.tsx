@@ -1059,13 +1059,6 @@ function App() {
   const [_sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds (internal only, not displayed)
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
-
-  // Server-controlled session state (for phase tracking and mute rules)
-  const [_serverSessionState, setServerSessionState] = useState<{
-    phase: string
-    giver_can_speak: boolean
-    seconds_remaining_in_phase: number
-  } | null>(null)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [emailEvents, setEmailEvents] = useState<any[]>([])
@@ -3328,31 +3321,34 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, activeSession?.id])
 
-  // Poll server session state every 10 seconds for phase tracking and mute enforcement
+  // Poll authoritative session phase every 10 seconds for mute enforcement
   useEffect(() => {
     if (screen !== 'videoSession' || !activeSession || !user) return
 
     const pollSessionState = async () => {
       try {
-        console.log('[Session State Poll] Fetching server state for booking:', activeSession.id)
+        console.log('[Session State Poll] Fetching authoritative phase for booking:', activeSession.id)
 
-        const { data, error } = await supabase.functions.invoke('get-session-state', {
-          body: { booking_id: activeSession.id }
-        })
+        // Query authoritative phase from session_states table (user-driven, not time-based)
+        const { data, error } = await supabase
+          .from('session_states')
+          .select('current_phase')
+          .eq('booking_id', activeSession.id)
+          .single()
 
         if (error) {
           console.error('[Session State Poll] Error:', error)
           return
         }
 
-        console.log('[Session State Poll] Server state:', data)
-        setServerSessionState(data)
+        console.log('[Session State Poll] Authoritative phase:', data.current_phase)
 
-        // Enforce mute rules for giver
+        // Enforce mute rules for giver based on user-driven phase
         if (user.id === activeSession.giver_id && dailyCallRef.current) {
-          const shouldBeMuted = !data.giver_can_speak
+          // Giver is muted ONLY during transmission phase
+          const shouldBeMuted = data.current_phase === 'transmission'
 
-          console.log(`[Session State Poll] Giver mute enforcement: shouldBeMuted=${shouldBeMuted}, phase=${data.phase}`)
+          console.log(`[Session State Poll] Giver mute enforcement: shouldBeMuted=${shouldBeMuted}, phase=${data.current_phase}`)
 
           if (shouldBeMuted) {
             // Transmission phase: force giver mute
