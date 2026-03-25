@@ -3035,13 +3035,14 @@ function App() {
 
       // Create new Daily call
       console.log('DAILY: creating Daily iframe with createFrame()')
+      console.log('DAILY: will auto-join to skip prejoin screen')
       const call = DailyIframe.createFrame(videoContainerRef.current, {
+        url: activeSession.video_room_url, // Auto-join, skip prejoin screen
         iframeStyle: {
           width: '100%',
           height: '100%',
-          border: '5px solid lime', // TEMP DEBUG: Make iframe visible
-          borderRadius: '0',
-          boxSizing: 'border-box',
+          border: '0',
+          borderRadius: '3px',
         },
         showLeaveButton: false,
         showFullscreenButton: true,
@@ -3117,6 +3118,11 @@ function App() {
 
       call.on('started-camera', () => {
         console.log('DAILY: started-camera event - local video started')
+        const participants = call.participants()
+        if (participants.local) {
+          console.log('DAILY: local participant video:', participants.local.video)
+          console.log('DAILY: local participant tracks:', participants.local.tracks)
+        }
       })
 
       call.on('access-state-updated', (event) => {
@@ -3133,78 +3139,74 @@ function App() {
         console.error('========================================')
       })
 
+      call.on('track-started', (event) => {
+        console.log('DAILY: track-started event')
+        console.log('DAILY: track participant:', event?.participant?.user_name || event?.participant?.session_id)
+        console.log('DAILY: track type:', event?.track?.kind)
+        console.log('DAILY: track state:', event?.track?.readyState)
+      })
+
+      call.on('track-stopped', (event) => {
+        console.log('DAILY: track-stopped event')
+        console.log('DAILY: track participant:', event?.participant?.user_name || event?.participant?.session_id)
+        console.log('DAILY: track type:', event?.track?.kind)
+      })
+
+      call.on('joining-meeting', () => {
+        console.log('DAILY: joining-meeting event - prejoin screen passed, joining now')
+      })
+
+      call.on('joined-meeting', () => {
+        console.log('========================================')
+        console.log('DAILY: joined-meeting event - successfully joined')
+        const participants = call.participants()
+        console.log('DAILY: participant count:', Object.keys(participants).length)
+        console.log('DAILY: local participant:', participants.local)
+        if (participants.local) {
+          console.log('DAILY: local video state:', participants.local.video)
+          console.log('DAILY: local audio state:', participants.local.audio)
+          console.log('DAILY: local tracks:', participants.local.tracks)
+        }
+        // Log remote participants
+        const remote = Object.keys(participants).filter(k => k !== 'local')
+        console.log('DAILY: remote participant count:', remote.length)
+        remote.forEach(sessionId => {
+          const p = participants[sessionId]
+          console.log(`DAILY: remote participant ${p.user_name || sessionId}:`, {
+            video: p.video,
+            audio: p.audio,
+            tracks: p.tracks
+          })
+        })
+        console.log('========================================')
+      })
+
+      call.on('left-meeting', () => {
+        console.log('DAILY: left-meeting event')
+      })
+
       const userRole = user?.id === activeSession.giver_id ? 'GIVER' : 'SEEKER'
       console.log('========================================')
-      console.log('DAILY: BEFORE join() call')
-      console.log('DAILY: requesting join() as', userRole)
-      console.log('DAILY: join URL:', activeSession.video_room_url)
-      console.log('DAILY: call object state:', call.meetingState())
+      console.log('DAILY: Auto-joining via createFrame (no manual join call needed)')
+      console.log('DAILY: joining as', userRole)
+      console.log('DAILY: initial meeting state:', call.meetingState())
       console.log('========================================')
 
-      // Start meeting state polling
+      // Start meeting state polling to track join progress
       let pollCount = 0
       const pollInterval = setInterval(() => {
         pollCount++
-        console.log(`DAILY: meeting state poll [${pollCount}s]:`, call.meetingState())
-        if (pollCount >= 10) {
+        const state = call.meetingState()
+        console.log(`DAILY: meeting state poll [${pollCount}s]:`, state)
+
+        // Stop polling once joined
+        if (state === 'joined-meeting' || pollCount >= 15) {
           clearInterval(pollInterval)
+          if (state === 'joined-meeting') {
+            console.log('DAILY: Successfully reached joined-meeting state')
+          }
         }
       }, 1000)
-
-      try {
-        // Wrap join() in timeout using Promise.race
-        const joinPromise = call.join({ url: activeSession.video_room_url })
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('DAILY_JOIN_TIMEOUT')), 10000)
-        )
-
-        await Promise.race([joinPromise, timeoutPromise])
-
-        clearInterval(pollInterval)
-        console.log('========================================')
-        console.log('DAILY: AFTER join() SUCCESS')
-        console.log('DAILY: join succeeded for', userRole)
-        console.log('DAILY: call object state:', call.meetingState())
-        console.log('========================================')
-      } catch (joinError) {
-        clearInterval(pollInterval)
-
-        const errorMessage = joinError instanceof Error ? joinError.message : String(joinError)
-
-        if (errorMessage === 'DAILY_JOIN_TIMEOUT') {
-          console.error('========================================')
-          console.error('🚨 DAILY JOIN TIMEOUT 🚨')
-          console.error('DAILY: join() did not settle within 10 seconds')
-          console.error('DAILY: current meeting state:', call.meetingState())
-          console.error('DAILY: current access state:', call.accessState())
-
-          // Check iframe still exists
-          if (videoContainerRef.current) {
-            const iframes = videoContainerRef.current.querySelectorAll('iframe')
-            console.error('DAILY: iframe count:', iframes.length)
-            if (iframes.length > 0) {
-              const iframe = iframes[0] as HTMLIFrameElement
-              console.error('DAILY: iframe src:', iframe.src)
-              console.error('DAILY: iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight)
-            }
-            const rect = videoContainerRef.current.getBoundingClientRect()
-            console.error('DAILY: container size:', rect.width, 'x', rect.height)
-          }
-          console.error('🚨 DAILY JOIN TIMEOUT 🚨')
-          console.error('========================================')
-        } else {
-          console.error('========================================')
-          console.error('🚨 DAILY: join() REJECTED/FAILED 🚨')
-          console.error('DAILY: join error:', joinError)
-          console.error('DAILY: join error type:', joinError instanceof Error ? joinError.constructor.name : typeof joinError)
-          console.error('DAILY: join error message:', errorMessage)
-          if (joinError instanceof Error) {
-            console.error('DAILY: join error stack:', joinError.stack)
-          }
-          console.error('========================================')
-        }
-        throw joinError // Re-throw to be caught by outer catch
-      }
 
       // Log participants after join
       const participants = call.participants()
@@ -7831,24 +7833,6 @@ function App() {
           overflow: 'hidden',
           background: colors.bgSecondary,
         }}>
-          {/* THIS IS THE ACTIVE VIDEO BRANCH - TOP OF VISIBLE CONTAINER */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            padding: '20px',
-            background: 'magenta',
-            color: 'white',
-            fontSize: '24px',
-            fontWeight: 'bold',
-            zIndex: 9999,
-            textAlign: 'center',
-            border: '10px solid cyan',
-          }}>
-            ⚠️ THIS IS THE ACTIVE VIDEO BRANCH ⚠️
-          </div>
-
           {/* Daily video container (background layer) */}
           <div
             ref={videoContainerRef}
@@ -7860,33 +7844,8 @@ function App() {
               height: '100%',
               background: colors.bgSecondary,
               zIndex: 1,
-              border: '5px solid red', // TEMP DEBUG: Make container visible
-              boxSizing: 'border-box',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
             }}
-          >
-            {/* UNMISTAKABLE DEBUG TEXT */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              background: 'yellow',
-              color: 'black',
-              padding: '40px',
-              fontSize: '32px',
-              fontWeight: 'bold',
-              zIndex: 999,
-              border: '10px solid red',
-              textAlign: 'center',
-            }}>
-              DAILY CONTAINER ACTIVE<br/>
-              Container ID: {activeSession.id.slice(0,8)}<br/>
-              Role: {userRole}
-            </div>
-          </div>
+          />
 
         {/* SessionStateMachine overlay (UI layer - doesn't block video) */}
         <SessionStateMachine
