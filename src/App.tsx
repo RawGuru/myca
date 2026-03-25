@@ -1753,13 +1753,9 @@ function App() {
       }
 
       // Step 3: Create Daily.co room for the video session
+      // DISABLED: Room creation now happens at join-time via ensure-fresh-room edge function
+      // This prevents stale room URLs (rooms expire after 35 minutes but sessions can be scheduled days in advance)
       let videoRoomUrl: string | null = null
-      try {
-        videoRoomUrl = await createDailyRoom()
-      } catch (roomError) {
-        console.error('Failed to create video room:', roomError)
-        // Continue without room - can be created later
-      }
 
       // Step 4: Update booking status and payment details
       // Important: Keep status as 'pending_approval' if it requires giver approval
@@ -2399,23 +2395,25 @@ function App() {
   }
 
   // Create Daily.co room for a booking
-  const createDailyRoom = async (): Promise<string> => {
-    // Call backend API to create Daily room (expires in 35 minutes, max 2 participants)
-    const response = await fetch('/api/create-room', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      throw new Error(errorData.error || 'Failed to create video room')
-    }
-
-    const { roomUrl } = await response.json()
-    return roomUrl
-  }
+  // DISABLED: Room creation now handled by ensure-fresh-room edge function at join-time
+  // This prevents stale room URLs from rooms created at payment time
+  // const createDailyRoom = async (): Promise<string> => {
+  //   // Call backend API to create Daily room (expires in 35 minutes, max 2 participants)
+  //   const response = await fetch('/api/create-room', {
+  //     method: 'POST',
+  //     headers: {
+  //       'Content-Type': 'application/json',
+  //     },
+  //   })
+  //
+  //   if (!response.ok) {
+  //     const errorData = await response.json()
+  //     throw new Error(errorData.error || 'Failed to create video room')
+  //   }
+  //
+  //   const { roomUrl } = await response.json()
+  //   return roomUrl
+  // }
 
   // Fetch user's bookings
   const fetchUserBookings = useCallback(async () => {
@@ -2908,34 +2906,34 @@ function App() {
     console.log('JOIN SESSION: booking id:', booking.id)
     console.log('JOIN SESSION: booking video_room_url:', booking.video_room_url)
 
-    let roomUrl = booking.video_room_url
+    // ALWAYS call ensure-fresh-room edge function to get a valid room URL
+    // This ensures room is < 30 minutes old and handles concurrent joins safely
+    let roomUrl: string
+    try {
+      console.log('JOIN SESSION: Calling ensure-fresh-room edge function...')
+      const { data, error } = await supabase.functions.invoke('ensure-fresh-room', {
+        body: { booking_id: booking.id }
+      })
 
-    // If room doesn't exist, create it now (fallback for failed creation at booking time)
-    if (!roomUrl) {
-      console.log('JOIN SESSION: No video room URL found, creating room now...')
-      try {
-        roomUrl = await createDailyRoom()
-        console.log('JOIN SESSION: Room created:', roomUrl)
-
-        // Update booking with room URL
-        const { error } = await supabase
-          .from('bookings')
-          .update({ video_room_url: roomUrl })
-          .eq('id', booking.id)
-
-        if (error) {
-          console.error('JOIN SESSION: Failed to update booking with room URL:', error)
-          throw new Error('Failed to save video room URL')
-        }
-
-        // Update local booking object
-        booking.video_room_url = roomUrl
-        console.log('JOIN SESSION: Updated booking object with room URL')
-      } catch (err) {
-        console.error('JOIN SESSION: Failed to create video room:', err)
-        alert('Failed to create video room. Please try again or contact support.')
-        return
+      if (error) {
+        console.error('JOIN SESSION: ensure-fresh-room error:', error)
+        throw new Error(`Failed to ensure fresh room: ${error.message}`)
       }
+
+      if (!data?.video_room_url) {
+        console.error('JOIN SESSION: No room URL returned from edge function')
+        throw new Error('No room URL returned from server')
+      }
+
+      roomUrl = data.video_room_url
+      console.log(`JOIN SESSION: Got room URL from edge function (${data.was_refreshed ? 'refreshed' : 'reused'}):`, roomUrl)
+
+      // Update local booking object
+      booking.video_room_url = roomUrl
+    } catch (err) {
+      console.error('JOIN SESSION: Failed to ensure fresh room:', err)
+      alert('Failed to prepare video room. Please try again or contact support.')
+      return
     }
 
     // Log room URL for both giver and seeker
