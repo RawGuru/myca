@@ -3097,6 +3097,17 @@ function App() {
       await call.join({ url: activeSession.video_room_url })
       console.log('DAILY: join() completed')
 
+      // Diagnostic: Check actual meeting state after join resolves
+      const meetingState = call.meetingState()
+      console.log('DAILY: meetingState after join():', meetingState)
+      console.log('DAILY: Expected: "joined-meeting", Actual:', meetingState)
+
+      if (meetingState !== 'joined-meeting') {
+        console.error('DAILY: join() resolved but meetingState is not "joined-meeting"')
+        console.error('DAILY: This indicates join succeeded at connection level but failed at meeting admission level')
+        console.error('DAILY: Possible causes: permissions denied, invalid room, room expired, or network issue')
+      }
+
       // Log participants after join
       const participants = call.participants()
       console.log('DAILY: participants after join:', Object.keys(participants).length)
