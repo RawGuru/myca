@@ -263,7 +263,24 @@ export function SessionStateMachine({
         })
       }
     } catch (err) {
+      console.error('========================================')
+      console.error('🚨 SESSION STATE INITIALIZATION ERROR 🚨')
       console.error('[SessionStateMachine] Error fetching/creating session state:', err)
+      console.error('[SessionStateMachine] Error type:', err instanceof Error ? err.constructor.name : typeof err)
+      console.error('[SessionStateMachine] Error message:', err instanceof Error ? err.message : String(err))
+      if (err instanceof Error) {
+        console.error('[SessionStateMachine] Error name:', err.name)
+        console.error('[SessionStateMachine] Error stack:', err.stack)
+      }
+      // Log Supabase-specific error fields
+      if (typeof err === 'object' && err !== null) {
+        console.error('[SessionStateMachine] Error code:', (err as any).code)
+        console.error('[SessionStateMachine] Error details:', (err as any).details)
+        console.error('[SessionStateMachine] Error hint:', (err as any).hint)
+        console.error('[SessionStateMachine] Full error object:', JSON.stringify(err, null, 2))
+      }
+      console.error('🚨 SESSION STATE INITIALIZATION ERROR 🚨')
+      console.error('========================================')
       alert('Failed to initialize session. Please refresh the page.')
     } finally {
       setLoading(false)

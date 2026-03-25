@@ -2962,9 +2962,14 @@ function App() {
         updates.seeker_credit_earned = true
 
         // Increment giver's times_joined_late counter
-        await supabase.rpc('increment_times_joined_late', {
-          giver_user_id: booking.giver_id
-        })
+        // ISOLATED: Catch any RPC errors to prevent blocking session startup
+        try {
+          await supabase.rpc('increment_times_joined_late', {
+            giver_user_id: booking.giver_id
+          })
+        } catch (rpcError) {
+          console.warn('[Join Session] increment_times_joined_late RPC failed (non-blocking):', rpcError)
+        }
       }
 
       await supabase
@@ -3049,9 +3054,19 @@ function App() {
       const iframes = container.querySelectorAll('iframe')
       console.log('DAILY: iframe count inside container after mount:', iframes.length)
       if (iframes.length > 0) {
-        console.log('DAILY: iframe element found:', iframes[0])
-        console.log('DAILY: iframe src:', iframes[0].src)
-        console.log('DAILY: iframe size:', iframes[0].offsetWidth, 'x', iframes[0].offsetHeight)
+        const iframe = iframes[0] as HTMLIFrameElement
+        console.log('DAILY: iframe element found:', iframe)
+        console.log('DAILY: iframe src:', iframe.src)
+        console.log('DAILY: iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight)
+
+        // Listen for iframe load event
+        iframe.addEventListener('load', () => {
+          console.log('DAILY: iframe LOAD event fired - iframe content loaded')
+        })
+
+        iframe.addEventListener('error', (e) => {
+          console.error('DAILY: iframe ERROR event fired:', e)
+        })
       } else {
         console.error('DAILY: NO IFRAME FOUND IN CONTAINER AFTER createFrame()')
       }
@@ -3092,7 +3107,12 @@ function App() {
 
       // Track local media events
       call.on('camera-error', (event) => {
+        console.error('========================================')
+        console.error('🚨 DAILY: camera-error event 🚨')
         console.error('DAILY: camera-error event:', event)
+        console.error('DAILY: camera-error errorMsg:', event?.errorMsg)
+        console.error('DAILY: camera-error error:', event?.error)
+        console.error('========================================')
       })
 
       call.on('started-camera', () => {
@@ -3103,13 +3123,88 @@ function App() {
         console.log('DAILY: access-state-updated:', event)
       })
 
+      call.on('error', (event) => {
+        console.error('========================================')
+        console.error('🚨 DAILY: error event 🚨')
+        console.error('DAILY: error event:', event)
+        console.error('DAILY: error action:', event?.action)
+        console.error('DAILY: error errorMsg:', event?.errorMsg)
+        console.error('DAILY: error error:', event?.error)
+        console.error('========================================')
+      })
+
       const userRole = user?.id === activeSession.giver_id ? 'GIVER' : 'SEEKER'
+      console.log('========================================')
+      console.log('DAILY: BEFORE join() call')
       console.log('DAILY: requesting join() as', userRole)
       console.log('DAILY: join URL:', activeSession.video_room_url)
+      console.log('DAILY: call object state:', call.meetingState())
+      console.log('========================================')
 
-      await call.join({ url: activeSession.video_room_url })
+      // Start meeting state polling
+      let pollCount = 0
+      const pollInterval = setInterval(() => {
+        pollCount++
+        console.log(`DAILY: meeting state poll [${pollCount}s]:`, call.meetingState())
+        if (pollCount >= 10) {
+          clearInterval(pollInterval)
+        }
+      }, 1000)
 
-      console.log('DAILY: join succeeded for', userRole)
+      try {
+        // Wrap join() in timeout using Promise.race
+        const joinPromise = call.join({ url: activeSession.video_room_url })
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('DAILY_JOIN_TIMEOUT')), 10000)
+        )
+
+        await Promise.race([joinPromise, timeoutPromise])
+
+        clearInterval(pollInterval)
+        console.log('========================================')
+        console.log('DAILY: AFTER join() SUCCESS')
+        console.log('DAILY: join succeeded for', userRole)
+        console.log('DAILY: call object state:', call.meetingState())
+        console.log('========================================')
+      } catch (joinError) {
+        clearInterval(pollInterval)
+
+        const errorMessage = joinError instanceof Error ? joinError.message : String(joinError)
+
+        if (errorMessage === 'DAILY_JOIN_TIMEOUT') {
+          console.error('========================================')
+          console.error('🚨 DAILY JOIN TIMEOUT 🚨')
+          console.error('DAILY: join() did not settle within 10 seconds')
+          console.error('DAILY: current meeting state:', call.meetingState())
+          console.error('DAILY: current access state:', call.accessState())
+
+          // Check iframe still exists
+          if (videoContainerRef.current) {
+            const iframes = videoContainerRef.current.querySelectorAll('iframe')
+            console.error('DAILY: iframe count:', iframes.length)
+            if (iframes.length > 0) {
+              const iframe = iframes[0] as HTMLIFrameElement
+              console.error('DAILY: iframe src:', iframe.src)
+              console.error('DAILY: iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight)
+            }
+            const rect = videoContainerRef.current.getBoundingClientRect()
+            console.error('DAILY: container size:', rect.width, 'x', rect.height)
+          }
+          console.error('🚨 DAILY JOIN TIMEOUT 🚨')
+          console.error('========================================')
+        } else {
+          console.error('========================================')
+          console.error('🚨 DAILY: join() REJECTED/FAILED 🚨')
+          console.error('DAILY: join error:', joinError)
+          console.error('DAILY: join error type:', joinError instanceof Error ? joinError.constructor.name : typeof joinError)
+          console.error('DAILY: join error message:', errorMessage)
+          if (joinError instanceof Error) {
+            console.error('DAILY: join error stack:', joinError.stack)
+          }
+          console.error('========================================')
+        }
+        throw joinError // Re-throw to be caught by outer catch
+      }
 
       // Log participants after join
       const participants = call.participants()
