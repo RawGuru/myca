@@ -2998,44 +2998,18 @@ function App() {
 
   // Start the Daily call
   const startDailyCall = useCallback(async () => {
-    console.log('========================================')
-    console.log('DAILY: startDailyCall invoked')
-    console.log('DAILY: booking id:', activeSession?.id)
-    console.log('DAILY: room URL:', activeSession?.video_room_url)
-    console.log('DAILY: videoContainerRef.current exists:', !!videoContainerRef.current)
-
     if (!activeSession?.video_room_url || !videoContainerRef.current) {
       console.error('DAILY: Cannot start - missing room URL or container')
-      console.error('DAILY: - video_room_url:', activeSession?.video_room_url)
-      console.error('DAILY: - container ref:', videoContainerRef.current)
       return
     }
-
-    // Container diagnostics
-    const container = videoContainerRef.current
-    const rect = container.getBoundingClientRect()
-    console.log('DAILY: container ref found')
-    console.log('DAILY: container size:', rect.width, 'x', rect.height)
-    console.log('DAILY: container position:', 'top:', rect.top, 'left:', rect.left)
-    console.log('DAILY: container computed style:', {
-      display: getComputedStyle(container).display,
-      visibility: getComputedStyle(container).visibility,
-      opacity: getComputedStyle(container).opacity,
-      zIndex: getComputedStyle(container).zIndex,
-      position: getComputedStyle(container).position
-    })
 
     try {
       // Destroy existing call if any
       if (dailyCallRef.current) {
-        console.log('DAILY: destroying existing call object')
         await dailyCallRef.current.destroy()
-        console.log('DAILY: existing call destroyed')
       }
 
-      // Create new Daily call
-      console.log('DAILY: creating Daily iframe with createFrame()')
-      console.log('DAILY: will auto-join to skip prejoin screen')
+      // Create new Daily call with auto-join
       const call = DailyIframe.createFrame(videoContainerRef.current, {
         url: activeSession.video_room_url, // Auto-join, skip prejoin screen
         iframeStyle: {
@@ -3048,39 +3022,13 @@ function App() {
         showFullscreenButton: true,
       })
 
-      console.log('DAILY: frame/call object created:', !!call)
-      console.log('DAILY: call object type:', typeof call)
-
-      // Check if iframe was actually inserted into DOM
-      const iframes = container.querySelectorAll('iframe')
-      console.log('DAILY: iframe count inside container after mount:', iframes.length)
-      if (iframes.length > 0) {
-        const iframe = iframes[0] as HTMLIFrameElement
-        console.log('DAILY: iframe element found:', iframe)
-        console.log('DAILY: iframe src:', iframe.src)
-        console.log('DAILY: iframe size:', iframe.offsetWidth, 'x', iframe.offsetHeight)
-
-        // Listen for iframe load event
-        iframe.addEventListener('load', () => {
-          console.log('DAILY: iframe LOAD event fired - iframe content loaded')
-        })
-
-        iframe.addEventListener('error', (e) => {
-          console.error('DAILY: iframe ERROR event fired:', e)
-        })
-      } else {
-        console.error('DAILY: NO IFRAME FOUND IN CONTAINER AFTER createFrame()')
-      }
-
       dailyCallRef.current = call
 
       // Show giver overlay when both participants join
       if (user && user.id === activeSession.giver_id) {
-        call.on('participant-joined', (event) => {
-          console.log('DAILY: participant-joined event:', event?.participant?.user_name || 'unknown')
+        call.on('participant-joined', () => {
           const participants = call.participants()
           const participantCount = Object.keys(participants).length
-          console.log('DAILY: total participants now:', participantCount)
 
           // When both are present (local + 1 remote)
           if (participantCount >= 2) {
@@ -3092,51 +3040,13 @@ function App() {
       }
 
       // Track when participants leave (for both giver and seeker)
-      call.on('participant-left', async (event) => {
-        console.log('DAILY: participant-left event:', event?.participant?.user_name || 'unknown')
-        if (!user || !activeSession) return
-
-        // Identify who left based on their session_id
-        const localParticipant = call.participants().local
-        const isLocalUserLeaving = event.participant.session_id === localParticipant?.session_id
-
-        if (isLocalUserLeaving) {
-          // Note: Individual participant leave times (giver_left_at, seeker_left_at)
-          // are not tracked in the current schema. Session end time is tracked via ended_at.
-        }
-      })
-
-      // Track local media events
-      call.on('camera-error', (event) => {
-        console.error('========================================')
-        console.error('🚨 DAILY: camera-error event 🚨')
-        console.error('DAILY: camera-error event:', event)
-        console.error('DAILY: camera-error errorMsg:', event?.errorMsg)
-        console.error('DAILY: camera-error error:', event?.error)
-        console.error('========================================')
-      })
-
-      call.on('started-camera', () => {
-        console.log('DAILY: started-camera event - local video started')
-        const participants = call.participants()
-        if (participants.local) {
-          console.log('DAILY: local participant video:', participants.local.video)
-          console.log('DAILY: local participant tracks:', participants.local.tracks)
-        }
-      })
-
-      call.on('access-state-updated', (event) => {
-        console.log('DAILY: access-state-updated:', event)
+      call.on('participant-left', async () => {
+        // Note: Individual participant leave times (giver_left_at, seeker_left_at)
+        // are not tracked in the current schema. Session end time is tracked via ended_at.
       })
 
       call.on('error', (event) => {
-        console.error('========================================')
-        console.error('🚨 DAILY: error event 🚨')
-        console.error('DAILY: error event:', event)
-        console.error('DAILY: error action:', event?.action)
-        console.error('DAILY: error errorMsg:', event?.errorMsg)
-        console.error('DAILY: error error:', event?.error)
-        console.error('========================================')
+        console.error('DAILY: error event:', event?.action, event?.errorMsg)
       })
 
       call.on('track-started', (event) => {
@@ -3152,9 +3062,6 @@ function App() {
         console.log('DAILY: track type:', event?.track?.kind)
       })
 
-      call.on('joining-meeting', () => {
-        console.log('DAILY: joining-meeting event - prejoin screen passed, joining now')
-      })
 
       call.on('joined-meeting', () => {
         console.log('========================================')
@@ -3185,28 +3092,7 @@ function App() {
         console.log('DAILY: left-meeting event')
       })
 
-      const userRole = user?.id === activeSession.giver_id ? 'GIVER' : 'SEEKER'
-      console.log('========================================')
-      console.log('DAILY: Auto-joining via createFrame (no manual join call needed)')
-      console.log('DAILY: joining as', userRole)
-      console.log('DAILY: initial meeting state:', call.meetingState())
-      console.log('========================================')
-
-      // Start meeting state polling to track join progress
-      let pollCount = 0
-      const pollInterval = setInterval(() => {
-        pollCount++
-        const state = call.meetingState()
-        console.log(`DAILY: meeting state poll [${pollCount}s]:`, state)
-
-        // Stop polling once joined
-        if (state === 'joined-meeting' || pollCount >= 15) {
-          clearInterval(pollInterval)
-          if (state === 'joined-meeting') {
-            console.log('DAILY: Successfully reached joined-meeting state')
-          }
-        }
-      }, 1000)
+      // Auto-joining via createFrame with url parameter (no manual join call needed)
 
       // Log participants after join
       const participants = call.participants()
@@ -7814,15 +7700,6 @@ function App() {
   // Video session screen with phased protocol
   if (screen === 'videoSession' && activeSession && user) {
     const userRole = user.id === activeSession.seeker_id ? 'receiver' : 'giver'
-
-    console.log('========================================')
-    console.log('🔴🔴🔴 ACTIVE VIDEO BRANCH HIT 🔴🔴🔴')
-    console.log('RENDER: Video session screen is rendering')
-    console.log('RENDER: activeSession.id =', activeSession.id)
-    console.log('RENDER: userRole =', userRole)
-    console.log('RENDER: About to return JSX with VideoSessionWrapper')
-    console.log('🔴🔴🔴 ACTIVE VIDEO BRANCH HIT 🔴🔴🔴')
-    console.log('========================================')
 
     return (
       <VideoSessionWrapper>
