@@ -3038,6 +3038,27 @@ function App() {
         })
       }
 
+      // Log remote participants when they join (diagnostic - updates in real-time)
+      call.on('participant-joined', (event) => {
+        console.log('========================================')
+        console.log('DAILY: participant-joined event')
+        console.log('DAILY: New participant:', event?.participant?.user_name || event?.participant?.session_id)
+
+        const participants = call.participants()
+        const remote = Object.keys(participants).filter(k => k !== 'local')
+        console.log('DAILY: Updated remote participant count:', remote.length)
+
+        remote.forEach(sessionId => {
+          const p = participants[sessionId]
+          console.log(`DAILY: Remote participant ${p.user_name || sessionId}:`, {
+            video: p.video,
+            audio: p.audio,
+            tracks: p.tracks
+          })
+        })
+        console.log('========================================')
+      })
+
       // Track when participants leave (for both giver and seeker)
       call.on('participant-left', async () => {
         // Note: Individual participant leave times (giver_left_at, seeker_left_at)
