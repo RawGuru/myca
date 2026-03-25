@@ -263,6 +263,31 @@ export function SessionStateMachine({
         })
       }
     } catch (err) {
+      // Check if error is duplicate key violation (code 23505)
+      // This happens when two participants join concurrently and both try to create the row
+      if (typeof err === 'object' && err !== null && (err as any).code === '23505') {
+        console.log('[SessionStateMachine] Duplicate key detected - recovering by fetching existing row')
+
+        // Retry fetch - the other participant must have created it
+        try {
+          const { data: existingState, error: retryError } = await supabase
+            .from('session_states')
+            .select('*')
+            .eq('booking_id', booking.id)
+            .single()
+
+          if (retryError) throw retryError
+
+          setSessionState(existingState as SessionState)
+          console.log('[SessionStateMachine] Successfully recovered from concurrent join race')
+          return // Success - exit early
+        } catch (retryErr) {
+          console.error('[SessionStateMachine] Failed to fetch after duplicate key:', retryErr)
+          // Fall through to fatal error handling below
+        }
+      }
+
+      // Fatal error - log and alert
       console.error('========================================')
       console.error('🚨 SESSION STATE INITIALIZATION ERROR 🚨')
       console.error('[SessionStateMachine] Error fetching/creating session state:', err)
