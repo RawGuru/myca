@@ -7704,7 +7704,7 @@ function App() {
     return (
       <VideoSessionWrapper>
         <div style={{
-          maxWidth: '100%',
+          width: '100vw',
           height: '100vh',
           position: 'relative',
           overflow: 'hidden',
