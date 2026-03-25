@@ -3009,9 +3009,8 @@ function App() {
         await dailyCallRef.current.destroy()
       }
 
-      // Create new Daily call with auto-join
+      // Create new Daily call (without auto-join to avoid listener race condition)
       const call = DailyIframe.createFrame(videoContainerRef.current, {
-        url: activeSession.video_room_url, // Auto-join, skip prejoin screen
         iframeStyle: {
           width: '100%',
           height: '100%',
@@ -3092,7 +3091,11 @@ function App() {
         console.log('DAILY: left-meeting event')
       })
 
-      // Auto-joining via createFrame with url parameter (no manual join call needed)
+      // Join meeting manually AFTER all event listeners are attached
+      // This ensures joined-meeting event is always caught
+      console.log('DAILY: All event listeners attached, now joining meeting...')
+      await call.join({ url: activeSession.video_room_url })
+      console.log('DAILY: join() completed')
 
       // Log participants after join
       const participants = call.participants()
