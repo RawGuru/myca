@@ -223,6 +223,38 @@ export function SessionStateMachine({
     fetchOrCreateSessionState()
   }, [booking.id])
 
+  // Sync local sessionState with authoritative database phase every 2 seconds
+  // This ensures non-initiating user's UI updates even if realtime subscription is slow/failed
+  useEffect(() => {
+    if (!booking.id) return
+
+    const syncAuthoritativePhase = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('session_states')
+          .select('*')
+          .eq('booking_id', booking.id)
+          .maybeSingle()
+
+        if (error || !data) return
+
+        // Only update if phase changed (avoid unnecessary re-renders)
+        if (sessionState && sessionState.current_phase !== data.current_phase) {
+          console.log('[Phase Sync] Detected phase mismatch, syncing', {
+            local_phase: sessionState.current_phase,
+            authoritative_phase: data.current_phase
+          })
+          setSessionState(data as SessionState)
+        }
+      } catch (err) {
+        console.error('[Phase Sync] Error:', err)
+      }
+    }
+
+    const interval = setInterval(syncAuthoritativePhase, 2000)
+    return () => clearInterval(interval)
+  }, [booking.id, sessionState?.current_phase])
+
   const fetchOrCreateSessionState = async () => {
     try {
       // Try to fetch existing session state
@@ -703,6 +735,38 @@ export function SessionStateMachine({
       </div>
     )
   }
+
+  // Log phase render selection
+  useEffect(() => {
+    if (!sessionState) return
+
+    let component = 'none'
+    let ctaLabel = 'none'
+
+    if (sessionState.current_phase === 'transmission') {
+      component = 'TransmissionPhase'
+      ctaLabel = userRole === 'receiver' ? "I'm done, reflect now" : 'none'
+    } else if (sessionState.current_phase === 'reflection') {
+      component = 'ReflectionPhase'
+      ctaLabel = userRole === 'giver' ? 'Done reflecting' : 'none'
+    } else if (sessionState.current_phase === 'validation') {
+      component = 'ValidationPhase'
+      ctaLabel = userRole === 'receiver' ? 'Yes/No buttons' : 'none'
+    } else if (sessionState.current_phase === 'direction') {
+      component = 'DirectionPhase'
+      ctaLabel = 'varies'
+    } else if (sessionState.current_phase === 'ended') {
+      component = 'SessionEndedSummary'
+      ctaLabel = 'none'
+    }
+
+    console.log('[PHASE RENDER]', {
+      authoritative_phase: sessionState.current_phase,
+      userRole,
+      component,
+      ctaLabel
+    })
+  }, [sessionState?.current_phase, userRole])
 
   return (
     <div>
