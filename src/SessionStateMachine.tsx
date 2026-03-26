@@ -599,40 +599,6 @@ export function SessionStateMachine({
     }
   }
 
-  // Handle safety exit from giver
-  const handleGiverSafetyExit = async () => {
-    if (!confirm('Are you sure you want to exit for safety reasons? This will end the session and apply pro-rated payout.')) {
-      return
-    }
-
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
-
-      // Call finalize-session edge function
-      const response = await fetch(`${supabaseUrl}/functions/v1/finalize-session`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${supabaseAnonKey}`
-        },
-        body: JSON.stringify({
-          booking_id: booking.id,
-          end_reason: 'giver_safety_exit'
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to finalize session')
-      }
-
-      await updatePhase('ended', 'system')
-    } catch (err) {
-      console.error('[Session] Error processing safety exit:', err)
-      alert('Failed to exit session. Please try again.')
-    }
-  }
-
   // Handle giver actions
   const handleGiverDoneReflection = async () => {
     console.log('[Giver] Done with reflection, advancing to validation')
@@ -843,7 +809,6 @@ export function SessionStateMachine({
           sessionTimeRemaining={sessionTimeRemaining}
           onRequestExtension={onRequestExtension}
           onGiverCustomDirectionResponse={handleGiverCustomDirectionResponse}
-          onSafetyExit={handleGiverSafetyExit}
           dailyCall={dailyCall}
         />
       )}

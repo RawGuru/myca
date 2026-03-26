@@ -52,6 +52,26 @@ serve(async (req) => {
       throw new Error(`Booking not found: ${bookingError?.message}`)
     }
 
+    // IDEMPOTENCY CHECK: If booking already ended, return existing state
+    if (booking.ended_at) {
+      console.log(`[Finalize Session] IDEMPOTENT: Booking already finalized at ${booking.ended_at}`)
+      return new Response(
+        JSON.stringify({
+          success: true,
+          already_finalized: true,
+          payout_net_cents: booking.payout_net_cents || 0,
+          refund_gross_cents: booking.refund_gross_cents || 0,
+          elapsed_seconds: booking.elapsed_seconds || 0,
+          ended_at: booking.ended_at,
+          end_reason: booking.end_reason,
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+        }
+      )
+    }
+
     // Calculate elapsed time
     const startedAt = new Date(booking.started_at || booking.session_started_at || booking.scheduled_time)
     const endedAt = new Date()

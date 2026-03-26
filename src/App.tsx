@@ -1060,6 +1060,7 @@ function App() {
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
   const [dailyMeetingJoined, setDailyMeetingJoined] = useState(false) // Track if user completed Daily prejoin and joined meeting
+  const [isFinalizingSession, setIsFinalizingSession] = useState(false) // Track if session is being finalized
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [emailEvents, setEmailEvents] = useState<any[]>([])
@@ -1080,6 +1081,7 @@ function App() {
   const videoContainerRef = useRef<HTMLDivElement>(null)
   const previewVideoRef = useRef<HTMLVideoElement>(null)
   const stripeReturnHandledRef = useRef(false)
+  const isFinalizingRef = useRef(false) // Guard against duplicate finalization calls
 
   // Giver profile form state
   const [giverName, setGiverName] = useState('')
@@ -3089,6 +3091,27 @@ function App() {
     }
 
     try {
+      // Mobile detection and permission pre-check
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+      console.log('[DAILY] Mobile device detected:', isMobile)
+
+      if (isMobile) {
+        console.log('[DAILY] Mobile path - requesting permissions explicitly before iframe init')
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: true
+          })
+          console.log('[DAILY] Mobile permissions granted, stream:', stream.id)
+          // Stop tracks immediately - Daily will request again
+          stream.getTracks().forEach(track => track.stop())
+        } catch (permErr) {
+          console.error('[DAILY] Mobile permission denied:', permErr)
+          alert('Camera and microphone access required. Please grant permissions in your browser settings and try again.')
+          return
+        }
+      }
+
       // Destroy existing call if any
       if (dailyCallRef.current) {
         await dailyCallRef.current.destroy()
@@ -3308,6 +3331,122 @@ function App() {
     console.log('========================================')
   }, [activeSession, user])
 
+  // Finalize session - single authoritative completion path
+  const finalizeSession = async (reason: 'completed' | 'safety_exit' | 'receiver_end_complete') => {
+    console.log('========================================')
+    console.log('[FINALIZE] finalizeSession called with reason:', reason)
+
+    // Guard: prevent duplicate finalization
+    if (isFinalizingRef.current) {
+      console.log('[FINALIZE] Already finalizing, ignoring duplicate call')
+      return
+    }
+
+    if (!activeSession) {
+      console.log('[FINALIZE] No active session, nothing to finalize')
+      return
+    }
+
+    // Mark as finalizing
+    isFinalizingRef.current = true
+    setIsFinalizingSession(true)
+    console.log('[FINALIZE] Set isFinalizingRef.current = true')
+
+    const completedSession = activeSession
+
+    try {
+      // Step 1: Leave Daily cleanly
+      console.log('[FINALIZE] Step 1: Leaving Daily call')
+      if (dailyCallRef.current) {
+        await dailyCallRef.current.destroy()
+        dailyCallRef.current = null
+        console.log('[FINALIZE] Daily call destroyed')
+      }
+
+      // Step 2: Call server finalization endpoint
+      console.log('[FINALIZE] Step 2: Calling finalize-session endpoint')
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/finalize-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        },
+        body: JSON.stringify({
+          booking_id: completedSession.id,
+          end_reason: reason
+        })
+      })
+
+      const result = await response.json()
+      console.log('[FINALIZE] Server response:', result)
+
+      if (!response.ok) {
+        throw new Error(`Server finalization failed: ${result.error || 'Unknown error'}`)
+      }
+
+      console.log('[FINALIZE] Server finalization succeeded:', {
+        payout: result.payout_net_cents,
+        refund: result.refund_gross_cents,
+        elapsed: result.elapsed_seconds,
+        already_finalized: result.already_finalized
+      })
+
+      // Step 3: Clean up local state
+      console.log('[FINALIZE] Step 3: Cleaning up local state')
+      setActiveSession(null)
+      setSessionTimeRemaining(30 * 60)
+      setShowTimeWarning(false)
+      setShowCountdown(false)
+      setDailyMeetingJoined(false)
+      setExtensionTimeRemaining(60)
+
+      // Refresh bookings
+      fetchUserBookings()
+
+      // Step 4: Route to post-session screen
+      console.log('[FINALIZE] Step 4: Routing to post-session screen')
+
+      // Show feedback if completed and user is seeker
+      if ((reason === 'completed' || reason === 'receiver_end_complete') && user && user.id === completedSession.seeker_id) {
+        // Check if feedback already exists
+        const { data: existingFeedback } = await supabase
+          .from('feedback')
+          .select('id')
+          .eq('booking_id', completedSession.id)
+          .eq('seeker_id', user.id)
+          .single()
+
+        if (!existingFeedback) {
+          setFeedbackBooking(completedSession)
+          setScreen('feedback')
+          console.log('[FINALIZE] Routed to feedback screen')
+        } else {
+          setScreen('sessions')
+          console.log('[FINALIZE] Feedback already exists, routed to sessions')
+        }
+      } else {
+        setScreen('sessions')
+        console.log('[FINALIZE] Routed to sessions screen')
+      }
+
+    } catch (err) {
+      console.error('[FINALIZE] Error during finalization:', err)
+      alert('Session ended but finalization may be incomplete. Please check your sessions page.')
+
+      // Clean up anyway to prevent stuck state
+      setActiveSession(null)
+      setScreen('sessions')
+    } finally {
+      setIsFinalizingSession(false)
+      // Don't reset isFinalizingRef - keep it true to prevent re-entry
+      console.log('[FINALIZE] Finalization complete')
+      console.log('========================================')
+    }
+  }
+
   // Leave the video session
   const leaveSession = async (markComplete: boolean = false) => {
     console.log('========================================')
@@ -3401,10 +3540,10 @@ function App() {
     const timer = setInterval(() => {
       setSessionTimeRemaining(prev => {
         if (prev <= 1) {
-          // Time's up - hard cut (auto disconnect)
+          // Time's up - finalize session
           clearInterval(timer)
           setShowCountdown(false)
-          leaveSession(true)
+          finalizeSession('completed')
           return 0
         }
 
@@ -3424,7 +3563,7 @@ function App() {
     }, 1000)
 
     return () => clearInterval(timer)
-  }, [activeSession, screen, leaveSession, playChime, showCountdown])
+  }, [activeSession, screen, finalizeSession, playChime, showCountdown])
 
   // Start Daily call when entering video session
   useEffect(() => {
@@ -7933,6 +8072,9 @@ function App() {
             top: '80px', // Below phase indicator
             right: '20px',
             zIndex: 10, // Lower z-index to not cover protocol UI
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
           }}>
             <button
               onClick={() => leaveSession(false)}
@@ -7953,6 +8095,54 @@ function App() {
               <span style={{ fontSize: '1rem' }}>📞</span>
               Leave
             </button>
+
+            {/* Safety Exit - giver only, small and quiet */}
+            {userRole === 'giver' && (
+              <button
+                onClick={() => {
+                  if (confirm('Are you sure you want to exit for safety reasons? This will end the session immediately.')) {
+                    finalizeSession('safety_exit')
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  color: '#d9534f',
+                  border: '1px solid rgba(217, 83, 79, 0.3)',
+                  padding: '6px 12px',
+                  borderRadius: '3px',
+                  fontSize: '0.7rem',
+                  fontWeight: 400,
+                  cursor: 'pointer',
+                  opacity: 0.7,
+                }}
+              >
+                Safety Exit
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Ending session overlay */}
+        {isFinalizingSession && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.8)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{
+              color: '#fff',
+              fontSize: '1.2rem',
+              fontWeight: 500,
+            }}>
+              Ending session...
+            </div>
           </div>
         )}
         </div>

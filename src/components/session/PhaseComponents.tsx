@@ -665,7 +665,6 @@ interface DirectionPhaseProps {
   sessionTimeRemaining: number
   onRequestExtension?: () => void
   onGiverCustomDirectionResponse: (accepted: boolean) => void
-  onSafetyExit: () => void
   dailyCall: DailyCall | null
 }
 
@@ -678,11 +677,9 @@ export function DirectionPhase({
   sessionTimeRemaining,
   onRequestExtension,
   onGiverCustomDirectionResponse,
-  onSafetyExit,
   dailyCall
 }: DirectionPhaseProps) {
   const [turnState, setTurnState] = useState<'turn1' | 'turn2' | 'completed'>('turn1')
-  const [micOwner, setMicOwner] = useState<'receiver' | 'giver'>('receiver')
 
   const directionLabels: Record<DirectionType, string> = {
     go_deeper: 'Going Deeper',
@@ -803,36 +800,12 @@ export function DirectionPhase({
             Template complete - continue or wind down
           </p>
         )}
-
-        {userRole === 'giver' && (
-          <button
-            style={{
-              ...buttonSecondaryStyle,
-              fontSize: '0.75rem',
-              padding: '8px 16px',
-              marginTop: '10px',
-              borderColor: colors.error,
-              color: colors.error
-            }}
-            onClick={onSafetyExit}
-          >
-            Safety Exit
-          </button>
-        )}
       </div>
     )
   }
 
-  // Handle think_together manual turn passing
+  // Handle think_together - open dialogue, no turn passing
   if (directionSelected === 'think_together') {
-    const handlePassTurn = () => {
-      const newOwner = micOwner === 'receiver' ? 'giver' : 'receiver'
-      setMicOwner(newOwner)
-      if (dailyCall) {
-        dailyCall.setLocalAudio(userRole === newOwner)
-      }
-    }
-
     return (
       <div style={{
         position: 'fixed',
@@ -852,39 +825,12 @@ export function DirectionPhase({
           {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
         </div>
 
-        <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
-          Current speaker: {micOwner === 'receiver' ? 'Receiver' : 'Giver'}
-        </p>
-
-        <button
-          style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }}
-          onClick={handlePassTurn}
-        >
-          Pass Turn
-        </button>
-
         {showExtensionOption && (
           <button
             style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
             onClick={onRequestExtension}
           >
             Request +{BLOCK_MINUTES} minutes
-          </button>
-        )}
-
-        {userRole === 'giver' && (
-          <button
-            style={{
-              ...buttonSecondaryStyle,
-              fontSize: '0.75rem',
-              padding: '8px 16px',
-              marginTop: '10px',
-              borderColor: colors.error,
-              color: colors.error
-            }}
-            onClick={onSafetyExit}
-          >
-            Safety Exit
           </button>
         )}
       </div>
@@ -917,22 +863,6 @@ export function DirectionPhase({
           onClick={onRequestExtension}
         >
           Request +{BLOCK_MINUTES} minutes
-        </button>
-      )}
-
-      {userRole === 'giver' && (
-        <button
-          style={{
-            ...buttonSecondaryStyle,
-            fontSize: '0.75rem',
-            padding: '8px 16px',
-            marginTop: '10px',
-            borderColor: colors.error,
-            color: colors.error
-          }}
-          onClick={onSafetyExit}
-        >
-          Safety Exit
         </button>
       )}
     </div>
