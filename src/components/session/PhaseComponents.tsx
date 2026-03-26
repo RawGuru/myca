@@ -27,26 +27,30 @@ const overlayStyle: React.CSSProperties = {
   bottom: 0,
   left: 0,
   right: 0,
-  background: 'rgba(10, 10, 10, 0.85)',
+  background: 'rgba(10, 10, 10, 0.95)',
   zIndex: 50,
-  padding: '20px',
+  padding: '16px',
+  paddingBottom: 'max(16px, env(safe-area-inset-bottom))', // Respect safe area on iOS
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'center',
-  maxHeight: '40vh', // Don't cover more than 40% of screen
-  overflow: 'auto',
+  justifyContent: 'flex-start',
+  maxHeight: '50dvh', // Use dynamic viewport height, allow more space for controls
+  overflowY: 'auto',
+  overflowX: 'hidden',
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '18px 30px',
+  padding: '14px 24px',
   borderRadius: '3px',
-  fontSize: '1rem',
+  fontSize: '0.95rem',
   fontWeight: 600,
   cursor: 'pointer',
   border: 'none',
   background: colors.accent,
   color: colors.bgPrimary,
+  width: '100%',
+  maxWidth: '320px',
 }
 
 const buttonSecondaryStyle: React.CSSProperties = {
@@ -135,28 +139,28 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
   const onComplete = onDone // Use consistent naming internally
   return (
     <div style={overlayStyle}>
-      <div style={{ maxWidth: '400px', textAlign: 'center' }}>
+      <div style={{ maxWidth: '360px', width: '100%', textAlign: 'center' }}>
         {userRole === 'receiver' ? (
           <>
             <div style={{
-              fontSize: '3rem',
-              marginBottom: '20px'
+              fontSize: '2.5rem',
+              marginBottom: '12px'
             }}>
               🎙️
             </div>
             <h2 style={{
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               fontWeight: 600,
-              marginBottom: '15px',
+              marginBottom: '10px',
               color: colors.textPrimary
             }}>
               Your Transmission
             </h2>
             <p style={{
-              fontSize: '1rem',
-              lineHeight: 1.6,
+              fontSize: '0.95rem',
+              lineHeight: 1.5,
               color: colors.textSecondary,
-              marginBottom: '30px'
+              marginBottom: '20px'
             }}>
               Speak until you feel complete. Nothing else is required right now.
             </p>
@@ -170,29 +174,29 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
         ) : (
           <>
             <div style={{
-              fontSize: '3rem',
-              marginBottom: '20px'
+              fontSize: '2.5rem',
+              marginBottom: '12px'
             }}>
               👂
             </div>
             <h2 style={{
-              fontSize: '1.5rem',
+              fontSize: '1.3rem',
               fontWeight: 600,
-              marginBottom: '15px',
+              marginBottom: '10px',
               color: colors.textPrimary
             }}>
               Listening
             </h2>
             <p style={{
-              fontSize: '1rem',
-              lineHeight: 1.6,
+              fontSize: '0.95rem',
+              lineHeight: 1.5,
               color: colors.textSecondary,
-              marginBottom: '15px'
+              marginBottom: '10px'
             }}>
               One person speaks. One person listens. The app enforces it.
             </p>
             <p style={{
-              fontSize: '0.9rem',
+              fontSize: '0.85rem',
               color: colors.textMuted
             }}>
               Your mic is OFF

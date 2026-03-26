@@ -1059,6 +1059,7 @@ function App() {
   const [_sessionTimeRemaining, setSessionTimeRemaining] = useState(30 * 60) // 30 minutes in seconds (internal only, not displayed)
   const [_showTimeWarning, setShowTimeWarning] = useState(false) // Internal state, not displayed per constitution
   const [showCountdown, setShowCountdown] = useState(false) // 30-second countdown overlay (Phase 5)
+  const [dailyMeetingJoined, setDailyMeetingJoined] = useState(false) // Track if user completed Daily prejoin and joined meeting
   const [userBookings, setUserBookings] = useState<Booking[]>([])
   const [bookingsFetchError, setBookingsFetchError] = useState<{ code: string; message: string } | null>(null)
   const [emailEvents, setEmailEvents] = useState<any[]>([])
@@ -3127,6 +3128,7 @@ function App() {
       call.on('joined-meeting', () => {
         console.log('========================================')
         console.log('DAILY: joined-meeting event - successfully joined')
+        setDailyMeetingJoined(true) // User completed prejoin, now show protocol UI
         const participants = call.participants()
         console.log('DAILY: participant count:', Object.keys(participants).length)
         console.log('DAILY: local participant:', participants.local)
@@ -3267,6 +3269,7 @@ function App() {
     setSessionTimeRemaining(30 * 60)
     setShowTimeWarning(false)
     setShowCountdown(false)
+    setDailyMeetingJoined(false) // Reset Daily join state
 
     // Reset state
     setExtensionTimeRemaining(60)
@@ -7784,7 +7787,7 @@ function App() {
       <VideoSessionWrapper>
         <div style={{
           width: '100vw',
-          height: '100vh',
+          height: '100dvh', // Use dynamic viewport height for mobile
           position: 'relative',
           overflow: 'hidden',
           background: colors.bgSecondary,
@@ -7803,46 +7806,49 @@ function App() {
             }}
           />
 
-        {/* SessionStateMachine overlay (UI layer - doesn't block video) */}
-        <SessionStateMachine
-          booking={activeSession}
-          dailyCall={dailyCallRef.current}
-          userRole={userRole}
-          userId={user.id}
-          sessionTimeRemaining={_sessionTimeRemaining}
-          onSessionEnd={() => leaveSession(false)}
-          onRequestExtension={() => {
-            console.log('Extension requested from SessionStateMachine')
-          }}
-        />
+        {/* SessionStateMachine overlay - only show after user completes Daily prejoin */}
+        {dailyMeetingJoined && (
+          <SessionStateMachine
+            booking={activeSession}
+            dailyCall={dailyCallRef.current}
+            userRole={userRole}
+            userId={user.id}
+            sessionTimeRemaining={_sessionTimeRemaining}
+            onSessionEnd={() => leaveSession(false)}
+            onRequestExtension={() => {
+              console.log('Extension requested from SessionStateMachine')
+            }}
+          />
+        )}
 
-        {/* Receiver-Initiated Extension System */}
-        <ReceiverInitiatedExtension
-          bookingId={activeSession.id}
-          userRole={userRole}
-          userId={user.id}
-          giverId={activeSession.giver_id}
-          receiverId={activeSession.seeker_id}
-          receiverName={activeSession.seeker_id === user.id ? 'The guest' : 'The guest'} // TODO: Fetch guest name from profile
-          amountCents={activeSession.amount_cents}
-          sessionTimeRemaining={_sessionTimeRemaining}
-          onExtensionGranted={() => {
-            // Add 30 minutes (1800 seconds) to session time
-            setSessionTimeRemaining(prev => prev + 1800)
-            console.log('Extension granted: Added 30 minutes')
-          }}
-          onExtensionDeclined={() => {
-            console.log('Extension declined')
-          }}
-        />
+        {/* Receiver-Initiated Extension System - only show after prejoin */}
+        {dailyMeetingJoined && (
+          <ReceiverInitiatedExtension
+            bookingId={activeSession.id}
+            userRole={userRole}
+            userId={user.id}
+            giverId={activeSession.giver_id}
+            receiverId={activeSession.seeker_id}
+            receiverName={activeSession.seeker_id === user.id ? 'The guest' : 'The guest'} // TODO: Fetch guest name from profile
+            amountCents={activeSession.amount_cents}
+            sessionTimeRemaining={_sessionTimeRemaining}
+            onExtensionGranted={() => {
+              // Add 30 minutes (1800 seconds) to session time
+              setSessionTimeRemaining(prev => prev + 1800)
+              console.log('Extension granted: Added 30 minutes')
+            }}
+            onExtensionDeclined={() => {
+              console.log('Extension declined')
+            }}
+          />
+        )}
 
-        {/* Leave session button */}
+        {/* Leave session button - positioned to not cover protocol CTAs */}
         <div style={{
           position: 'absolute',
-          bottom: '30px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 100,
+          top: '80px', // Below phase indicator
+          right: '20px',
+          zIndex: 10, // Lower z-index to not cover protocol UI
         }}>
           <button
             onClick={() => leaveSession(false)}
@@ -7850,18 +7856,18 @@ function App() {
               background: 'rgba(201, 107, 107, 0.9)',
               color: '#fff',
               border: 'none',
-              padding: '15px 40px',
+              padding: '12px 20px',
               borderRadius: '3px',
-              fontSize: '1rem',
+              fontSize: '0.9rem',
               fontWeight: 500,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '10px',
+              gap: '8px',
             }}
           >
-            <span style={{ fontSize: '1.2rem' }}>📞</span>
-            Leave Session
+            <span style={{ fontSize: '1rem' }}>📞</span>
+            Leave
           </button>
         </div>
         </div>
