@@ -132,11 +132,15 @@ export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
 
 interface TransmissionPhaseProps {
   userRole: 'receiver' | 'giver'
+  sessionTimeRemaining: number
   onDone: () => void
 }
 
-export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) {
+export function TransmissionPhase({ userRole, sessionTimeRemaining, onDone }: TransmissionPhaseProps) {
   const onComplete = onDone // Use consistent naming internally
+  const minutesRemaining = Math.floor(sessionTimeRemaining / 60)
+  const secondsRemaining = sessionTimeRemaining % 60
+
   return (
     <div style={overlayStyle}>
       <div style={{ maxWidth: '360px', width: '100%', textAlign: 'center' }}>
@@ -156,6 +160,15 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
             }}>
               Your Transmission
             </h2>
+            <div style={{
+              fontSize: '1.2rem',
+              color: colors.textPrimary,
+              fontFamily: 'monospace',
+              marginBottom: '15px',
+              fontWeight: 500
+            }}>
+              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+            </div>
             <p style={{
               fontSize: '0.95rem',
               lineHeight: 1.5,
@@ -187,6 +200,15 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
             }}>
               Listening
             </h2>
+            <div style={{
+              fontSize: '1.2rem',
+              color: colors.textPrimary,
+              fontFamily: 'monospace',
+              marginBottom: '15px',
+              fontWeight: 500
+            }}>
+              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+            </div>
             <p style={{
               fontSize: '0.95rem',
               lineHeight: 1.5,
@@ -214,11 +236,15 @@ export function TransmissionPhase({ userRole, onDone }: TransmissionPhaseProps) 
 
 interface ReflectionPhaseProps {
   userRole: 'receiver' | 'giver'
+  sessionTimeRemaining: number
   onDone: () => void
 }
 
-export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
+export function ReflectionPhase({ userRole, sessionTimeRemaining, onDone }: ReflectionPhaseProps) {
   const onComplete = onDone // Use consistent naming internally
+  const minutesRemaining = Math.floor(sessionTimeRemaining / 60)
+  const secondsRemaining = sessionTimeRemaining % 60
+
   return (
     <div style={overlayStyle}>
       <div style={{ maxWidth: '400px', textAlign: 'center' }}>
@@ -238,6 +264,15 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
             }}>
               Your Reflection
             </h2>
+            <div style={{
+              fontSize: '1.2rem',
+              color: colors.textPrimary,
+              fontFamily: 'monospace',
+              marginBottom: '15px',
+              fontWeight: 500
+            }}>
+              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+            </div>
             <p style={{
               fontSize: '1rem',
               lineHeight: 1.6,
@@ -276,6 +311,15 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
             }}>
               Receiving Reflection
             </h2>
+            <div style={{
+              fontSize: '1.2rem',
+              color: colors.textPrimary,
+              fontFamily: 'monospace',
+              marginBottom: '15px',
+              fontWeight: 500
+            }}>
+              {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+            </div>
             <p style={{
               fontSize: '1rem',
               lineHeight: 1.6,
@@ -304,12 +348,15 @@ export function ReflectionPhase({ userRole, onDone }: ReflectionPhaseProps) {
 interface ValidationPhaseProps {
   userRole: 'receiver' | 'giver'
   validationAttempts: number
+  sessionTimeRemaining: number
   onYes: (direction: DirectionType, source: 'pre_consented' | 'custom_request', customText?: string) => void
   onNo: () => void
   listingId?: string | null // Optional - multi-listing feature removed
 }
 
-export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, listingId }: ValidationPhaseProps) {
+export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemaining, onYes, onNo, listingId }: ValidationPhaseProps) {
+  const minutesRemaining = Math.floor(sessionTimeRemaining / 60)
+  const secondsRemaining = sessionTimeRemaining % 60
   const [showDirectionSelector, setShowDirectionSelector] = useState(false)
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [customText, setCustomText] = useState('')
@@ -363,6 +410,15 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, lis
           }}>
             Waiting for Validation
           </h2>
+          <div style={{
+            fontSize: '1.2rem',
+            color: colors.textPrimary,
+            fontFamily: 'monospace',
+            marginBottom: '15px',
+            fontWeight: 500
+          }}>
+            {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+          </div>
           <p style={{
             fontSize: '1rem',
             lineHeight: 1.6,
@@ -540,6 +596,15 @@ export function ValidationPhase({ userRole, validationAttempts, onYes, onNo, lis
         }}>
           Did they understand you?
         </h2>
+        <div style={{
+          fontSize: '1.2rem',
+          color: colors.textPrimary,
+          fontFamily: 'monospace',
+          marginBottom: '15px',
+          fontWeight: 500
+        }}>
+          {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
+        </div>
         <p style={{
           fontSize: '1rem',
           lineHeight: 1.6,

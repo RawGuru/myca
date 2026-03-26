@@ -730,6 +730,7 @@ export function SessionStateMachine({
       {sessionState.current_phase === 'transmission' && (
         <TransmissionPhase
           userRole={userRole}
+          sessionTimeRemaining={sessionTimeRemaining}
           onDone={handleReceiverDoneTransmission}
         />
       )}
@@ -737,6 +738,7 @@ export function SessionStateMachine({
       {sessionState.current_phase === 'reflection' && (
         <ReflectionPhase
           userRole={userRole}
+          sessionTimeRemaining={sessionTimeRemaining}
           onDone={handleGiverDoneReflection}
         />
       )}
@@ -745,6 +747,7 @@ export function SessionStateMachine({
         <ValidationPhase
           userRole={userRole}
           validationAttempts={sessionState.validation_attempts}
+          sessionTimeRemaining={sessionTimeRemaining}
           onYes={handleReceiverValidationYes}
           onNo={handleReceiverValidationNo}
           listingId={null}

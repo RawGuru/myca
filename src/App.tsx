@@ -3032,6 +3032,49 @@ function App() {
     setShowCountdown(false)
     setExtensionTimeRemaining(60)
 
+    // Create session_states row BEFORE transitioning to videoSession screen
+    // This ensures the row exists before polling starts, preventing PGRST116 errors
+    if (user) {
+      try {
+        console.log('[JOIN SESSION] Creating/ensuring session_states row for booking:', booking.id)
+        const now = new Date().toISOString()
+
+        // Attempt insert with ON CONFLICT DO NOTHING (idempotent)
+        const { data: sessionState, error: sessionError } = await supabase
+          .from('session_states')
+          .upsert({
+            booking_id: booking.id,
+            current_phase: 'transmission',
+            validation_attempts: 0,
+            transmission_started_at: now,
+            started_at: now,
+            updated_by: user.id,
+            updated_at: now
+          }, {
+            onConflict: 'booking_id',
+            ignoreDuplicates: false // Update if exists
+          })
+          .select()
+          .single()
+
+        if (sessionError) {
+          console.error('[JOIN SESSION] Failed to create session_states:', sessionError)
+          // Non-fatal - SessionStateMachine will create it if needed
+        } else {
+          console.log('[JOIN SESSION] Session state ready:', {
+            booking_id: booking.id,
+            role: userRole,
+            session_found: true,
+            current_phase: sessionState.current_phase,
+            transmission_started_at: sessionState.transmission_started_at
+          })
+        }
+      } catch (err) {
+        console.error('[JOIN SESSION] Exception creating session_states:', err)
+        // Non-fatal - continue
+      }
+    }
+
     console.log('JOIN SESSION: Setting screen to videoSession')
     setScreen('videoSession')
     console.log('JOIN SESSION: joinSession completed')
@@ -3125,11 +3168,15 @@ function App() {
       })
 
 
-      call.on('joined-meeting', () => {
+      call.on('joined-meeting', async () => {
         console.log('========================================')
         console.log('DAILY: joined-meeting event - successfully joined')
         setDailyMeetingJoined(true) // User completed prejoin, now show protocol UI
+
         const participants = call.participants()
+        const localAudio = participants.local?.audio
+        const userRole = user?.id === activeSession.giver_id ? 'giver' : 'receiver'
+
         console.log('DAILY: participant count:', Object.keys(participants).length)
         console.log('DAILY: local participant:', participants.local)
         if (participants.local) {
@@ -3137,6 +3184,36 @@ function App() {
           console.log('DAILY: local audio state:', participants.local.audio)
           console.log('DAILY: local tracks:', participants.local.tracks)
         }
+
+        // Query session state for comprehensive logging
+        try {
+          const { data: sessionState } = await supabase
+            .from('session_states')
+            .select('*')
+            .eq('booking_id', activeSession.id)
+            .maybeSingle()
+
+          console.log('[POST-JOIN STATE]', {
+            booking_id: activeSession.id,
+            role: userRole,
+            session_row_found: !!sessionState,
+            session_row_created: !!sessionState, // Same as found since we created in joinSession
+            joined_local: true,
+            joined_remote: Object.keys(participants).filter(k => k !== 'local').length > 0,
+            phase: sessionState?.current_phase || 'unknown',
+            phase_started_at: sessionState?.transmission_started_at || sessionState?.started_at,
+            transmission_started_at: sessionState?.transmission_started_at,
+            reflection_started_at: sessionState?.reflection_started_at,
+            validation_started_at: sessionState?.validation_started_at,
+            direction_started_at: sessionState?.direction_started_at,
+            can_local_speak: userRole === 'receiver' || sessionState?.current_phase !== 'transmission',
+            local_mic_intended_state: localAudio ? 'unmuted' : 'muted',
+            local_mic_actual_state: participants.local?.audio ? 'unmuted' : 'muted'
+          })
+        } catch (err) {
+          console.error('[POST-JOIN STATE] Error querying session state:', err)
+        }
+
         // Log remote participants
         const remote = Object.keys(participants).filter(k => k !== 'local')
         console.log('DAILY: remote participant count:', remote.length)
@@ -3381,14 +3458,20 @@ function App() {
         console.log('[Session State Poll] Fetching authoritative phase for booking:', activeSession.id)
 
         // Query authoritative phase from session_states table (user-driven, not time-based)
+        // Use .maybeSingle() to gracefully handle zero-row case during bootstrap
         const { data, error } = await supabase
           .from('session_states')
-          .select('current_phase')
+          .select('current_phase, transmission_started_at, reflection_started_at, validation_started_at, direction_started_at')
           .eq('booking_id', activeSession.id)
-          .single()
+          .maybeSingle()
 
         if (error) {
           console.error('[Session State Poll] Error:', error)
+          return
+        }
+
+        if (!data) {
+          console.log('[Session State Poll] No session row yet (bootstrap in progress)')
           return
         }
 
