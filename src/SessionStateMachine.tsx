@@ -203,6 +203,14 @@ export function SessionStateMachine({
 }: SessionStateMachineProps) {
   const [sessionState, setSessionState] = useState<SessionState | null>(null)
   const [loading, setLoading] = useState(true)
+  const currentPhaseRef = useRef<string | null>(null)
+
+  // Track current phase in ref for sync comparison
+  useEffect(() => {
+    if (sessionState) {
+      currentPhaseRef.current = sessionState.current_phase
+    }
+  }, [sessionState?.current_phase])
 
   // Realtime subscription
   const { connectionStatus } = useSessionRealtime(
@@ -210,6 +218,7 @@ export function SessionStateMachine({
     useCallback((newState: SessionState) => {
       console.log('[SessionStateMachine] Realtime state update received')
       setSessionState(newState)
+      currentPhaseRef.current = newState.current_phase
     }, [])
   )
 
@@ -221,6 +230,39 @@ export function SessionStateMachine({
   // Initialize or fetch session state on mount
   useEffect(() => {
     fetchOrCreateSessionState()
+  }, [booking.id])
+
+  // Single sync check 1 second after mount to catch early phase transitions
+  // This ensures non-initiating user doesn't miss transitions during realtime connection
+  useEffect(() => {
+    if (!booking.id) return
+
+    const syncOnce = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('session_states')
+          .select('*')
+          .eq('booking_id', booking.id)
+          .maybeSingle()
+
+        if (error || !data) return
+
+        // Compare against ref (always current, no stale closure)
+        if (currentPhaseRef.current && data.current_phase !== currentPhaseRef.current) {
+          console.log('[SessionStateMachine] One-time sync detected phase mismatch', {
+            local_phase: currentPhaseRef.current,
+            authoritative_phase: data.current_phase
+          })
+          setSessionState(data as SessionState)
+          currentPhaseRef.current = data.current_phase
+        }
+      } catch (err) {
+        console.error('[SessionStateMachine] One-time sync error:', err)
+      }
+    }
+
+    const timer = setTimeout(syncOnce, 1000)
+    return () => clearTimeout(timer)
   }, [booking.id])
 
   const fetchOrCreateSessionState = async () => {
@@ -703,6 +745,36 @@ export function SessionStateMachine({
       </div>
     )
   }
+
+  // Log render selection
+  useEffect(() => {
+    let component = 'none'
+    let ctaLabel = 'none'
+
+    if (sessionState.current_phase === 'transmission') {
+      component = 'TransmissionPhase'
+      ctaLabel = userRole === 'receiver' ? "I'm done, reflect now" : 'none'
+    } else if (sessionState.current_phase === 'reflection') {
+      component = 'ReflectionPhase'
+      ctaLabel = userRole === 'giver' ? 'Done reflecting' : 'none'
+    } else if (sessionState.current_phase === 'validation') {
+      component = 'ValidationPhase'
+      ctaLabel = userRole === 'receiver' ? 'Yes/No' : 'none'
+    } else if (sessionState.current_phase === 'direction') {
+      component = 'DirectionPhase'
+      ctaLabel = 'varies'
+    } else if (sessionState.current_phase === 'ended') {
+      component = 'SessionEndedSummary'
+      ctaLabel = 'none'
+    }
+
+    console.log('[PHASE RENDER]', {
+      phase: sessionState.current_phase,
+      userRole,
+      component,
+      ctaLabel
+    })
+  }, [sessionState.current_phase, userRole])
 
   return (
     <div>
