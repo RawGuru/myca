@@ -24,22 +24,21 @@ Production test required: verify no 406 errors, timer visible in all phases, cle
 - Daily prejoin Chromebook testing (previous blocker, now secondary)
 
 ## Latest evidence
-**2026-03-26 commit 8695703**
-- Test: npm run build
-- Result: Build successful, no TypeScript errors
-- Branch: fix/session-bootstrap-timer-sync
-- Changed: src/App.tsx, src/SessionStateMachine.tsx, src/components/session/PhaseComponents.tsx
+**2026-03-26 commit da765ba**
+- Test: git merge fix/session-bootstrap-timer-sync to main
+- Result: Fast-forward merge successful, pushed to origin/main
+- Changed: src/App.tsx, src/SessionStateMachine.tsx, src/components/session/PhaseComponents.tsx, docs/LIVE_STATE.md
 - Root cause identified: Session row created too late, polling used .single(), timer only in Direction phase
 - Fix: Early upsert session_states row, .maybeSingle() polling, timer in all phases, enhanced logging
 
 ## Current production state
-Frontend commit: 8695703 (branch: fix/session-bootstrap-timer-sync)
+Frontend commit: da765ba (main branch)
 Edge function deploy state: ensure-fresh-room active
 Secrets state: DAILY_API_KEY configured, SUPABASE_SERVICE_ROLE_KEY configured
-Active environment: Staging (branch not yet merged to main)
+Active environment: Production (merged to main)
 
 ## Next single action
-Deploy to production: merge fix/session-bootstrap-timer-sync to main, test on two devices.
+Production test on two devices: verify no 406 errors, timer visible in all phases, clean post-join logs.
 
 ## If next action fails
 Branch 1: If still 406 errors → check session_states RLS policies, verify upsert completes
