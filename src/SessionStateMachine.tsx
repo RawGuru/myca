@@ -232,12 +232,12 @@ export function SessionStateMachine({
     fetchOrCreateSessionState()
   }, [booking.id])
 
-  // Single sync check 1 second after mount to catch early phase transitions
-  // This ensures non-initiating user doesn't miss transitions during realtime connection
+  // Continuous sync every 2 seconds to catch phase transitions
+  // This ensures non-initiating user's UI updates even when realtime is slow/failed
   useEffect(() => {
     if (!booking.id) return
 
-    const syncOnce = async () => {
+    const syncPhase = async () => {
       try {
         const { data, error } = await supabase
           .from('session_states')
@@ -248,8 +248,8 @@ export function SessionStateMachine({
         if (error || !data) return
 
         // Compare against ref (always current, no stale closure)
-        if (currentPhaseRef.current && data.current_phase !== currentPhaseRef.current) {
-          console.log('[SessionStateMachine] One-time sync detected phase mismatch', {
+        if (currentPhaseRef.current !== data.current_phase) {
+          console.log('[SessionStateMachine] Phase sync detected mismatch', {
             local_phase: currentPhaseRef.current,
             authoritative_phase: data.current_phase
           })
@@ -257,12 +257,14 @@ export function SessionStateMachine({
           currentPhaseRef.current = data.current_phase
         }
       } catch (err) {
-        console.error('[SessionStateMachine] One-time sync error:', err)
+        console.error('[SessionStateMachine] Phase sync error:', err)
       }
     }
 
-    const timer = setTimeout(syncOnce, 1000)
-    return () => clearTimeout(timer)
+    // Run immediately, then every 2 seconds
+    syncPhase()
+    const interval = setInterval(syncPhase, 2000)
+    return () => clearInterval(interval)
   }, [booking.id])
 
   const fetchOrCreateSessionState = async () => {
