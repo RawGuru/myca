@@ -63,8 +63,8 @@ serve(async (req) => {
     )
 
     // Get Daily API key from environment
-    const dailyApiKey = Deno.env.get('DAILY_API_KEY')
-    if (!dailyApiKey) {
+    const dailyApiKeyRaw = Deno.env.get('DAILY_API_KEY')
+    if (!dailyApiKeyRaw) {
       console.error('[ENSURE-FRESH-ROOM] Stage: missing_daily_api_key')
       return new Response(
         JSON.stringify({ error: 'Daily API key not configured', stage: 'missing_daily_api_key' }),
@@ -73,6 +73,26 @@ serve(async (req) => {
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
         }
       )
+    }
+
+    // Clean key (remove whitespace/newlines) and log diagnostics
+    const dailyApiKey = dailyApiKeyRaw.trim()
+    const keyDiagnostics = {
+      keyPresent: true,
+      keyLength: dailyApiKey.length,
+      keyPrefix: dailyApiKey.substring(0, 6),
+      hasWhitespace: dailyApiKeyRaw !== dailyApiKey,
+      rawLength: dailyApiKeyRaw.length,
+      looksValid: dailyApiKey.length > 20 && /^[a-zA-Z0-9_-]+$/.test(dailyApiKey)
+    }
+    console.log('[ENSURE-FRESH-ROOM] Daily API key diagnostics:', keyDiagnostics)
+
+    // Warn if key looks suspicious
+    if (keyDiagnostics.hasWhitespace) {
+      console.warn('[ENSURE-FRESH-ROOM] WARNING: DAILY_API_KEY had whitespace/newlines (now trimmed)')
+    }
+    if (!keyDiagnostics.looksValid) {
+      console.warn('[ENSURE-FRESH-ROOM] WARNING: DAILY_API_KEY format looks suspicious (length or invalid chars)')
     }
 
     // Fetch booking with room metadata
@@ -132,25 +152,50 @@ serve(async (req) => {
     console.log('[ENSURE-FRESH-ROOM] Creating new Daily room...')
     const expiryTime = Math.floor(Date.now() / 1000) + (35 * 60) // 35 minutes from now
 
-    const dailyResponse = await fetch('https://api.daily.co/v1/rooms', {
+    const dailyRequestUrl = 'https://api.daily.co/v1/rooms'
+    const dailyRequestBody = {
+      properties: {
+        exp: expiryTime,
+        max_participants: 2,
+      },
+    }
+
+    console.log('[ENSURE-FRESH-ROOM] Daily API request:', {
+      url: dailyRequestUrl,
+      method: 'POST',
+      authHeaderFormat: 'Bearer <key>',
+      bodyPreview: dailyRequestBody
+    })
+
+    const dailyResponse = await fetch(dailyRequestUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${dailyApiKey}`,
       },
-      body: JSON.stringify({
-        properties: {
-          exp: expiryTime,
-          max_participants: 2,
-        },
-      }),
+      body: JSON.stringify(dailyRequestBody),
+    })
+
+    console.log('[ENSURE-FRESH-ROOM] Daily API response:', {
+      status: dailyResponse.status,
+      statusText: dailyResponse.statusText,
+      ok: dailyResponse.ok
     })
 
     if (!dailyResponse.ok) {
       const errorData = await dailyResponse.json()
-      console.error('[ENSURE-FRESH-ROOM] Stage: daily_room_create_failed:', errorData)
+      console.error('[ENSURE-FRESH-ROOM] Stage: daily_room_create_failed:', {
+        status: dailyResponse.status,
+        statusText: dailyResponse.statusText,
+        errorData
+      })
       return new Response(
-        JSON.stringify({ error: 'Failed to create Daily room', stage: 'daily_room_create_failed', details: errorData }),
+        JSON.stringify({
+          error: 'Failed to create Daily room',
+          stage: 'daily_room_create_failed',
+          details: errorData,
+          httpStatus: dailyResponse.status
+        }),
         {
           status: dailyResponse.status,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
