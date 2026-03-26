@@ -116,8 +116,13 @@ function useSessionRealtime(bookingId: string, onStateUpdate: (state: SessionSta
             filter: `booking_id=eq.${bookingId}`
           },
           (payload) => {
-            console.log('[Realtime] Session state updated:', payload)
             const newState = payload.new as SessionState
+            const oldState = payload.old as SessionState
+            console.log('[Realtime] Session state updated', {
+              old_phase: oldState?.current_phase,
+              new_phase: newState.current_phase,
+              phase_changed: oldState?.current_phase !== newState.current_phase
+            })
             onStateUpdate(newState)
             reconnectAttemptsRef.current = 0
           }
@@ -222,6 +227,49 @@ export function SessionStateMachine({
   useEffect(() => {
     fetchOrCreateSessionState()
   }, [booking.id])
+
+  // Poll authoritative phase as fallback to realtime (every 3 seconds)
+  // This ensures UI syncs even if realtime subscription fails
+  useEffect(() => {
+    if (!booking.id) return
+
+    const pollAuthoritativePhase = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('session_states')
+          .select('*')
+          .eq('booking_id', booking.id)
+          .maybeSingle()
+
+        if (error) {
+          console.error('[Phase Poll] Error:', error)
+          return
+        }
+
+        if (!data) {
+          return // Bootstrap in progress
+        }
+
+        // Update local state with authoritative data
+        // This ensures non-initiating user sees phase transitions
+        if (sessionState?.current_phase !== data.current_phase) {
+          console.log('[Phase Poll] Authoritative phase mismatch detected', {
+            rendered_phase: sessionState?.current_phase,
+            authoritative_phase: data.current_phase,
+            local_role: userRole
+          })
+          setSessionState(data as SessionState)
+        }
+      } catch (err) {
+        console.error('[Phase Poll] Exception:', err)
+      }
+    }
+
+    // Poll every 3 seconds as fallback to realtime
+    const interval = setInterval(pollAuthoritativePhase, 3000)
+
+    return () => clearInterval(interval)
+  }, [booking.id, sessionState?.current_phase, userRole])
 
   const fetchOrCreateSessionState = async () => {
     try {
@@ -335,7 +383,14 @@ export function SessionStateMachine({
     const timestampField = `${newPhase}_started_at` as keyof SessionState
 
     if (initiator === 'user') {
-      // Optimistic update - instant UI
+      // Optimistic update - instant UI for initiating user
+      console.log('[Phase Update] Optimistic local update', {
+        from_phase: previousPhase,
+        to_phase: newPhase,
+        initiator: 'user',
+        user_role: userRole
+      })
+
       setSessionState(prev => prev ? {
         ...prev,
         current_phase: newPhase,
@@ -345,6 +400,12 @@ export function SessionStateMachine({
       } : null)
 
       try {
+        console.log('[Phase Update] Writing to database', {
+          from_phase: previousPhase,
+          to_phase: newPhase,
+          booking_id: booking.id
+        })
+
         const { error } = await supabase
           .from('session_states')
           .update({
@@ -356,12 +417,14 @@ export function SessionStateMachine({
           .eq('booking_id', booking.id)
 
         if (error) {
-          console.error('[Session] Phase update failed, rolling back:', error)
+          console.error('[Phase Update] Database update failed, rolling back:', error)
           // Rollback optimistic update
           await fetchOrCreateSessionState()
           alert('Failed to advance session. Please try again.')
           return
         }
+
+        console.log('[Phase Update] Database update successful, other user will receive via realtime or polling')
 
         // Record milestone
         await recordMilestone('phase_transition', {
@@ -370,7 +433,7 @@ export function SessionStateMachine({
           user_role: userRole
         })
       } catch (err) {
-        console.error('[Session] Error updating phase:', err)
+        console.error('[Phase Update] Exception:', err)
         await fetchOrCreateSessionState()
       }
     } else {
@@ -407,7 +470,12 @@ export function SessionStateMachine({
 
   // Handle receiver actions
   const handleReceiverDoneTransmission = async () => {
-    console.log('[Receiver] Done with transmission, advancing to reflection')
+    console.log('[Receiver] Done with transmission, advancing to reflection', {
+      current_phase: sessionState?.current_phase,
+      target_phase: 'reflection',
+      user_role: userRole,
+      booking_id: booking.id
+    })
     await updatePhase('reflection', 'user')
   }
 
@@ -703,6 +771,42 @@ export function SessionStateMachine({
       </div>
     )
   }
+
+  // Log render state for debugging
+  useEffect(() => {
+    if (!sessionState) return
+
+    const canLocalSpeak = (
+      (sessionState.current_phase === 'transmission' && userRole === 'receiver') ||
+      (sessionState.current_phase === 'reflection' && userRole === 'giver') ||
+      (sessionState.current_phase === 'direction' && sessionState.direction_selected === 'go_deeper' && userRole === 'receiver') ||
+      (sessionState.current_phase === 'direction' && sessionState.direction_selected === 'hear_perspective' && userRole === 'giver') ||
+      (sessionState.current_phase === 'direction' && (sessionState.direction_selected === 'think_together' || sessionState.direction_selected === 'build_next_step'))
+    )
+
+    let ctaVisible = false
+    let ctaLabel = 'none'
+
+    if (sessionState.current_phase === 'transmission' && userRole === 'receiver') {
+      ctaVisible = true
+      ctaLabel = "I'm done, reflect now"
+    } else if (sessionState.current_phase === 'reflection' && userRole === 'giver') {
+      ctaVisible = true
+      ctaLabel = 'Done reflecting'
+    } else if (sessionState.current_phase === 'validation' && userRole === 'receiver') {
+      ctaVisible = true
+      ctaLabel = 'Yes/No validation'
+    }
+
+    console.log('[Render State]', {
+      rendered_phase: sessionState.current_phase,
+      authoritative_phase: sessionState.current_phase,
+      local_role: userRole,
+      CTA_visible: ctaVisible,
+      CTA_label: ctaLabel,
+      can_local_speak: canLocalSpeak
+    })
+  }, [sessionState?.current_phase, userRole, sessionState?.direction_selected])
 
   return (
     <div>
