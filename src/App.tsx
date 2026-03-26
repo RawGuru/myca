@@ -6085,7 +6085,7 @@ function App() {
           <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '20px', maxWidth: '300px' }}>
             Remember: If you cancel, your payment goes to {selectedGiver?.name}. If they cancel, you'll be refunded.
           </p>
-          {currentBooking?.video_room_url && (
+          {currentBooking && (
             <>
               <button
                 disabled={!isSessionJoinable(currentBooking)}
@@ -8191,7 +8191,7 @@ function App() {
                       </div>
                     </div>
 
-                    {booking.status === 'confirmed' && booking.video_room_url && (
+                    {booking.status === 'confirmed' && (
                       <button
                         onClick={() => joinable && joinSession(booking)}
                         disabled={!joinable}
@@ -8442,7 +8442,7 @@ function App() {
                       </div>
                     </div>
 
-                    {booking.status === 'confirmed' && booking.video_room_url && (
+                    {booking.status === 'confirmed' && (
                       <button
                         onClick={() => joinable && joinSession(booking)}
                         disabled={!joinable}
