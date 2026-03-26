@@ -7843,33 +7843,35 @@ function App() {
           />
         )}
 
-        {/* Leave session button - positioned to not cover protocol CTAs */}
-        <div style={{
-          position: 'absolute',
-          top: '80px', // Below phase indicator
-          right: '20px',
-          zIndex: 10, // Lower z-index to not cover protocol UI
-        }}>
-          <button
-            onClick={() => leaveSession(false)}
-            style={{
-              background: 'rgba(201, 107, 107, 0.9)',
-              color: '#fff',
-              border: 'none',
-              padding: '12px 20px',
-              borderRadius: '3px',
-              fontSize: '0.9rem',
-              fontWeight: 500,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span style={{ fontSize: '1rem' }}>📞</span>
-            Leave
-          </button>
-        </div>
+        {/* Leave session button - only show after Daily prejoin complete */}
+        {dailyMeetingJoined && (
+          <div style={{
+            position: 'absolute',
+            top: '80px', // Below phase indicator
+            right: '20px',
+            zIndex: 10, // Lower z-index to not cover protocol UI
+          }}>
+            <button
+              onClick={() => leaveSession(false)}
+              style={{
+                background: 'rgba(201, 107, 107, 0.9)',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 20px',
+                borderRadius: '3px',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <span style={{ fontSize: '1rem' }}>📞</span>
+              Leave
+            </button>
+          </div>
+        )}
         </div>
       </VideoSessionWrapper>
     )
