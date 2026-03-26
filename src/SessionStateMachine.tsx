@@ -204,25 +204,14 @@ export function SessionStateMachine({
   const [sessionState, setSessionState] = useState<SessionState | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Use ref to track current phase for polling (avoids stale closure)
-  const currentPhaseRef = useRef<string | null>(null)
-
   // Realtime subscription
   const { connectionStatus } = useSessionRealtime(
     booking.id,
     useCallback((newState: SessionState) => {
       console.log('[SessionStateMachine] Realtime state update received')
       setSessionState(newState)
-      currentPhaseRef.current = newState.current_phase
     }, [])
   )
-
-  // Update ref whenever sessionState changes
-  useEffect(() => {
-    if (sessionState) {
-      currentPhaseRef.current = sessionState.current_phase
-    }
-  }, [sessionState?.current_phase])
 
   // Log connection status changes
   useEffect(() => {
@@ -249,14 +238,13 @@ export function SessionStateMachine({
 
         if (error || !data) return
 
-        // Check against ref (always current, no stale closure)
-        if (currentPhaseRef.current !== data.current_phase) {
+        // Only update if phase changed (avoid unnecessary re-renders)
+        if (sessionState && sessionState.current_phase !== data.current_phase) {
           console.log('[Phase Sync] Detected phase mismatch, syncing', {
-            local_phase: currentPhaseRef.current,
+            local_phase: sessionState.current_phase,
             authoritative_phase: data.current_phase
           })
           setSessionState(data as SessionState)
-          currentPhaseRef.current = data.current_phase
         }
       } catch (err) {
         console.error('[Phase Sync] Error:', err)
@@ -265,7 +253,7 @@ export function SessionStateMachine({
 
     const interval = setInterval(syncAuthoritativePhase, 2000)
     return () => clearInterval(interval)
-  }, [booking.id])
+  }, [booking.id, sessionState?.current_phase])
 
   const fetchOrCreateSessionState = async () => {
     try {
@@ -281,7 +269,6 @@ export function SessionStateMachine({
       if (data) {
         // Session state exists
         setSessionState(data as SessionState)
-        currentPhaseRef.current = data.current_phase
       } else {
         // Create initial session state (first party to join)
         const { data: newState, error: createError } = await supabase
@@ -300,7 +287,6 @@ export function SessionStateMachine({
         if (createError) throw createError
 
         setSessionState(newState as SessionState)
-        currentPhaseRef.current = newState.current_phase
 
         // Record milestone
         await recordMilestone('phase_transition', {
@@ -325,7 +311,6 @@ export function SessionStateMachine({
           if (retryError) throw retryError
 
           setSessionState(existingState as SessionState)
-          currentPhaseRef.current = existingState.current_phase
           console.log('[SessionStateMachine] Successfully recovered from concurrent join race')
           return // Success - exit early
         } catch (retryErr) {
