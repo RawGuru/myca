@@ -2924,33 +2924,59 @@ function App() {
         throw new Error('No active session - please sign in again')
       }
 
-      console.log('JOIN SESSION: Calling ensure-fresh-room edge function...')
-      const { data, error } = await supabase.functions.invoke('ensure-fresh-room', {
-        body: { booking_id: booking.id },
+      // RAW FETCH DIAGNOSTIC: Bypass supabase.functions.invoke to see exact gateway response
+      const functionUrl = `https://ksramckuggspsqymcjpo.supabase.co/functions/v1/ensure-fresh-room`
+      const apikeyHeader = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtzcmFtY2t1Z2dzcHNxeW1janBvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTMwODgsImV4cCI6MjA4MTgyOTA4OH0.CszijxFZU09QKH2aJbv6TjniWUJ1muJDnHXSe_u8DJc'
+
+      console.log('JOIN SESSION: RAW FETCH DIAGNOSTIC')
+      console.log('JOIN SESSION: Function URL:', functionUrl)
+      console.log('JOIN SESSION: apikey header exists:', !!apikeyHeader)
+      console.log('JOIN SESSION: Authorization header exists:', !!sessionData.session.access_token)
+      console.log('JOIN SESSION: Request body:', JSON.stringify({ booking_id: booking.id }))
+
+      const response = await fetch(functionUrl, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${sessionData.session.access_token}`
-        }
+          'Content-Type': 'application/json',
+          'apikey': apikeyHeader,
+          'Authorization': `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify({ booking_id: booking.id })
       })
 
-      if (error) {
-        console.error('JOIN SESSION: ensure-fresh-room error:', error)
-        console.error('JOIN SESSION: Full error object:', JSON.stringify(error, null, 2))
+      console.log('JOIN SESSION: Response status:', response.status)
+      console.log('JOIN SESSION: Response statusText:', response.statusText)
+      console.log('JOIN SESSION: Response headers:', Object.fromEntries(response.headers.entries()))
 
-        // 401 likely means function not deployed or JWT issue
-        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-          throw new Error('Authentication error calling ensure-fresh-room. The function may not be deployed yet. Please contact support.')
+      const responseText = await response.text()
+      console.log('JOIN SESSION: Response raw body:', responseText)
+
+      let data: any
+      try {
+        data = JSON.parse(responseText)
+        console.log('JOIN SESSION: Response parsed JSON:', data)
+      } catch (parseErr) {
+        console.error('JOIN SESSION: Failed to parse response as JSON:', parseErr)
+        throw new Error(`Invalid response from server: ${responseText}`)
+      }
+
+      if (!response.ok) {
+        console.error('JOIN SESSION: HTTP error', response.status, data)
+
+        if (response.status === 401) {
+          throw new Error(`401 Unauthorized from ensure-fresh-room. Gateway rejected request. Response: ${JSON.stringify(data)}`)
         }
 
-        throw new Error(`Failed to ensure fresh room: ${error.message}`)
+        throw new Error(`ensure-fresh-room failed: ${data.error || 'Unknown error'} (stage: ${data.stage || 'unknown'})`)
       }
 
       if (!data?.video_room_url) {
-        console.error('JOIN SESSION: No room URL returned from edge function')
+        console.error('JOIN SESSION: No room URL in response')
         throw new Error('No room URL returned from server')
       }
 
       roomUrl = data.video_room_url
-      console.log(`JOIN SESSION: Got room URL from edge function (${data.was_refreshed ? 'refreshed' : 'reused'}):`, roomUrl)
+      console.log(`JOIN SESSION: Got room URL (${data.was_refreshed ? 'refreshed' : 'reused'}):`, roomUrl)
 
       // Update local booking object
       booking.video_room_url = roomUrl

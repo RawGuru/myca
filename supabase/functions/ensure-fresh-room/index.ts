@@ -18,8 +18,18 @@ interface EnsureFreshRoomResponse {
 const ROOM_FRESHNESS_THRESHOLD_MS = 30 * 60 * 1000
 
 serve(async (req) => {
+  // PROOF OF EXECUTION: Log immediately at function entry
+  console.log('[ENSURE-FRESH-ROOM] ===== FUNCTION EXECUTION STARTED =====')
+  console.log('[ENSURE-FRESH-ROOM] Method:', req.method)
+  console.log('[ENSURE-FRESH-ROOM] Headers:', {
+    authorization: req.headers.get('authorization') ? 'EXISTS' : 'MISSING',
+    apikey: req.headers.get('apikey') ? 'EXISTS' : 'MISSING',
+    contentType: req.headers.get('content-type')
+  })
+
   // CORS headers
   if (req.method === 'OPTIONS') {
+    console.log('[ENSURE-FRESH-ROOM] Handling OPTIONS preflight')
     return new Response('ok', {
       headers: {
         'Access-Control-Allow-Origin': '*',
@@ -31,10 +41,12 @@ serve(async (req) => {
 
   try {
     const { booking_id }: EnsureFreshRoomRequest = await req.json()
+    console.log('[ENSURE-FRESH-ROOM] Stage: request_parsed, booking_id:', booking_id)
 
     if (!booking_id) {
+      console.error('[ENSURE-FRESH-ROOM] Stage: validation_failed - missing booking_id')
       return new Response(
-        JSON.stringify({ error: 'Missing booking_id' }),
+        JSON.stringify({ error: 'Missing booking_id', stage: 'validation_failed' }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -53,9 +65,9 @@ serve(async (req) => {
     // Get Daily API key from environment
     const dailyApiKey = Deno.env.get('DAILY_API_KEY')
     if (!dailyApiKey) {
-      console.error('[ENSURE-FRESH-ROOM] DAILY_API_KEY not configured')
+      console.error('[ENSURE-FRESH-ROOM] Stage: missing_daily_api_key')
       return new Response(
-        JSON.stringify({ error: 'Daily API key not configured' }),
+        JSON.stringify({ error: 'Daily API key not configured', stage: 'missing_daily_api_key' }),
         {
           status: 500,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -71,9 +83,9 @@ serve(async (req) => {
       .single()
 
     if (fetchError || !booking) {
-      console.error('[ENSURE-FRESH-ROOM] Booking not found:', fetchError)
+      console.error('[ENSURE-FRESH-ROOM] Stage: booking_lookup_failed:', fetchError)
       return new Response(
-        JSON.stringify({ error: 'Booking not found' }),
+        JSON.stringify({ error: 'Booking not found', stage: 'booking_lookup_failed', details: fetchError }),
         {
           status: 404,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
@@ -136,9 +148,9 @@ serve(async (req) => {
 
     if (!dailyResponse.ok) {
       const errorData = await dailyResponse.json()
-      console.error('[ENSURE-FRESH-ROOM] Daily.co API error:', errorData)
+      console.error('[ENSURE-FRESH-ROOM] Stage: daily_room_create_failed:', errorData)
       return new Response(
-        JSON.stringify({ error: 'Failed to create Daily room', details: errorData }),
+        JSON.stringify({ error: 'Failed to create Daily room', stage: 'daily_room_create_failed', details: errorData }),
         {
           status: dailyResponse.status,
           headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
