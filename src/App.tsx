@@ -2910,13 +2910,37 @@ function App() {
     // This ensures room is < 30 minutes old and handles concurrent joins safely
     let roomUrl: string
     try {
+      // Get current session to pass Authorization header explicitly
+      // Supabase functions.invoke should auto-attach this, but we do it explicitly to ensure JWT propagation
+      const { data: sessionData } = await supabase.auth.getSession()
+      console.log('JOIN SESSION: Auth session check:', {
+        hasSession: !!sessionData.session,
+        hasAccessToken: !!sessionData.session?.access_token,
+        userId: sessionData.session?.user?.id,
+        tokenLength: sessionData.session?.access_token?.length
+      })
+
+      if (!sessionData.session?.access_token) {
+        throw new Error('No active session - please sign in again')
+      }
+
       console.log('JOIN SESSION: Calling ensure-fresh-room edge function...')
       const { data, error } = await supabase.functions.invoke('ensure-fresh-room', {
-        body: { booking_id: booking.id }
+        body: { booking_id: booking.id },
+        headers: {
+          Authorization: `Bearer ${sessionData.session.access_token}`
+        }
       })
 
       if (error) {
         console.error('JOIN SESSION: ensure-fresh-room error:', error)
+        console.error('JOIN SESSION: Full error object:', JSON.stringify(error, null, 2))
+
+        // 401 likely means function not deployed or JWT issue
+        if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+          throw new Error('Authentication error calling ensure-fresh-room. The function may not be deployed yet. Please contact support.')
+        }
+
         throw new Error(`Failed to ensure fresh room: ${error.message}`)
       }
 
