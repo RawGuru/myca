@@ -263,9 +263,6 @@ export function SessionStateMachine({
       }
     }
 
-    // Run immediately on mount to catch any early phase transitions
-    syncAuthoritativePhase()
-    // Then poll every 2 seconds
     const interval = setInterval(syncAuthoritativePhase, 2000)
     return () => clearInterval(interval)
   }, [booking.id])
