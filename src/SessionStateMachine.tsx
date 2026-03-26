@@ -208,6 +208,7 @@ export function SessionStateMachine({
   // Track current phase in ref for sync comparison
   useEffect(() => {
     if (sessionState) {
+      console.log('[SessionStateMachine] sessionState.current_phase changed to:', sessionState.current_phase)
       currentPhaseRef.current = sessionState.current_phase
     }
   }, [sessionState?.current_phase])
@@ -251,10 +252,13 @@ export function SessionStateMachine({
         if (currentPhaseRef.current !== data.current_phase) {
           console.log('[SessionStateMachine] Phase sync detected mismatch', {
             local_phase: currentPhaseRef.current,
-            authoritative_phase: data.current_phase
+            authoritative_phase: data.current_phase,
+            booking_id: booking.id
           })
+          console.log('[SessionStateMachine] Calling setSessionState with:', data)
           setSessionState(data as SessionState)
           currentPhaseRef.current = data.current_phase
+          console.log('[SessionStateMachine] Updated currentPhaseRef to:', currentPhaseRef.current)
         }
       } catch (err) {
         console.error('[SessionStateMachine] Phase sync error:', err)
@@ -748,35 +752,36 @@ export function SessionStateMachine({
     )
   }
 
-  // Log render selection
-  useEffect(() => {
-    let component = 'none'
-    let ctaLabel = 'none'
+  // Log at render time with exact values being used
+  const renderPhase = sessionState.current_phase
+  const renderRef = currentPhaseRef.current
+  let chosenComponent = 'none'
+  let ctaLabel = 'none'
 
-    if (sessionState.current_phase === 'transmission') {
-      component = 'TransmissionPhase'
-      ctaLabel = userRole === 'receiver' ? "I'm done, reflect now" : 'none'
-    } else if (sessionState.current_phase === 'reflection') {
-      component = 'ReflectionPhase'
-      ctaLabel = userRole === 'giver' ? 'Done reflecting' : 'none'
-    } else if (sessionState.current_phase === 'validation') {
-      component = 'ValidationPhase'
-      ctaLabel = userRole === 'receiver' ? 'Yes/No' : 'none'
-    } else if (sessionState.current_phase === 'direction') {
-      component = 'DirectionPhase'
-      ctaLabel = 'varies'
-    } else if (sessionState.current_phase === 'ended') {
-      component = 'SessionEndedSummary'
-      ctaLabel = 'none'
-    }
+  if (renderPhase === 'transmission') {
+    chosenComponent = 'TransmissionPhase'
+    ctaLabel = userRole === 'receiver' ? "I'm done, reflect now" : 'none'
+  } else if (renderPhase === 'reflection') {
+    chosenComponent = 'ReflectionPhase'
+    ctaLabel = userRole === 'giver' ? 'Done reflecting' : 'none'
+  } else if (renderPhase === 'validation') {
+    chosenComponent = 'ValidationPhase'
+    ctaLabel = userRole === 'receiver' ? 'Yes/No' : 'none'
+  } else if (renderPhase === 'direction') {
+    chosenComponent = 'DirectionPhase'
+    ctaLabel = 'varies'
+  } else if (renderPhase === 'ended') {
+    chosenComponent = 'SessionEndedSummary'
+    ctaLabel = 'none'
+  }
 
-    console.log('[PHASE RENDER]', {
-      phase: sessionState.current_phase,
-      userRole,
-      component,
-      ctaLabel
-    })
-  }, [sessionState.current_phase, userRole])
+  console.log('[PHASE RENDER]', {
+    local_phase: renderPhase,
+    ref_phase: renderRef,
+    userRole,
+    chosenComponent,
+    ctaLabel
+  })
 
   return (
     <div>
