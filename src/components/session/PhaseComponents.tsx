@@ -22,15 +22,36 @@ const colors = {
   error: '#d9534f',
 }
 
+// Typography scale (6-step system)
+const typography = {
+  xs: '0.75rem',
+  sm: '0.85rem',
+  base: '0.95rem',
+  md: '1rem',
+  lg: '1.2rem',
+  xl: '1.5rem',
+}
+
+// Spacing scale (4px base unit)
+const spacing = {
+  xs: '8px',
+  sm: '12px',
+  md: '16px',
+  lg: '20px',
+  xl: '24px',
+  xxl: '32px',
+}
+
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
   bottom: 0,
   left: 0,
   right: 0,
-  background: 'rgba(10, 10, 10, 0.95)',
+  background: 'rgba(10, 10, 10, 0.96)',
+  backdropFilter: 'blur(10px)',
   zIndex: 50,
-  padding: '16px',
-  paddingBottom: 'max(16px, env(safe-area-inset-bottom))', // Respect safe area on iOS
+  padding: spacing.md,
+  paddingBottom: `max(${spacing.md}, env(safe-area-inset-bottom))`, // Respect safe area on iOS
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -41,16 +62,18 @@ const overlayStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '14px 24px',
+  padding: `14px ${spacing.xl}`,
   borderRadius: '3px',
-  fontSize: '0.95rem',
+  fontSize: typography.base,
   fontWeight: 600,
   cursor: 'pointer',
   border: 'none',
+  minHeight: '48px',
   background: colors.accent,
   color: colors.bgPrimary,
   width: '100%',
   maxWidth: '320px',
+  transition: 'all 0.15s ease',
 }
 
 const buttonSecondaryStyle: React.CSSProperties = {
@@ -58,6 +81,7 @@ const buttonSecondaryStyle: React.CSSProperties = {
   background: 'transparent',
   color: colors.textPrimary,
   border: `1px solid ${colors.border}`,
+  fontWeight: 500,
 }
 
 // ============================================

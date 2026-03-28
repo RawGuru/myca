@@ -258,6 +258,26 @@ const colors = {
   error: '#d9534f',
 }
 
+// Typography scale (6-step system)
+const typography = {
+  xs: '0.75rem',    // 12px - captions, footnotes
+  sm: '0.85rem',    // 13.6px - secondary text, labels
+  base: '0.95rem',  // 15.2px - body text, buttons
+  md: '1rem',       // 16px - primary body
+  lg: '1.2rem',     // 19.2px - subheadings
+  xl: '1.5rem',     // 24px - page headings
+}
+
+// Spacing scale (4px base unit)
+const spacing = {
+  xs: '8px',    // 2x
+  sm: '12px',   // 3x
+  md: '16px',   // 4x
+  lg: '20px',   // 5x
+  xl: '24px',   // 6x
+  xxl: '32px',  // 8x
+}
+
 // Calendar-based availability: specific date + time
 interface AvailabilitySlot {
   id: string
@@ -374,10 +394,10 @@ function ImageUpload({
   }, [localPreviewUrl])
 
   const buttonStyle: React.CSSProperties = {
-    padding: '12px 24px',
+    padding: `${spacing.sm} ${spacing.xl}`,
     borderRadius: '3px',
     border: `1px solid ${colors.border}`,
-    fontSize: '1rem',
+    fontSize: typography.md,
     fontWeight: 600,
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -626,10 +646,10 @@ function VideoUpload({
   const videoPreviewRef = useRef<HTMLVideoElement>(null)
 
   const buttonStyle: React.CSSProperties = {
-    padding: '12px 24px',
+    padding: `${spacing.sm} ${spacing.xl}`,
     borderRadius: '3px',
     border: `1px solid ${colors.border}`,
-    fontSize: '1rem',
+    fontSize: typography.md,
     fontWeight: 600,
     cursor: (uploading || isRecording) ? 'not-allowed' : 'pointer',
     transition: 'all 0.2s',
@@ -4027,28 +4047,30 @@ function App() {
     background: colors.bgPrimary,
     color: colors.textPrimary,
     minHeight: '100vh',
-    maxWidth: '430px',
+    maxWidth: '560px',
     margin: '0 auto',
   }
 
   const screenStyle: React.CSSProperties = {
-    padding: '20px',
+    padding: spacing.lg,
     paddingBottom: '100px',
     minHeight: '100vh',
   }
 
   const btnStyle: React.CSSProperties = {
-    padding: '16px 24px',
+    padding: `${spacing.md} ${spacing.xl}`,
     borderRadius: '3px',
-    fontSize: '0.95rem',
-    fontWeight: 500,
+    fontSize: typography.base,
+    fontWeight: 600,
     cursor: 'pointer',
     border: 'none',
     width: '100%',
+    minHeight: '48px',
     background: colors.accent,
     color: '#000000',
-    marginBottom: '20px',
+    marginBottom: spacing.lg,
     letterSpacing: '0.01em',
+    transition: 'all 0.15s ease',
   }
 
   const btnSecondaryStyle: React.CSSProperties = {
@@ -4056,15 +4078,17 @@ function App() {
     background: 'transparent',
     color: colors.textPrimary,
     border: `1px solid ${colors.border}`,
+    fontWeight: 500,
   }
 
   const cardStyle: React.CSSProperties = {
     background: colors.bgCard,
-    border: `1px solid ${colors.border}`,
+    border: `1px solid rgba(255, 255, 255, 0.06)`,
     borderRadius: '3px',
-    padding: '24px',
-    marginBottom: '24px',
+    padding: spacing.xl,
+    marginBottom: spacing.xl,
     cursor: 'pointer',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.4)',
   }
 
   const navStyle: React.CSSProperties = {
@@ -4073,10 +4097,11 @@ function App() {
     left: '50%',
     transform: 'translateX(-50%)',
     width: '100%',
-    maxWidth: '430px',
-    background: colors.bgSecondary,
-    borderTop: `1px solid ${colors.border}`,
-    padding: '15px 20px',
+    maxWidth: '560px',
+    background: 'rgba(10, 10, 10, 0.95)',
+    backdropFilter: 'blur(10px)',
+    borderTop: `1px solid rgba(255, 255, 255, 0.05)`,
+    padding: `${spacing.md} ${spacing.lg}`,
     display: 'flex',
     justifyContent: 'space-around',
   }
