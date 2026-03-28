@@ -1418,6 +1418,7 @@ function App() {
       // Use local date, not UTC
       const today = new Date()
       const todayLocal = formatDateLocal(today)
+      const nowTimestamp = Date.now()
 
       const { data, error } = await supabase
         .from('giver_availability')
@@ -1433,8 +1434,16 @@ function App() {
         throw error
       }
 
-      console.log(`Fetched ${data?.length || 0} available slots for giver ${giverId}`)
-      return data || []
+      // CLIENT-SIDE GUARD: Filter out slots where date+time has already passed
+      const futureSlots = (data || []).filter(slot => {
+        const slotDate = new Date(slot.date + 'T00:00:00')
+        const [hours, minutes] = slot.time.split(':').map(Number)
+        slotDate.setHours(hours, minutes, 0, 0)
+        return slotDate.getTime() > nowTimestamp
+      })
+
+      console.log(`Fetched ${data?.length || 0} available slots for giver ${giverId}, filtered to ${futureSlots.length} future slots`)
+      return futureSlots
     } catch (err) {
       console.error('Error fetching giver availability:', err)
       return []
@@ -1565,6 +1574,13 @@ function App() {
       // Calculate credit application
       const creditsToApplyCents = Math.min(availableCreditsCents, grossAmountCents)
       setCreditsAppliedCents(creditsToApplyCents)
+
+      // SERVER-SIDE GUARD: Reject booking if scheduled time is in the past
+      const scheduledTimestamp = new Date(scheduledTime).getTime()
+      const nowTimestamp = Date.now()
+      if (scheduledTimestamp <= nowTimestamp) {
+        throw new Error('That time has already passed. Please refresh and choose another slot.')
+      }
 
       // Determine initial status based on listing approval settings
       const requiresApproval = selectedListingForBooking?.requires_approval !== false // Default true
@@ -8810,53 +8826,68 @@ function App() {
                       </button>
                     )}
 
-                    {booking.status === 'pending_approval' && !isPast && (
-                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation()
-                            if (confirm('Approve this booking?')) {
-                              const { error } = await supabase
-                                .from('bookings')
-                                .update({
-                                  status: 'confirmed',
-                                })
-                                .eq('id', booking.id)
-
-                              if (!error) {
-                                // Send confirmation emails
-                                try {
-                                  await supabase.functions.invoke('send-booking-emails', {
-                                    body: {
-                                      booking_id: booking.id,
-                                      event: 'confirmed',
-                                    },
+                    {booking.status === 'pending_approval' && (
+                      <>
+                        {isPast && (
+                          <div style={{
+                            padding: '8px 12px',
+                            background: 'rgba(251,191,36,0.1)',
+                            border: '1px solid rgba(251,191,36,0.3)',
+                            borderRadius: '8px',
+                            fontSize: '0.8rem',
+                            color: '#f59e0b',
+                            marginTop: '10px',
+                            marginBottom: '5px',
+                          }}>
+                            ⚠️ This time has passed - approve to reschedule or decline to refund
+                          </div>
+                        )}
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation()
+                              if (confirm('Approve this booking?')) {
+                                const { error } = await supabase
+                                  .from('bookings')
+                                  .update({
+                                    status: 'confirmed',
                                   })
-                                } catch (emailError) {
-                                  console.error('Failed to send confirmation emails:', emailError)
+                                  .eq('id', booking.id)
+
+                                if (!error) {
+                                  // Send confirmation emails
+                                  try {
+                                    await supabase.functions.invoke('send-booking-emails', {
+                                      body: {
+                                        booking_id: booking.id,
+                                        event: 'confirmed',
+                                      },
+                                    })
+                                  } catch (emailError) {
+                                    console.error('Failed to send confirmation emails:', emailError)
+                                  }
+                                  await fetchUserBookings()
+                                  alert('Booking approved!')
+                                } else {
+                                  console.error('Approval error:', error)
+                                  alert('Failed to approve booking. Please try again.')
                                 }
-                                await fetchUserBookings()
-                                alert('Booking approved!')
-                              } else {
-                                console.error('Approval error:', error)
-                                alert('Failed to approve booking. Please try again.')
                               }
-                            }
-                          }}
-                          style={{
-                            flex: 1,
-                            padding: '12px',
-                            borderRadius: '10px',
-                            border: `1px solid rgba(34,197,94,0.3)`,
-                            background: 'rgba(34,197,94,0.1)',
-                            color: '#22c55e',
-                            cursor: 'pointer',
-                            fontSize: '0.9rem',
-                            fontWeight: 500,
-                          }}
-                        >
-                          ✓ Approve
-                        </button>
+                            }}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              borderRadius: '10px',
+                              border: `1px solid rgba(34,197,94,0.3)`,
+                              background: 'rgba(34,197,94,0.1)',
+                              color: '#22c55e',
+                              cursor: 'pointer',
+                              fontSize: '0.9rem',
+                              fontWeight: 500,
+                            }}
+                          >
+                            ✓ Approve
+                          </button>
                         <button
                           onClick={async (e) => {
                             e.stopPropagation()
@@ -8906,6 +8937,7 @@ function App() {
                           ✕ Decline
                         </button>
                       </div>
+                      </>
                     )}
 
                     {booking.status === 'pending' && !isPast && (
