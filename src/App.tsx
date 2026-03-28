@@ -6948,7 +6948,7 @@ function App() {
       return (
         <div style={containerStyle}>
           <div style={screenStyle}>
-            <p style={{ color: colors.textSecondary }}>Please set up your giver profile first.</p>
+            <p style={{ color: colors.textSecondary }}>Please set up your giver profile first</p>
             <button style={btnStyle} onClick={() => setScreen('giverIntro')}>Get Started</button>
             <Nav />
           </div>
@@ -6959,36 +6959,36 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xxl }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Manage Availability</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Availability</h2>
             <div style={{ width: '40px' }} />
           </div>
 
           {/* Availability Section */}
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Your Availability <span style={{ color: colors.textMuted }}>({availabilitySlots.length} slots)</span>
+          <div style={{ marginBottom: spacing.xxl }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.base }}>
+              Your Slots <span style={{ color: colors.textMuted }}>({availabilitySlots.length})</span>
             </label>
 
-            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px' }}>
+            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: spacing.lg }}>
               {/* Bulk Add */}
-              <div style={{ marginBottom: '25px', paddingBottom: '20px', borderBottom: `2px solid ${colors.border}` }}>
-                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Quick Add</h4>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+              <div style={{ marginBottom: spacing.xl, paddingBottom: spacing.lg, borderBottom: `1px solid ${colors.border}` }}>
+                <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Quick Add</h4>
+                <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.sm }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Date</label>
-                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Date</label>
+                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm, boxSizing: 'border-box' }} />
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Date</label>
-                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem', boxSizing: 'border-box' }} />
+                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Date</label>
+                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm, boxSizing: 'border-box' }} />
                   </div>
                 </div>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '12px' }}>
+                <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.sm }}>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Time</label>
-                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Time</label>
+                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm }}>
                       {Array.from({ length: 24 }, (_, i) => {
                         const hour = i.toString().padStart(2, '0')
                         return [
@@ -6999,8 +6999,8 @@ function App() {
                     </select>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Time</label>
-                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: '0.85rem' }}>
+                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Time</label>
+                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm }}>
                       {Array.from({ length: 24 }, (_, i) => {
                         const hour = i.toString().padStart(2, '0')
                         return [
@@ -7011,17 +7011,17 @@ function App() {
                     </select>
                   </div>
                 </div>
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ fontSize: '0.8rem', color: colors.textSecondary, display: 'block', marginBottom: '8px' }}>Days</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px' }}>
+                <div style={{ marginBottom: spacing.md }}>
+                  <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: spacing.xs }}>Days</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: spacing.xs }}>
                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: '10px 0', borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}`, minWidth: 0 }}>
+                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: `${spacing.sm} 0`, borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: typography.xs, fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}`, minWidth: 0 }}>
                         {day}
                       </div>
                     ))}
                   </div>
                 </div>
-                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: '12px', borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: '0.9rem', fontWeight: 600 }}>
+                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: typography.base, fontWeight: 600 }}>
                   Add Availability
                 </button>
               </div>
@@ -7029,26 +7029,26 @@ function App() {
               {/* Current slots list */}
               {availabilitySlots.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
+                  <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
-                      <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '3px', marginBottom: '8px', fontSize: '0.85rem' }}>
+                      <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: spacing.sm, background: colors.bgSecondary, borderRadius: '3px', marginBottom: spacing.xs, fontSize: typography.sm }}>
                         <span style={{ color: colors.textPrimary }}>
                           {new Date(slot.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} at {formatTimeTo12Hour(slot.time)}
                         </span>
-                        <button onClick={() => removeAvailabilitySlot(slot.id)} style={{ padding: '4px 8px', borderRadius: '4px', border: 'none', background: 'transparent', color: colors.textMuted, cursor: 'pointer', fontSize: '0.85rem' }}>✕</button>
+                        <button onClick={() => removeAvailabilitySlot(slot.id)} style={{ padding: '4px 8px', borderRadius: '3px', border: 'none', background: 'transparent', color: colors.textMuted, cursor: 'pointer', fontSize: typography.sm }}>✕</button>
                       </div>
                     ))}
                   </div>
                   <button onClick={async () => {
-                    if (confirm('Remove all availability slots?')) {
+                    if (confirm('Remove all slots?')) {
                       for (const slot of availabilitySlots) {
                         await supabase.from('giver_availability').delete().eq('id', slot.id)
                       }
                       setAvailabilitySlots([])
                     }
-                  }} style={{ ...btnSecondaryStyle, marginTop: '15px', background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' }}>
-                    Clear All Slots
+                  }} style={{ ...btnSecondaryStyle, marginTop: spacing.md, background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#f87171' }}>
+                    Clear All
                   </button>
                 </div>
               )}
@@ -7057,26 +7057,26 @@ function App() {
 
           {/* Giver Commitment Policy */}
           <div style={{
-            padding: '15px',
-            background: 'rgba(201, 166, 107, 0.1)',
-            border: `1px solid ${colors.accent}`,
-            borderRadius: '12px',
-            marginBottom: '20px',
+            padding: spacing.md,
+            background: 'rgba(201, 166, 107, 0.08)',
+            border: `1px solid ${colors.border}`,
+            borderRadius: '3px',
+            marginBottom: spacing.lg,
           }}>
-            <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
+            <p style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.xs, fontWeight: 600 }}>
               Your Commitment
             </p>
-            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-              When someone books your time, they pay upfront.
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
+              When someone books, they pay upfront.
             </p>
-            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
               If you cancel: They get refunded. You receive nothing.
             </p>
-            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
               If they cancel: You keep their payment.
             </p>
-            <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
-              Only offer times you can reliably keep.
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5, marginTop: spacing.xs }}>
+              Only offer times you can keep.
             </p>
           </div>
 
@@ -9126,7 +9126,7 @@ function App() {
         <div style={containerStyle}>
           <div style={screenStyle}>
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to view your profile</p>
+              <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to view your profile</p>
               <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
             </div>
           </div>
@@ -9141,22 +9141,22 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, textAlign: 'center', marginBottom: '30px' }}>
-            {myGiverProfile ? 'Profile & Settings' : 'Profile Settings'}
+          <h2 style={{ fontSize: typography.xl, fontWeight: 600, textAlign: 'center', marginBottom: spacing.xxl }}>
+            {myGiverProfile ? 'Profile & Settings' : 'Settings'}
           </h2>
 
           {/* Account Info */}
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Account</h3>
-            <div style={{ marginBottom: '12px' }}>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '5px' }}>Email</p>
-              <p style={{ color: colors.textPrimary }}>{user.email}</p>
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+            <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Account</h3>
+            <div style={{ marginBottom: spacing.sm }}>
+              <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: '6px' }}>Email</p>
+              <p style={{ color: colors.textPrimary, fontSize: typography.md }}>{user.email}</p>
             </div>
           </div>
 
           {/* Profile Picture */}
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Profile Picture</h3>
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+            <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Profile Picture</h3>
             <ImageUpload
               onUpload={async (publicUrl) => {
                 // Update profile with new picture URL
@@ -9179,8 +9179,8 @@ function App() {
           </div>
 
           {/* Timezone Setting */}
-          <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Timezone</h3>
+          <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+            <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Timezone</h3>
             <select
               value={currentTimezone}
               onChange={async (e) => {
@@ -9201,20 +9201,20 @@ function App() {
                   await fetchUserProfile()
                   if (myGiverProfile) await fetchMyGiverProfile()
 
-                  alert('Timezone updated successfully!')
+                  alert('Timezone updated')
                 } catch (err) {
                   console.error('Error updating timezone:', err)
-                  alert('Failed to update timezone. Please try again.')
+                  alert('Failed to update timezone')
                 }
               }}
               style={{
                 width: '100%',
-                padding: '15px',
+                padding: spacing.md,
                 background: colors.bgSecondary,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '12px',
+                borderRadius: '3px',
                 color: colors.textPrimary,
-                fontSize: '1rem',
+                fontSize: typography.md,
                 boxSizing: 'border-box'
               }}
             >
@@ -9222,8 +9222,8 @@ function App() {
                 <option key={tz.value} value={tz.value}>{tz.label}</option>
               ))}
             </select>
-            <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '10px' }}>
-              Times will be displayed in your timezone
+            <p style={{ color: colors.textMuted, fontSize: typography.sm, marginTop: spacing.xs }}>
+              Times displayed in your timezone
             </p>
           </div>
 
@@ -9231,49 +9231,49 @@ function App() {
           {myGiverProfile ? (
             <>
               {/* Name & Tagline */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Public Profile</h3>
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Public Profile</h3>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Name</label>
+                <div style={{ marginBottom: spacing.md }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>Name</label>
                   <input
                     value={giverName}
                     onChange={(e) => setGiverName(e.target.value)}
                     style={{
                       width: '100%',
-                      padding: '12px',
+                      padding: spacing.sm,
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
                       borderRadius: '3px',
                       color: colors.textPrimary,
-                      fontSize: '1rem',
+                      fontSize: typography.md,
                       boxSizing: 'border-box'
                     }}
                   />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>Tagline</label>
+                <div style={{ marginBottom: spacing.md }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>Tagline</label>
                   <input
                     value={giverTagline}
                     onChange={(e) => setGiverTagline(e.target.value)}
-                    placeholder="Optional tagline"
+                    placeholder="Optional"
                     style={{
                       width: '100%',
-                      padding: '12px',
+                      padding: spacing.sm,
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
                       borderRadius: '3px',
                       color: colors.textPrimary,
-                      fontSize: '1rem',
+                      fontSize: typography.md,
                       boxSizing: 'border-box'
                     }}
                   />
                 </div>
 
-                <div style={{ marginBottom: '15px' }}>
-                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                    Bio/background <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
+                <div style={{ marginBottom: spacing.md }}>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
+                    Bio <span style={{ color: colors.textMuted }}>(500 char max)</span>
                   </label>
                   <textarea
                     value={giverBio}
@@ -9282,22 +9282,22 @@ function App() {
                         setGiverBio(e.target.value)
                       }
                     }}
-                    placeholder="Share a bit about your background and experience..."
+                    placeholder="Share a bit about your background..."
                     style={{
                       width: '100%',
-                      padding: '12px',
+                      padding: spacing.sm,
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
                       borderRadius: '3px',
                       color: colors.textPrimary,
-                      fontSize: '1rem',
+                      fontSize: typography.md,
                       boxSizing: 'border-box',
-                      minHeight: '80px',
+                      minHeight: '90px',
                       resize: 'vertical',
                       fontFamily: 'inherit'
                     }}
                   />
-                  <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', textAlign: 'right' }}>
+                  <p style={{ color: colors.textMuted, fontSize: typography.xs, marginTop: '6px', textAlign: 'right' }}>
                     {giverBio.length}/500
                   </p>
                 </div>
@@ -9323,10 +9323,10 @@ function App() {
 
                       await fetchMyGiverProfile()
                       await fetchGivers()
-                      alert('Profile updated successfully!')
+                      alert('Profile updated')
                     } catch (err) {
                       console.error('Error updating profile:', err)
-                      alert('Failed to update profile. Please try again.')
+                      alert('Failed to update profile')
                     }
                   }}
                   style={{
@@ -9340,10 +9340,10 @@ function App() {
               </div>
 
               {/* Rate */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Rate</h3>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                  <span style={{ color: colors.textPrimary, fontSize: '1.2rem' }}>$</span>
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Rate</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
+                  <span style={{ color: colors.textPrimary, fontSize: typography.lg }}>$</span>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -9360,22 +9360,22 @@ function App() {
                     }}
                     style={{
                       flex: 1,
-                      padding: '12px',
+                      padding: spacing.sm,
                       background: colors.bgSecondary,
                       border: `1px solid ${colors.border}`,
                       borderRadius: '3px',
                       color: colors.textPrimary,
-                      fontSize: '1rem',
+                      fontSize: typography.md,
                       boxSizing: 'border-box'
                     }}
                   />
-                  <span style={{ color: colors.textSecondary, fontSize: '0.9rem' }}>per block</span>
+                  <span style={{ color: colors.textSecondary, fontSize: typography.base }}>per block</span>
                 </div>
-                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>Minimum $15</p>
+                <p style={{ color: colors.textMuted, fontSize: typography.sm, marginBottom: spacing.md }}>Minimum $15</p>
                 <button
                   onClick={async () => {
                     if (giverRate < 15) {
-                      alert('Minimum rate is $15 per block')
+                      alert('Minimum rate is $15')
                       return
                     }
                     try {
@@ -9388,10 +9388,10 @@ function App() {
 
                       await fetchMyGiverProfile()
                       await fetchGivers()
-                      alert('Rate updated successfully!')
+                      alert('Rate updated')
                     } catch (err) {
                       console.error('Error updating rate:', err)
-                      alert('Failed to update rate. Please try again.')
+                      alert('Failed to update rate')
                     }
                   }}
                   style={{
@@ -9405,30 +9405,30 @@ function App() {
               </div>
 
               {/* Introduction Video */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>Introduction Video</h3>
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Introduction Video</h3>
                 {myGiverProfile?.video_url ? (
                   <>
-                    <div style={{ borderRadius: '12px', overflow: 'hidden', marginBottom: '15px' }}>
+                    <div style={{ borderRadius: '3px', overflow: 'hidden', marginBottom: spacing.md }}>
                       <video src={myGiverProfile.video_url} controls playsInline style={{ width: '100%', aspectRatio: '16/9', objectFit: 'cover' }} />
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: spacing.sm }}>
                       <button
                         style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
                         onClick={() => setScreen('editVideo')}
                       >
-                        Replace Video
+                        Replace
                       </button>
                       <button
                         style={{
                           flex: 1,
-                          padding: '15px',
+                          padding: spacing.md,
                           background: 'rgba(220, 38, 38, 0.1)',
                           border: '1px solid rgba(220, 38, 38, 0.3)',
-                          borderRadius: '12px',
+                          borderRadius: '3px',
                           color: '#f87171',
                           cursor: 'pointer',
-                          fontSize: '1rem',
+                          fontSize: typography.base,
                           fontWeight: 500
                         }}
                         onClick={async () => {
@@ -9444,14 +9444,14 @@ function App() {
                           }
                         }}
                       >
-                        Delete Video
+                        Delete
                       </button>
                     </div>
                   </>
                 ) : (
                   <>
-                    <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                      Record your introduction video (15-30 seconds)
+                    <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.md }}>
+                      Record introduction video (15-30 seconds)
                     </p>
                     <button
                       style={{ ...btnStyle, margin: 0, width: '100%' }}
@@ -9464,10 +9464,10 @@ function App() {
               </div>
 
               {/* Manage Availability */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Manage Availability</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Control when you're available for bookings. This applies to all your offerings.
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Availability</h3>
+                <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.md }}>
+                  Set times when you're available for bookings
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
@@ -9478,53 +9478,53 @@ function App() {
               </div>
 
               {/* What You Offer */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>What You Offer</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Each offer is a different type of conversation you offer. You can offer multiple modes (listening, teaching, etc.) at different prices.
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Your Offers</h3>
+                <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.xs }}>
+                  Different types of conversations at different prices
                 </p>
-                <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px' }}>
+                <p style={{ color: colors.textMuted, fontSize: typography.sm, marginBottom: spacing.md }}>
                   {myListings.length} {myListings.length === 1 ? 'offer' : 'offers'}
                 </p>
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: spacing.sm }}>
                   <button
                     style={{ ...btnStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('createListing')}
                   >
-                    Create New Offer
+                    Create Offer
                   </button>
                   <button
                     style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('manageListings')}
                   >
-                    Manage Offers
+                    Manage
                   </button>
                 </div>
               </div>
 
               {/* Share Profile */}
-              <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Share Your Profile</h3>
-                <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                  Share this on Instagram, Twitter, or anywhere you want people to find you.
+              <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Share Profile</h3>
+                <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.md }}>
+                  Direct link to your profile
                 </p>
                 <button
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
                   onClick={() => {
                     const shareUrl = `${window.location.origin}?giver=${user.id}`
                     navigator.clipboard.writeText(shareUrl)
-                    alert('Link copied! Paste it in your bio.')
+                    alert('Link copied')
                   }}
                 >
-                  Copy Your Profile Link
+                  Copy Link
                 </button>
               </div>
 
               {/* Upcoming Availability */}
               {myGiverProfile && availabilitySlots.length > 0 && (
-                <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-                  <h3 style={{ fontSize: '1.1rem', marginBottom: '15px', fontWeight: 600 }}>
-                    Your Upcoming Availability ({availabilitySlots.length} slots)
+                <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+                  <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>
+                    Upcoming Availability ({availabilitySlots.length} slots)
                   </h3>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {Object.entries(
@@ -9537,12 +9537,12 @@ function App() {
                           return acc
                         }, {} as Record<string, typeof availabilitySlots>)
                     ).map(([date, slots]) => (
-                      <div key={date} style={{ marginBottom: '15px' }}>
+                      <div key={date} style={{ marginBottom: spacing.md }}>
                         <div style={{
-                          fontSize: '0.9rem',
+                          fontSize: typography.base,
                           fontWeight: 600,
                           color: colors.accent,
-                          marginBottom: '8px'
+                          marginBottom: spacing.xs
                         }}>
                           {new Date(date + 'T00:00:00').toLocaleDateString('en-US', {
                             weekday: 'long',
@@ -9557,8 +9557,8 @@ function App() {
                               style={{
                                 padding: '6px 10px',
                                 background: colors.bgSecondary,
-                                borderRadius: '6px',
-                                fontSize: '0.8rem',
+                                borderRadius: '3px',
+                                fontSize: typography.sm,
                                 color: colors.textPrimary
                               }}
                             >
@@ -9574,10 +9574,10 @@ function App() {
             </>
           ) : (
             /* Non-giver: Option to become a giver */
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '10px', fontWeight: 600 }}>Become a Giver</h3>
-              <p style={{ color: colors.textSecondary, fontSize: '0.9rem', marginBottom: '15px' }}>
-                Get paid for your time and expertise
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Become a Giver</h3>
+              <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.md }}>
+                Get paid for your time
               </p>
               <button
                 style={{ ...btnStyle, margin: 0, width: '100%' }}
@@ -9602,7 +9602,7 @@ function App() {
         <div style={containerStyle}>
           <div style={screenStyle}>
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to manage listings</p>
+              <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to manage listings</p>
               <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
             </div>
           </div>
@@ -9615,15 +9615,15 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <SignOutButton />
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>My Offers</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>My Offers</h2>
             <div style={{ width: '40px' }} />
           </div>
 
           {listingsLoading ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
-              <p style={{ color: colors.textSecondary }}>Loading listings...</p>
+              <p style={{ color: colors.textSecondary }}>Loading...</p>
             </div>
           ) : (
             <>
@@ -9631,11 +9631,11 @@ function App() {
               <button
                 style={{
                   ...btnStyle,
-                  marginBottom: '12px',
+                  marginBottom: spacing.sm,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: spacing.xs
                 }}
                 onClick={() => {
                   // Reset form
@@ -9654,43 +9654,42 @@ function App() {
                   setScreen('createListing')
                 }}
               >
-                <span style={{ fontSize: '1.2rem' }}>+</span>
-                Create New Offer
+                <span style={{ fontSize: typography.lg }}>+</span>
+                Create Offer
               </button>
 
               {/* Manage Availability Button */}
               <button
                 style={{
-                  padding: '16px 24px',
+                  padding: `${spacing.md} ${spacing.xl}`,
                   borderRadius: '3px',
-                  fontSize: '0.95rem',
+                  fontSize: typography.base,
                   fontWeight: 500,
                   cursor: 'pointer',
-                  border: `2px solid ${colors.accent}`,
+                  border: `1px solid ${colors.border}`,
                   width: '100%',
                   background: colors.bgSecondary,
-                  color: colors.accent,
-                  marginBottom: '20px',
+                  color: colors.textPrimary,
+                  marginBottom: spacing.lg,
                   letterSpacing: '0.01em',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: spacing.xs
                 }}
                 onClick={() => setScreen('manageAvailability')}
               >
-                <span style={{ fontSize: '1rem' }}>📅</span>
                 Manage Availability
               </button>
 
               {/* Offers List */}
               {myListings.length === 0 ? (
                 <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center' }}>
-                  <p style={{ color: colors.textSecondary, marginBottom: '15px' }}>
-                    You haven't created any listings yet
+                  <p style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
+                    No offers yet
                   </p>
-                  <p style={{ color: colors.textMuted, fontSize: '0.9rem' }}>
-                    Create a listing to start offering your presence
+                  <p style={{ color: colors.textMuted, fontSize: typography.base }}>
+                    Create an offer to start
                   </p>
                 </div>
               ) : (
@@ -9704,9 +9703,9 @@ function App() {
                           borderLeft: `3px solid ${colors.accent}`
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: spacing.sm }}>
                           <div style={{ flex: 1 }}>
-                            <h3 style={{ fontSize: '1.1rem', marginBottom: '6px', fontWeight: 600 }}>
+                            <h3 style={{ fontSize: typography.lg, marginBottom: '6px', fontWeight: 600 }}>
                               {listing.topic || 'Offer'}
                             </h3>
                             {/* Show mode badge */}
@@ -9714,8 +9713,8 @@ function App() {
                               display: 'inline-block',
                               padding: '4px 10px',
                               background: colors.accentSoft,
-                              borderRadius: '12px',
-                              fontSize: '0.75rem',
+                              borderRadius: '3px',
+                              fontSize: typography.xs,
                               color: colors.accent,
                               fontWeight: 500
                             }}>
@@ -9723,34 +9722,32 @@ function App() {
                             </span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: colors.textPrimary }}>
+                            <div style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary }}>
                               ${(listing.price_cents / 100).toFixed(0)}
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
+                            <div style={{ fontSize: typography.xs, color: colors.textMuted }}>
                               per block
                             </div>
                           </div>
                         </div>
 
                         {listing.description && (
-                          <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '12px', lineHeight: '1.5' }}>
+                          <p style={{ fontSize: typography.base, color: colors.textSecondary, marginBottom: spacing.sm, lineHeight: '1.5' }}>
                             {listing.description}
                           </p>
                         )}
 
-                        {/* Removed deprecated categories section - now empty after multi-listing deprecation */}
-
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '15px' }}>
+                        <div style={{ display: 'flex', gap: spacing.xs, marginTop: spacing.md }}>
                           <button
                             style={{
                               flex: 1,
-                              padding: '10px',
+                              padding: spacing.sm,
                               background: colors.bgSecondary,
                               border: `1px solid ${colors.border}`,
                               borderRadius: '3px',
                               color: colors.textPrimary,
                               cursor: 'pointer',
-                              fontSize: '0.9rem'
+                              fontSize: typography.base
                             }}
                             onClick={() => {
                               setSelectedListing(listing)
@@ -9791,7 +9788,7 @@ function App() {
         <div style={containerStyle}>
           <div style={screenStyle}>
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Please sign in to create an offer</p>
+              <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to create an offer</p>
               <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
             </div>
           </div>
@@ -9804,9 +9801,9 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
           <SignOutButton />
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Offer</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Create Offer</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -9847,8 +9844,8 @@ function App() {
             {/* Simplified: Giver offers themselves inside protocol, not expertise */}
 
             {/* Profile Photo */}
-            <div style={{ marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+            <div style={{ marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
                 Profile photo <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <ImageUpload
@@ -9868,15 +9865,15 @@ function App() {
             </div>
 
             {/* Price */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Name your price <span style={{ color: colors.accent }}>*</span>
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
+                Price <span style={{ color: colors.accent }}>*</span>
               </label>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
+              <p style={{ color: colors.textMuted, fontSize: typography.sm, marginTop: '-4px', marginBottom: spacing.xs }}>
                 per block ({BLOCK_MINUTES} minutes)
               </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
+                <span style={{ fontSize: typography.lg, color: colors.textPrimary }}>$</span>
                 <input
                   type="number"
                   min="15"
@@ -9888,12 +9885,12 @@ function App() {
                   }}
                   style={{
                     flex: 1,
-                    padding: '12px',
+                    padding: spacing.sm,
                     background: colors.bgSecondary,
                     border: `1px solid ${colors.border}`,
                     borderRadius: '3px',
                     color: colors.textPrimary,
-                    fontSize: '1rem',
+                    fontSize: typography.md,
                     boxSizing: 'border-box'
                   }}
                   required
@@ -9902,12 +9899,12 @@ function App() {
             </div>
 
             {/* Direction Types Selection */}
-            <div id="listing-directions-section" style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+            <div id="listing-directions-section" style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
                 Directions you allow <span style={{ color: colors.accent }}>*</span>
               </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.5 }}>
-                Select which directions they can choose from during the conversation
+              <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: spacing.md, lineHeight: 1.5 }}>
+                Which directions they can choose during conversation
               </p>
               {[
                 { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together', required: true },
@@ -9922,8 +9919,8 @@ function App() {
                   style={{
                     display: 'flex',
                     alignItems: 'flex-start',
-                    padding: '12px',
-                    marginBottom: '8px',
+                    padding: spacing.sm,
+                    marginBottom: spacing.xs,
                     background: listingFormData.directions_allowed?.includes(direction.value) ? colors.accentSoft : 'transparent',
                     border: `1px solid ${listingFormData.directions_allowed?.includes(direction.value) ? colors.accent : colors.border}`,
                     borderRadius: '3px',
@@ -9940,13 +9937,13 @@ function App() {
                         : current.filter(d => d !== direction.value)
                       setListingFormData({ ...listingFormData, directions_allowed: updated })
                     }}
-                    style={{ marginRight: '12px', marginTop: '4px' }}
+                    style={{ marginRight: spacing.sm, marginTop: '4px' }}
                   />
                   <div>
-                    <div style={{ fontWeight: 500, color: colors.textPrimary, marginBottom: '2px' }}>
+                    <div style={{ fontWeight: 500, color: colors.textPrimary, marginBottom: '2px', fontSize: typography.base }}>
                       {direction.label}
                     </div>
-                    <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
+                    <div style={{ fontSize: typography.sm, color: colors.textSecondary }}>
                       {direction.description}
                     </div>
                   </div>
@@ -9955,26 +9952,26 @@ function App() {
             </div>
 
             {/* Hard No's */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
                 Hard no's <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                List anything that will end the conversation if it comes up
+              <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: spacing.xs, lineHeight: 1.5 }}>
+                Topics that will end the conversation
               </p>
               <textarea
                 value={listingFormData.boundaries || ''}
                 onChange={(e) => setListingFormData({ ...listingFormData, boundaries: e.target.value })}
-                placeholder="e.g., No political debate, no medical advice, no relationship counseling"
+                placeholder="e.g., No political debate, no medical advice"
                 style={{
                   width: '100%',
                   minHeight: '80px',
-                  padding: '12px',
+                  padding: spacing.sm,
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
                   color: colors.textPrimary,
-                  fontSize: '0.9rem',
+                  fontSize: typography.base,
                   fontFamily: 'inherit',
                   resize: 'vertical',
                   boxSizing: 'border-box'
@@ -9983,20 +9980,20 @@ function App() {
             </div>
 
             {/* Instant Booking Toggle */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
               <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                 <input
                   type="checkbox"
                   checked={listingFormData.allow_instant_book || false}
                   onChange={(e) => setListingFormData({ ...listingFormData, allow_instant_book: e.target.checked })}
-                  style={{ marginRight: '10px', cursor: 'pointer' }}
+                  style={{ marginRight: spacing.sm, cursor: 'pointer' }}
                 />
                 <div>
-                  <div style={{ color: colors.textPrimary, fontSize: '0.9rem', fontWeight: 500 }}>
+                  <div style={{ color: colors.textPrimary, fontSize: typography.base, fontWeight: 500 }}>
                     Allow instant booking
                   </div>
-                  <div style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '4px' }}>
-                    When enabled, bookings are confirmed immediately without your approval. When disabled (default), you'll review each booking request.
+                  <div style={{ color: colors.textMuted, fontSize: typography.sm, marginTop: '4px' }}>
+                    Bookings confirmed immediately without approval
                   </div>
                 </div>
               </label>
@@ -10007,17 +10004,17 @@ function App() {
               <div style={{
                 background: 'rgba(220, 38, 38, 0.1)',
                 border: `1px solid rgba(220, 38, 38, 0.3)`,
-                borderRadius: '8px',
-                padding: '15px',
-                marginBottom: '20px'
+                borderRadius: '3px',
+                padding: spacing.md,
+                marginBottom: spacing.lg
               }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: spacing.sm }}>
+                  <span style={{ fontSize: typography.lg }}>⚠️</span>
                   <div>
-                    <p style={{ color: '#fca5a5', fontWeight: 600, marginBottom: '5px' }}>
+                    <p style={{ color: '#fca5a5', fontWeight: 600, marginBottom: '5px', fontSize: typography.base }}>
                       Cannot create offer
                     </p>
-                    <p style={{ color: colors.textSecondary, fontSize: '0.9rem', lineHeight: 1.5 }}>
+                    <p style={{ color: colors.textSecondary, fontSize: typography.sm, lineHeight: 1.5 }}>
                       {listingFormError}
                     </p>
                   </div>
