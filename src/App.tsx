@@ -4366,7 +4366,7 @@ function App() {
   if (screen === 'welcome') {
     return (
       <div style={containerStyle}>
-        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative' }}>
+        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative', minHeight: '90vh' }}>
           <SignOutButton />
 
           {/* MYCA Logo */}
@@ -4374,23 +4374,40 @@ function App() {
             src="/myca-logo.webp"
             alt="Myca"
             style={{
-              width: '180px',
+              width: '200px',
               height: 'auto',
-              marginBottom: '30px'
+              marginBottom: spacing.xxl,
+              opacity: 0.95
             }}
           />
 
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.textPrimary, maxWidth: '380px', lineHeight: 1.5, marginBottom: '40px', letterSpacing: '-0.01em' }}>
+          <h1 style={{
+            fontSize: typography.xl,
+            fontWeight: 600,
+            color: colors.textPrimary,
+            maxWidth: '480px',
+            lineHeight: 1.4,
+            marginBottom: spacing.lg,
+            letterSpacing: '-0.02em'
+          }}>
             Get understood first.<br />
             Everything else is optional.
           </h1>
-          <p style={{ fontSize: '0.9rem', fontWeight: 500, color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
-            Uninterrupted conversation. Check for understanding, then move forward in the direction you choose.
+          <p style={{
+            fontSize: typography.sm,
+            fontWeight: 400,
+            color: colors.textSecondary,
+            maxWidth: '420px',
+            lineHeight: 1.8,
+            marginBottom: spacing.xxl,
+            marginTop: spacing.sm
+          }}>
+            Uninterrupted conversation with someone who holds the room.
           </p>
-          <div style={{ width: '100%', maxWidth: '340px' }}>
+          <div style={{ width: '100%', maxWidth: '360px', marginTop: spacing.md }}>
             <button style={btnStyle} onClick={() => setScreen('browse')}>Find a person</button>
             <button
-              style={{ ...btnSecondaryStyle, marginBottom: '20px' }}
+              style={btnSecondaryStyle}
               onClick={() => {
                 // If user already has a giver profile, go to manage listings
                 // Otherwise, go straight to listing form
@@ -4403,25 +4420,17 @@ function App() {
             >
               Offer your time
             </button>
-            <p style={{
-              fontSize: '0.85rem',
-              color: colors.textSecondary,
-              marginBottom: '20px',
-              lineHeight: 1.7,
-              maxWidth: '340px'
-            }}>
-              Uninterrupted conversation. Check for understanding, then move forward in the direction you choose.
-            </p>
             {!user && (
               <button
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: colors.accent,
-                  textDecoration: 'underline',
+                  color: colors.textMuted,
                   cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  padding: 0
+                  fontSize: typography.sm,
+                  padding: 0,
+                  marginTop: spacing.lg,
+                  opacity: 0.7
                 }}
                 onClick={() => setNeedsAuth(true)}
               >
@@ -4859,11 +4868,16 @@ function App() {
           {/* STEP 1: Availability */}
           {discoveryStep === 'availability' && (
             <div>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>
+              <h3 style={{
+                fontSize: typography.xl,
+                marginBottom: spacing.lg,
+                fontWeight: 600,
+                letterSpacing: '-0.01em'
+              }}>
                 When do you need someone?
               </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '30px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm, marginBottom: spacing.xl }}>
                 {[
                   { value: 'now' as const, label: 'Available now', description: 'Next 2 hours' },
                   { value: 'today' as const, label: 'Available today', description: 'Rest of today' },
@@ -4952,27 +4966,39 @@ function App() {
                       setDiscoveryStep('feed')
                     }}
                     style={{
-                      padding: '16px',
+                      padding: spacing.md,
                       background: colors.bgCard,
-                      border: `1px solid ${colors.border}`,
-                      borderRadius: '12px',
+                      border: `1px solid rgba(255, 255, 255, 0.06)`,
+                      borderRadius: '3px',
                       cursor: 'pointer',
                       textAlign: 'left',
-                      transition: 'all 0.2s'
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = colors.accent
                       e.currentTarget.style.background = colors.accentSoft
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.4)'
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = colors.border
+                      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
                       e.currentTarget.style.background = colors.bgCard
+                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.3)'
                     }}
                   >
-                    <div style={{ fontSize: '1.05rem', fontWeight: 600, color: colors.textPrimary, marginBottom: '6px' }}>
+                    <div style={{
+                      fontSize: typography.base,
+                      fontWeight: 600,
+                      color: colors.textPrimary,
+                      marginBottom: spacing.xs
+                    }}>
                       {option.label}
                     </div>
-                    <div style={{ fontSize: '0.9rem', color: colors.textSecondary }}>
+                    <div style={{
+                      fontSize: typography.sm,
+                      color: colors.textSecondary,
+                      lineHeight: 1.5
+                    }}>
                       {option.description}
                     </div>
                   </button>
@@ -4983,7 +5009,7 @@ function App() {
 
           {/* Time Filter Chips (shown when on feed) */}
           {discoveryStep === 'feed' && (
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.lg, flexWrap: 'wrap' }}>
               {[
                 { value: 'now' as const, label: 'Now' },
                 { value: 'today' as const, label: 'Today' },
@@ -5044,15 +5070,15 @@ function App() {
                     setCurrentFeedIndex(0)
                   }}
                   style={{
-                    padding: '8px 16px',
+                    padding: `${spacing.xs} ${spacing.md}`,
                     borderRadius: '20px',
-                    border: `1px solid ${discoveryFilters.availability === filter.value ? colors.accent : colors.border}`,
-                    background: discoveryFilters.availability === filter.value ? colors.accentSoft : colors.bgCard,
+                    border: `1px solid ${discoveryFilters.availability === filter.value ? colors.accent : 'rgba(255, 255, 255, 0.08)'}`,
+                    background: discoveryFilters.availability === filter.value ? colors.accentSoft : 'rgba(255, 255, 255, 0.03)',
                     color: discoveryFilters.availability === filter.value ? colors.accent : colors.textSecondary,
                     cursor: 'pointer',
-                    fontSize: '0.9rem',
+                    fontSize: typography.sm,
                     fontWeight: discoveryFilters.availability === filter.value ? 600 : 400,
-                    transition: 'all 0.2s'
+                    transition: 'all 0.15s ease'
                   }}
                 >
                   {filter.label}
@@ -5124,69 +5150,92 @@ function App() {
                           }}
                         />
 
-                        {/* Overlay Info - TikTok Style */}
+                        {/* Overlay Info */}
                         <div style={{
                           position: 'absolute',
                           bottom: 0,
                           left: 0,
                           right: 0,
-                          padding: '20px',
-                          background: 'linear-gradient(to top, rgba(0,0,0,0.8), transparent)',
+                          padding: spacing.lg,
+                          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.5) 50%, transparent 100%)',
                           color: '#fff'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
                             {/* Profile Picture */}
                             <div style={{
-                              width: '40px',
-                              height: '40px',
+                              width: '48px',
+                              height: '48px',
                               borderRadius: '50%',
                               background: giver.profile_picture_url
                                 ? `url(${giver.profile_picture_url}) center/cover`
-                                : 'rgba(255,255,255,0.3)',
-                              border: `2px solid #fff`,
+                                : 'rgba(255,255,255,0.2)',
+                              border: `2px solid rgba(255,255,255,0.3)`,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: '1rem',
+                              fontSize: typography.md,
                               fontWeight: 600,
                               flexShrink: 0
                             }}>
                               {!giver.profile_picture_url && giver.name[0].toUpperCase()}
                             </div>
 
-                            <div style={{ flex: 1 }}>
-                              <h3 style={{ fontSize: '1.2rem', margin: 0, fontWeight: 600 }}>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <h3 style={{
+                                fontSize: typography.lg,
+                                margin: 0,
+                                fontWeight: 600,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: spacing.xs
+                              }}>
                                 {giver.name}
                                 {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
-                                  <span style={{ marginLeft: '8px', fontSize: '0.9rem' }}>✓</span>
+                                  <span style={{ fontSize: typography.sm, opacity: 0.9 }}>✓</span>
                                 )}
                               </h3>
-                              <p style={{ fontSize: '0.95rem', margin: '4px 0 0 0', opacity: 0.9 }}>
+                              <p style={{
+                                fontSize: typography.sm,
+                                margin: `${spacing.xs} 0 0 0`,
+                                opacity: 0.85,
+                                lineHeight: 1.4
+                              }}>
                                 {currentListing.description || currentListing.topic || giver.bio?.slice(0, 60) + '...' || 'Available now'}
                               </p>
                             </div>
                           </div>
 
-                          <p style={{ fontSize: '1.5rem', fontWeight: 700, margin: '8px 0 0 0' }}>
+                          <p style={{
+                            fontSize: typography.xl,
+                            fontWeight: 600,
+                            margin: `${spacing.sm} 0 0 0`,
+                            letterSpacing: '-0.01em'
+                          }}>
                             ${(currentListing.price_cents / 100).toFixed(0)} per block
                           </p>
-                          <p style={{ fontSize: '0.75rem', color: colors.textMuted, marginTop: '4px' }}>
-                            Block length is {BLOCK_MINUTES} minutes
+                          <p style={{
+                            fontSize: typography.xs,
+                            color: 'rgba(255,255,255,0.6)',
+                            marginTop: spacing.xs
+                          }}>
+                            {BLOCK_MINUTES}-minute blocks
                           </p>
                         </div>
 
                         {/* Tap hint */}
                         <div style={{
                           position: 'absolute',
-                          top: '20px',
-                          right: '20px',
-                          padding: '8px 12px',
-                          background: 'rgba(0,0,0,0.6)',
+                          top: spacing.lg,
+                          right: spacing.lg,
+                          padding: `${spacing.xs} ${spacing.sm}`,
+                          background: 'rgba(0,0,0,0.5)',
+                          backdropFilter: 'blur(8px)',
                           borderRadius: '3px',
-                          fontSize: '0.85rem',
-                          color: '#fff'
+                          fontSize: typography.xs,
+                          color: 'rgba(255,255,255,0.8)',
+                          border: '1px solid rgba(255,255,255,0.1)'
                         }}>
-                          Tap for full profile
+                          Tap to view profile
                         </div>
                       </div>
                     ) : (
@@ -5295,17 +5344,19 @@ function App() {
           </div>
 
           {/* Saved filter toggle */}
-          <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.lg }}>
             <button
               onClick={() => setShowSavedOnly(false)}
               style={{
-                padding: '8px 16px',
+                padding: `${spacing.xs} ${spacing.md}`,
                 borderRadius: '3px',
-                border: `1px solid ${!showSavedOnly ? colors.accent : colors.border}`,
-                background: !showSavedOnly ? colors.accentSoft : 'transparent',
+                border: `1px solid ${!showSavedOnly ? colors.accent : 'rgba(255, 255, 255, 0.08)'}`,
+                background: !showSavedOnly ? colors.accentSoft : 'rgba(255, 255, 255, 0.03)',
                 color: !showSavedOnly ? colors.accent : colors.textSecondary,
                 cursor: 'pointer',
-                fontSize: '0.85rem',
+                fontSize: typography.sm,
+                fontWeight: !showSavedOnly ? 600 : 400,
+                transition: 'all 0.15s ease'
               }}
             >
               All
@@ -5313,34 +5364,37 @@ function App() {
             <button
               onClick={() => setShowSavedOnly(true)}
               style={{
-                padding: '8px 16px',
+                padding: `${spacing.xs} ${spacing.md}`,
                 borderRadius: '3px',
-                border: `1px solid ${showSavedOnly ? colors.accent : colors.border}`,
-                background: showSavedOnly ? colors.accentSoft : 'transparent',
+                border: `1px solid ${showSavedOnly ? colors.accent : 'rgba(255, 255, 255, 0.08)'}`,
+                background: showSavedOnly ? colors.accentSoft : 'rgba(255, 255, 255, 0.03)',
                 color: showSavedOnly ? colors.accent : colors.textSecondary,
                 cursor: 'pointer',
-                fontSize: '0.85rem',
+                fontSize: typography.sm,
+                fontWeight: showSavedOnly ? 600 : 400,
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: spacing.xs,
+                transition: 'all 0.15s ease'
               }}
             >
-              <span style={{ fontSize: '0.9rem' }}>♥</span>
+              <span style={{ fontSize: typography.sm }}>♥</span>
               Saved {savedGiverIds.size > 0 && `(${savedGiverIds.size})`}
             </button>
           </div>
 
           {givers.filter(g => g.id !== user?.id && (!showSavedOnly || savedGiverIds.has(g.id))).map(giver => (
             <div key={giver.id} style={cardStyle} onClick={() => { setSelectedGiver(giver); setScreen('profile'); }}>
-              <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
+              <div style={{ display: 'flex', gap: spacing.lg, marginBottom: spacing.lg }}>
                 {giver.video_url ? (
                   <div style={{
-                    width: '70px',
-                    height: '70px',
-                    borderRadius: '12px',
+                    width: '96px',
+                    height: '96px',
+                    borderRadius: '3px',
                     overflow: 'hidden',
                     position: 'relative',
-                    flexShrink: 0
+                    flexShrink: 0,
+                    border: `1px solid rgba(255, 255, 255, 0.08)`
                   }}>
                     <video
                       src={giver.video_url}
@@ -5355,24 +5409,26 @@ function App() {
                     <div style={{
                       position: 'absolute',
                       inset: 0,
-                      background: 'rgba(0,0,0,0.3)',
+                      background: 'linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.4) 100%)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center'
                     }}>
                       <div style={{
-                        width: '24px',
-                        height: '24px',
-                        background: 'rgba(255,255,255,0.9)',
+                        width: '28px',
+                        height: '28px',
+                        background: 'rgba(255,255,255,0.15)',
+                        backdropFilter: 'blur(8px)',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        border: '1px solid rgba(255,255,255,0.2)'
                       }}>
                         <div style={{
                           width: 0,
                           height: 0,
-                          borderLeft: '8px solid #333',
+                          borderLeft: '8px solid rgba(255,255,255,0.9)',
                           borderTop: '5px solid transparent',
                           borderBottom: '5px solid transparent',
                           marginLeft: '2px'
@@ -5382,63 +5438,89 @@ function App() {
                   </div>
                 ) : (
                   <div style={{
-                    width: '70px',
-                    height: '70px',
-                    borderRadius: '12px',
+                    width: '96px',
+                    height: '96px',
+                    borderRadius: '3px',
                     background: `linear-gradient(135deg, ${colors.accentSoft}, ${colors.bgSecondary})`,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 600,
-                    fontSize: '1.5rem',
+                    fontSize: '2rem',
                     color: colors.accent,
-                    flexShrink: 0
+                    flexShrink: 0,
+                    border: `1px solid rgba(255, 255, 255, 0.08)`
                   }}>
                     {giver.name[0]}
                   </div>
                 )}
-                <div style={{ flex: 1 }}>
-                  <h3 style={{ fontSize: '1.2rem', marginBottom: '5px', fontWeight: 600 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <h3 style={{
+                    fontSize: typography.lg,
+                    marginBottom: spacing.xs,
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: spacing.xs
+                  }}>
                     {giver.name}
                     {(giver.twitter_handle || giver.instagram_handle || giver.linkedin_handle) && (
                       <span style={{
-                        marginLeft: '8px',
-                        fontSize: '0.9rem',
+                        fontSize: typography.sm,
                         color: colors.accent,
-                        fontWeight: 500
+                        fontWeight: 500,
+                        opacity: 0.8
                       }}>
                         ✓
                       </span>
                     )}
                   </h3>
-                  <p style={{ fontSize: '0.9rem', color: colors.textSecondary }}>{giver.tagline}</p>
-                </div>
-              </div>
-              <div style={{ marginBottom: '15px' }}>
-                {(giver.qualities_offered || []).slice(0, 3).map((q, i) => (
-                  <span key={q} style={{
-                    padding: '6px 12px',
-                    background: i < 2 ? colors.accentSoft : colors.bgSecondary,
-                    borderRadius: '3px',
-                    fontSize: '0.8rem',
-                    color: i < 2 ? colors.accent : colors.textSecondary,
-                    marginRight: '8px',
+                  <p style={{
+                    fontSize: typography.sm,
+                    color: colors.textSecondary,
+                    lineHeight: 1.5,
+                    marginTop: spacing.xs
                   }}>
-                    {q}
-                  </span>
-                ))}
+                    {giver.tagline}
+                  </p>
+                </div>
               </div>
               {giver.bio && (
                 <p style={{
-                  fontSize: '0.85rem',
+                  fontSize: typography.sm,
                   color: colors.textSecondary,
-                  lineHeight: 1.5,
-                  marginBottom: '15px'
+                  lineHeight: 1.6,
+                  marginBottom: spacing.md,
+                  marginTop: spacing.xs
                 }}>
-                  {giver.bio.length > 100 ? `${giver.bio.slice(0, 100)}...` : giver.bio}
+                  {giver.bio.length > 120 ? `${giver.bio.slice(0, 120)}...` : giver.bio}
                 </p>
               )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '15px', borderTop: `1px solid ${colors.border}` }}>
+              {(giver.qualities_offered || []).length > 0 && (
+                <div style={{ marginBottom: spacing.md, marginTop: spacing.md }}>
+                  {(giver.qualities_offered || []).slice(0, 3).map((q, i) => (
+                    <span key={q} style={{
+                      padding: `${spacing.xs} ${spacing.sm}`,
+                      background: i === 0 ? colors.accentSoft : 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '3px',
+                      fontSize: typography.xs,
+                      color: i === 0 ? colors.accent : colors.textMuted,
+                      marginRight: spacing.xs,
+                      border: i === 0 ? 'none' : `1px solid rgba(255, 255, 255, 0.06)`
+                    }}>
+                      {q}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingTop: spacing.md,
+                borderTop: `1px solid rgba(255, 255, 255, 0.04)`,
+                marginTop: spacing.xs
+              }}>
                 {/* Multi-listing display */}
                 {giver.listings && giver.listings.length > 0 ? (
                   <div>
