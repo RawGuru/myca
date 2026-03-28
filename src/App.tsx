@@ -78,39 +78,39 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
             padding: '40px 20px'
           }}>
             <h1 style={{
-              fontSize: '1.8rem',
+              fontSize: typography.xl,
               fontWeight: 700,
-              marginBottom: '20px',
+              marginBottom: spacing.lg,
               color: '#ef4444'
             }}>
               Email Events crashed
             </h1>
 
             <div style={{
-              padding: '20px',
-              marginBottom: '20px',
+              padding: spacing.lg,
+              marginBottom: spacing.lg,
               background: colors.bgSecondary,
               border: `1px solid ${colors.border}`,
-              borderRadius: '8px'
+              borderRadius: '3px'
             }}>
-              <div style={{ marginBottom: '10px' }}>
+              <div style={{ marginBottom: spacing.sm }}>
                 <strong>Error:</strong> {this.state.error?.message || 'Unknown error'}
               </div>
 
-              <details style={{ marginTop: '20px' }}>
+              <details style={{ marginTop: spacing.lg }}>
                 <summary style={{
                   cursor: 'pointer',
                   color: colors.accent,
-                  marginBottom: '10px'
+                  marginBottom: spacing.sm
                 }}>
                   Show component stack
                 </summary>
                 <pre style={{
                   background: colors.bgPrimary,
-                  padding: '15px',
-                  borderRadius: '4px',
+                  padding: spacing.md,
+                  borderRadius: '3px',
                   overflow: 'auto',
-                  fontSize: '0.85rem',
+                  fontSize: typography.sm,
                   lineHeight: 1.4
                 }}>
                   {this.state.errorInfo?.componentStack}
@@ -124,12 +124,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
                 window.location.reload()
               }}
               style={{
-                padding: '12px 24px',
+                padding: `${spacing.sm} ${spacing.xl}`,
                 background: colors.accent,
                 border: 'none',
-                borderRadius: '8px',
+                borderRadius: '3px',
                 color: colors.bgPrimary,
-                fontSize: '1rem',
+                fontSize: typography.md,
                 fontWeight: 600,
                 cursor: 'pointer'
               }}
@@ -4455,21 +4455,21 @@ function App() {
           >
             ← Back to Sessions
           </button>
-          <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>Debug: Raw Bookings Data</h2>
+          <h2 style={{ fontSize: typography.xl, marginBottom: spacing.lg }}>Debug: Raw Bookings Data</h2>
           <div style={{
-            fontSize: '0.75rem',
+            fontSize: typography.xs,
             fontFamily: 'monospace',
             background: colors.bgSecondary,
-            padding: '15px',
-            borderRadius: '8px',
+            padding: spacing.md,
+            borderRadius: '3px',
             overflowX: 'auto',
             whiteSpace: 'pre-wrap',
             wordBreak: 'break-all'
           }}>
-            <div style={{ marginBottom: '15px', color: colors.accent }}>
+            <div style={{ marginBottom: spacing.md, color: colors.accent }}>
               User ID: {user?.id}
             </div>
-            <div style={{ marginBottom: '15px', color: colors.accent }}>
+            <div style={{ marginBottom: spacing.md, color: colors.accent }}>
               Total Bookings: {userBookings.length}
             </div>
             {JSON.stringify(userBookings.map(b => ({
@@ -7120,60 +7120,60 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
           
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xxl }}>
             <button onClick={() => setScreen('giverCode')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Create Profile</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Create Profile</h2>
             <div style={{ width: '40px' }} />
           </div>
-          <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Share your presence with those who need it.</p>
-          
+          <p style={{ color: colors.textSecondary, marginBottom: spacing.xxl }}>Share your presence with those who need it.</p>
+
           {profileError && (
             <div style={{
-              padding: '15px',
+              padding: spacing.md,
               background: 'rgba(220, 38, 38, 0.1)',
               border: '1px solid rgba(220, 38, 38, 0.3)',
-              borderRadius: '12px',
+              borderRadius: '3px',
               color: '#f87171',
-              marginBottom: '20px',
-              fontSize: '0.9rem'
+              marginBottom: spacing.lg,
+              fontSize: typography.sm
             }}>
               {profileError}
             </div>
           )}
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your name *</label>
+          <div style={{ marginBottom: spacing.lg }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>Your name *</label>
             <input
               value={giverName}
               onChange={(e) => setGiverName(e.target.value)}
-              style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: spacing.md, background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '3px', color: colors.textPrimary, fontSize: typography.md, boxSizing: 'border-box' }}
               placeholder="How should people know you?"
             />
           </div>
 
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your tagline</label>
+          <div style={{ marginBottom: spacing.lg }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>Your tagline</label>
             <input
               value={giverTagline}
               onChange={(e) => setGiverTagline(e.target.value)}
-              style={{ width: '100%', padding: '15px', background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '12px', color: colors.textPrimary, fontSize: '1rem', boxSizing: 'border-box' }}
+              style={{ width: '100%', padding: spacing.md, background: colors.bgSecondary, border: `1px solid ${colors.border}`, borderRadius: '3px', color: colors.textPrimary, fontSize: typography.md, boxSizing: 'border-box' }}
               placeholder="One sentence about your presence..."
             />
           </div>
 
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>Your timezone *</label>
+          <div style={{ marginBottom: spacing.xxl }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>Your timezone *</label>
             <select
               value={giverTimezone}
               onChange={(e) => setGiverTimezone(e.target.value)}
               style={{
                 width: '100%',
-                padding: '15px',
+                padding: spacing.md,
                 background: colors.bgSecondary,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '12px',
+                borderRadius: '3px',
                 color: colors.textPrimary,
-                fontSize: '1rem',
+                fontSize: typography.md,
                 boxSizing: 'border-box'
               }}
             >
@@ -7181,14 +7181,14 @@ function App() {
                 <option key={tz.value} value={tz.value}>{tz.label}</option>
               ))}
             </select>
-            <p style={{ color: colors.textMuted, fontSize: '0.8rem', marginTop: '8px' }}>
+            <p style={{ color: colors.textMuted, fontSize: typography.xs, marginTop: spacing.xs }}>
               Your availability times will be stored in this timezone
             </p>
           </div>
 
           {/* Bio/Background */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+          <div style={{ marginBottom: spacing.lg }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>
               Bio/background <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
             </label>
             <textarea
@@ -7200,12 +7200,12 @@ function App() {
               }}
               style={{
                 width: '100%',
-                padding: '15px',
+                padding: spacing.md,
                 background: colors.bgSecondary,
                 border: `1px solid ${colors.border}`,
-                borderRadius: '12px',
+                borderRadius: '3px',
                 color: colors.textPrimary,
-                fontSize: '1rem',
+                fontSize: typography.md,
                 boxSizing: 'border-box',
                 minHeight: '100px',
                 resize: 'vertical',
@@ -7213,23 +7213,23 @@ function App() {
               }}
               placeholder="Share a bit about your background and experience..."
             />
-            <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '5px', textAlign: 'right' }}>
+            <p style={{ color: colors.textMuted, fontSize: typography.xs, marginTop: '6px', textAlign: 'right' }}>
               {giverBio.length}/500
             </p>
           </div>
 
           {/* Social Verification */}
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+          <div style={{ marginBottom: spacing.xxl }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>
               Social Verification <span style={{ color: colors.textMuted }}>(optional)</span>
             </label>
-            <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginBottom: '15px', lineHeight: 1.6 }}>
+            <p style={{ color: colors.textMuted, fontSize: typography.sm, marginBottom: spacing.md, lineHeight: 1.6 }}>
               Link your social profiles to build trust. You'll receive a "Verified ✓" badge when at least one is added.
             </p>
 
             {/* Twitter */}
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+            <div style={{ marginBottom: spacing.sm }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: typography.sm }}>
                 Twitter / X
               </label>
               <input
@@ -7239,20 +7239,20 @@ function App() {
                 placeholder="@username"
                 style={{
                   width: '100%',
-                  padding: '12px',
+                  padding: spacing.sm,
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
                   color: colors.textPrimary,
-                  fontSize: '0.95rem',
+                  fontSize: typography.base,
                   boxSizing: 'border-box'
                 }}
               />
             </div>
 
             {/* Instagram */}
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+            <div style={{ marginBottom: spacing.sm }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: typography.sm }}>
                 Instagram
               </label>
               <input
@@ -7262,20 +7262,20 @@ function App() {
                 placeholder="@username"
                 style={{
                   width: '100%',
-                  padding: '12px',
+                  padding: spacing.sm,
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
                   color: colors.textPrimary,
-                  fontSize: '0.95rem',
+                  fontSize: typography.base,
                   boxSizing: 'border-box'
                 }}
               />
             </div>
 
             {/* LinkedIn */}
-            <div style={{ marginBottom: '12px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: '0.85rem' }}>
+            <div style={{ marginBottom: spacing.sm }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '6px', fontSize: typography.sm }}>
                 LinkedIn
               </label>
               <input
@@ -7285,12 +7285,12 @@ function App() {
                 placeholder="linkedin.com/in/yourprofile"
                 style={{
                   width: '100%',
-                  padding: '12px',
+                  padding: spacing.sm,
                   background: colors.bgSecondary,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
                   color: colors.textPrimary,
-                  fontSize: '0.95rem',
+                  fontSize: typography.base,
                   boxSizing: 'border-box'
                 }}
               />
@@ -7298,36 +7298,36 @@ function App() {
           </div>
 
           {/* Video Recording Section */}
-          <div style={{ marginBottom: '30px' }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
+          <div style={{ marginBottom: spacing.xxl }}>
+            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>
               Introduction video <span style={{ color: colors.textMuted }}>(optional, 15-30 seconds)</span>
             </label>
 
             {videoError && (
               <div style={{
-                padding: '12px',
+                padding: spacing.sm,
                 background: 'rgba(220, 38, 38, 0.1)',
                 border: '1px solid rgba(220, 38, 38, 0.3)',
-                borderRadius: '12px',
+                borderRadius: '3px',
                 color: '#f87171',
-                marginBottom: '15px',
-                fontSize: '0.85rem',
+                marginBottom: spacing.md,
+                fontSize: typography.sm,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: '10px'
+                gap: spacing.sm
               }}>
                 <span>{videoError}</span>
                 <button
                   onClick={() => startRecording()}
                   style={{
-                    padding: '6px 12px',
+                    padding: `6px ${spacing.sm}`,
                     background: 'rgba(220, 38, 38, 0.2)',
                     border: '1px solid rgba(220, 38, 38, 0.4)',
-                    borderRadius: '6px',
+                    borderRadius: '3px',
                     color: '#f87171',
                     cursor: 'pointer',
-                    fontSize: '0.8rem',
+                    fontSize: typography.xs,
                     whiteSpace: 'nowrap'
                   }}
                 >
@@ -7341,18 +7341,18 @@ function App() {
                 background: colors.bgCard,
                 border: `1px solid ${colors.border}`,
                 borderRadius: '3px',
-                padding: '25px',
+                padding: spacing.lg,
                 textAlign: 'center'
               }}>
                 <div style={{
                   background: colors.accentSoft,
-                  borderRadius: '12px',
-                  padding: '20px',
-                  marginBottom: '20px'
+                  borderRadius: '3px',
+                  padding: spacing.lg,
+                  marginBottom: spacing.lg
                 }}>
                   <p style={{
                     color: colors.textPrimary,
-                    fontSize: '0.95rem',
+                    fontSize: typography.base,
                     lineHeight: 1.6,
                     fontStyle: 'italic',
                     margin: 0
@@ -7360,7 +7360,7 @@ function App() {
                     "In this space, my role is to offer presence without directing, fixing, or advancing an agenda. This is how I personally hold that."
                   </p>
                 </div>
-                <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '20px' }}>
+                <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: spacing.lg }}>
                   Record a single take video sharing how you embody this. Be yourself.
                 </p>
                 <button
