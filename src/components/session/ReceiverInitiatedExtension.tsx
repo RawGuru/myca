@@ -15,6 +15,26 @@ const colors = {
   error: '#d9534f',
 }
 
+// Typography scale (6-step system)
+const typography = {
+  xs: '0.75rem',
+  sm: '0.85rem',
+  base: '0.95rem',
+  md: '1rem',
+  lg: '1.2rem',
+  xl: '1.5rem',
+}
+
+// Spacing scale (4px base unit)
+const spacing = {
+  xs: '8px',
+  sm: '12px',
+  md: '16px',
+  lg: '20px',
+  xl: '24px',
+  xxl: '32px',
+}
+
 interface ReceiverInitiatedExtensionProps {
   bookingId: string
   userRole: 'receiver' | 'giver'
@@ -327,57 +347,57 @@ export function ReceiverInitiatedExtension({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: spacing.lg
       }}>
         <div style={{
           background: colors.bgCard,
           border: `2px solid ${colors.accent}`,
           borderRadius: '3px',
-          padding: '40px',
+          padding: spacing.xxl,
           maxWidth: '500px',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏰</div>
+          <div style={{ fontSize: '3rem', marginBottom: spacing.lg }}>⏰</div>
 
           <h2 style={{
-            fontSize: '1.5rem',
+            fontSize: typography.xl,
             fontWeight: 600,
-            marginBottom: '15px',
+            marginBottom: spacing.md,
             color: colors.textPrimary
           }}>
             Continue for 30 more minutes?
           </h2>
 
           <p style={{
-            fontSize: '1rem',
+            fontSize: typography.md,
             color: colors.textSecondary,
-            marginBottom: '10px',
+            marginBottom: spacing.sm,
             lineHeight: 1.6
           }}>
             Your giver has availability to continue.
           </p>
 
           <p style={{
-            fontSize: '1.1rem',
+            fontSize: typography.lg,
             color: colors.accent,
-            marginBottom: '30px',
+            marginBottom: spacing.xxl,
             fontWeight: 600
           }}>
             ${(amountCents / 100).toFixed(2)} + platform fee
           </p>
 
-          <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ display: 'flex', gap: spacing.md }}>
             <button
               onClick={handleReceiverRequest}
               disabled={processing}
               style={{
                 flex: 1,
-                padding: '16px',
+                padding: spacing.md,
                 background: colors.success,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '3px',
-                fontSize: '1rem',
+                fontSize: typography.md,
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
                 opacity: processing ? 0.6 : 1
@@ -390,12 +410,12 @@ export function ReceiverInitiatedExtension({
               disabled={processing}
               style={{
                 flex: 1,
-                padding: '16px',
+                padding: spacing.md,
                 background: 'transparent',
                 color: colors.textPrimary,
                 border: `1px solid ${colors.border}`,
                 borderRadius: '3px',
-                fontSize: '1rem',
+                fontSize: typography.md,
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
                 opacity: processing ? 0.6 : 1
@@ -423,66 +443,66 @@ export function ReceiverInitiatedExtension({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '20px'
+        padding: spacing.lg
       }}>
         <div style={{
           background: colors.bgCard,
           border: `2px solid ${colors.accent}`,
           borderRadius: '3px',
-          padding: '40px',
+          padding: spacing.xxl,
           maxWidth: '500px',
           textAlign: 'center'
         }}>
-          <div style={{ fontSize: '3rem', marginBottom: '20px' }}>⏰</div>
+          <div style={{ fontSize: '3rem', marginBottom: spacing.lg }}>⏰</div>
 
           <h2 style={{
-            fontSize: '1.5rem',
+            fontSize: typography.xl,
             fontWeight: 600,
-            marginBottom: '15px',
+            marginBottom: spacing.md,
             color: colors.textPrimary
           }}>
             {receiverName} wants to continue
           </h2>
 
           <p style={{
-            fontSize: '1rem',
+            fontSize: typography.md,
             color: colors.textSecondary,
-            marginBottom: '10px',
+            marginBottom: spacing.sm,
             lineHeight: 1.6
           }}>
             Continue for 30 more minutes?
           </p>
 
           <p style={{
-            fontSize: '1.1rem',
+            fontSize: typography.lg,
             color: colors.accent,
-            marginBottom: '20px',
+            marginBottom: spacing.lg,
             fontWeight: 600
           }}>
             ${(amountCents / 100).toFixed(2)}
           </p>
 
           <p style={{
-            fontSize: '0.9rem',
+            fontSize: typography.sm,
             color: colors.textMuted,
-            marginBottom: '30px',
+            marginBottom: spacing.xxl,
             fontFamily: 'monospace'
           }}>
             {responseTimeRemaining}s remaining
           </p>
 
-          <div style={{ display: 'flex', gap: '15px' }}>
+          <div style={{ display: 'flex', gap: spacing.md }}>
             <button
               onClick={handleGiverAccept}
               disabled={processing}
               style={{
                 flex: 1,
-                padding: '16px',
+                padding: spacing.md,
                 background: colors.success,
                 color: '#fff',
                 border: 'none',
                 borderRadius: '3px',
-                fontSize: '1rem',
+                fontSize: typography.md,
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
                 opacity: processing ? 0.6 : 1
@@ -495,12 +515,12 @@ export function ReceiverInitiatedExtension({
               disabled={processing}
               style={{
                 flex: 1,
-                padding: '16px',
+                padding: spacing.md,
                 background: 'rgba(201, 107, 107, 0.9)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '3px',
-                fontSize: '1rem',
+                fontSize: typography.md,
                 fontWeight: 600,
                 cursor: processing ? 'not-allowed' : 'pointer',
                 opacity: processing ? 0.6 : 1

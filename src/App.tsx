@@ -8190,11 +8190,11 @@ function App() {
           <div style={{
             position: 'absolute',
             top: '80px', // Below phase indicator
-            right: '20px',
+            right: spacing.lg,
             zIndex: 10, // Lower z-index to not cover protocol UI
             display: 'flex',
             flexDirection: 'column',
-            gap: '8px',
+            gap: spacing.xs,
           }}>
             <button
               onClick={() => leaveSession(false)}
@@ -8202,17 +8202,17 @@ function App() {
                 background: 'rgba(201, 107, 107, 0.9)',
                 color: '#fff',
                 border: 'none',
-                padding: '12px 20px',
+                padding: `${spacing.sm} ${spacing.lg}`,
                 borderRadius: '3px',
-                fontSize: '0.9rem',
+                fontSize: typography.sm,
                 fontWeight: 500,
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
+                gap: spacing.xs,
               }}
             >
-              <span style={{ fontSize: '1rem' }}>📞</span>
+              <span style={{ fontSize: typography.md }}>📞</span>
               Leave
             </button>
 
@@ -8228,9 +8228,9 @@ function App() {
                   background: 'transparent',
                   color: '#d9534f',
                   border: '1px solid rgba(217, 83, 79, 0.3)',
-                  padding: '6px 12px',
+                  padding: `6px ${spacing.sm}`,
                   borderRadius: '3px',
-                  fontSize: '0.7rem',
+                  fontSize: typography.xs,
                   fontWeight: 400,
                   cursor: 'pointer',
                   opacity: 0.7,
@@ -8250,7 +8250,7 @@ function App() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
+            background: 'rgba(0, 0, 0, 0.85)',
             zIndex: 9999,
             display: 'flex',
             alignItems: 'center',
@@ -8258,7 +8258,7 @@ function App() {
           }}>
             <div style={{
               color: '#fff',
-              fontSize: '1.2rem',
+              fontSize: typography.lg,
               fontWeight: 500,
             }}>
               Ending session...

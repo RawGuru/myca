@@ -120,14 +120,14 @@ export function PhaseIndicator({ currentPhase }: PhaseIndicatorProps) {
       right: 0,
       background: colors.bgSecondary,
       borderBottom: `1px solid ${colors.border}`,
-      padding: '15px 20px',
+      padding: `${spacing.md} ${spacing.lg}`,
       zIndex: 99,
       textAlign: 'center'
     }}>
       <div style={{
-        fontSize: '0.9rem',
+        fontSize: typography.sm,
         color: colors.textSecondary,
-        marginBottom: '8px',
+        marginBottom: spacing.xs,
         fontWeight: 600
       }}>
         {phaseLabels[phase]}
@@ -172,32 +172,32 @@ export function TransmissionPhase({ userRole, sessionTimeRemaining, onDone }: Tr
           <>
             <div style={{
               fontSize: '2.5rem',
-              marginBottom: '12px'
+              marginBottom: spacing.sm
             }}>
               🎙️
             </div>
             <h2 style={{
-              fontSize: '1.3rem',
+              fontSize: typography.xl,
               fontWeight: 600,
-              marginBottom: '10px',
+              marginBottom: spacing.sm,
               color: colors.textPrimary
             }}>
               Your Transmission
             </h2>
             <div style={{
-              fontSize: '1.2rem',
+              fontSize: typography.lg,
               color: colors.textPrimary,
               fontFamily: 'monospace',
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               fontWeight: 500
             }}>
               {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
             </div>
             <p style={{
-              fontSize: '0.95rem',
+              fontSize: typography.base,
               lineHeight: 1.5,
               color: colors.textSecondary,
-              marginBottom: '20px'
+              marginBottom: spacing.lg
             }}>
               Speak until you feel complete. Nothing else is required right now.
             </p>
@@ -212,37 +212,37 @@ export function TransmissionPhase({ userRole, sessionTimeRemaining, onDone }: Tr
           <>
             <div style={{
               fontSize: '2.5rem',
-              marginBottom: '12px'
+              marginBottom: spacing.sm
             }}>
               👂
             </div>
             <h2 style={{
-              fontSize: '1.3rem',
+              fontSize: typography.xl,
               fontWeight: 600,
-              marginBottom: '10px',
+              marginBottom: spacing.sm,
               color: colors.textPrimary
             }}>
               Listening
             </h2>
             <div style={{
-              fontSize: '1.2rem',
+              fontSize: typography.lg,
               color: colors.textPrimary,
               fontFamily: 'monospace',
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               fontWeight: 500
             }}>
               {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
             </div>
             <p style={{
-              fontSize: '0.95rem',
+              fontSize: typography.base,
               lineHeight: 1.5,
               color: colors.textSecondary,
-              marginBottom: '10px'
+              marginBottom: spacing.sm
             }}>
               One person speaks. One person listens. The app enforces it.
             </p>
             <p style={{
-              fontSize: '0.85rem',
+              fontSize: typography.sm,
               color: colors.textMuted
             }}>
               Your mic is OFF
@@ -276,39 +276,39 @@ export function ReflectionPhase({ userRole, sessionTimeRemaining, onDone }: Refl
           <>
             <div style={{
               fontSize: '3rem',
-              marginBottom: '20px'
+              marginBottom: spacing.lg
             }}>
               🔄
             </div>
             <h2 style={{
-              fontSize: '1.5rem',
+              fontSize: typography.xl,
               fontWeight: 600,
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               color: colors.textPrimary
             }}>
               Your Reflection
             </h2>
             <div style={{
-              fontSize: '1.2rem',
+              fontSize: typography.lg,
               color: colors.textPrimary,
               fontFamily: 'monospace',
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               fontWeight: 500
             }}>
               {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
             </div>
             <p style={{
-              fontSize: '1rem',
+              fontSize: typography.md,
               lineHeight: 1.6,
               color: colors.textSecondary,
-              marginBottom: '10px'
+              marginBottom: spacing.sm
             }}>
               Here is what I think you're saying.
             </p>
             <p style={{
-              fontSize: '0.9rem',
+              fontSize: typography.sm,
               color: colors.textMuted,
-              marginBottom: '30px'
+              marginBottom: spacing.xxl
             }}>
               Accuracy matters more than insight.
             </p>
@@ -323,37 +323,37 @@ export function ReflectionPhase({ userRole, sessionTimeRemaining, onDone }: Refl
           <>
             <div style={{
               fontSize: '3rem',
-              marginBottom: '20px'
+              marginBottom: spacing.lg
             }}>
               👂
             </div>
             <h2 style={{
-              fontSize: '1.5rem',
+              fontSize: typography.xl,
               fontWeight: 600,
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               color: colors.textPrimary
             }}>
               Receiving Reflection
             </h2>
             <div style={{
-              fontSize: '1.2rem',
+              fontSize: typography.lg,
               color: colors.textPrimary,
               fontFamily: 'monospace',
-              marginBottom: '15px',
+              marginBottom: spacing.md,
               fontWeight: 500
             }}>
               {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
             </div>
             <p style={{
-              fontSize: '1rem',
+              fontSize: typography.md,
               lineHeight: 1.6,
               color: colors.textSecondary,
-              marginBottom: '15px'
+              marginBottom: spacing.md
             }}>
               The giver is reflecting what they heard. Listen and feel if you were truly understood. Your mic is OFF.
             </p>
             <p style={{
-              fontSize: '0.9rem',
+              fontSize: typography.sm,
               color: colors.textMuted
             }}>
               You'll validate next
@@ -422,29 +422,29 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
         <div style={{ maxWidth: '400px', textAlign: 'center' }}>
           <div style={{
             fontSize: '3rem',
-            marginBottom: '20px'
+            marginBottom: spacing.lg
           }}>
             ⏳
           </div>
           <h2 style={{
-            fontSize: '1.5rem',
+            fontSize: typography.xl,
             fontWeight: 600,
-            marginBottom: '15px',
+            marginBottom: spacing.md,
             color: colors.textPrimary
           }}>
             Waiting for Validation
           </h2>
           <div style={{
-            fontSize: '1.2rem',
+            fontSize: typography.lg,
             color: colors.textPrimary,
             fontFamily: 'monospace',
-            marginBottom: '15px',
+            marginBottom: spacing.md,
             fontWeight: 500
           }}>
             {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
           </div>
           <p style={{
-            fontSize: '1rem',
+            fontSize: typography.md,
             lineHeight: 1.6,
             color: colors.textSecondary
           }}>
@@ -466,28 +466,28 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
               setCustomText('')
             }}
             style={{
-              marginBottom: '20px',
+              marginBottom: spacing.lg,
               background: 'none',
               border: 'none',
               color: colors.textSecondary,
               cursor: 'pointer',
-              fontSize: '0.9rem'
+              fontSize: typography.sm
             }}
           >
             ← Back
           </button>
           <h2 style={{
-            fontSize: '1.3rem',
+            fontSize: typography.xl,
             fontWeight: 600,
-            marginBottom: '20px',
+            marginBottom: spacing.lg,
             color: colors.textPrimary
           }}>
             Request Custom Direction
           </h2>
           <p style={{
-            fontSize: '0.9rem',
+            fontSize: typography.sm,
             color: colors.textSecondary,
-            marginBottom: '15px'
+            marginBottom: spacing.md
           }}>
             Describe what you'd like from the giver (200 character limit)
           </p>
@@ -498,20 +498,20 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
             style={{
               width: '100%',
               minHeight: '100px',
-              padding: '12px',
+              padding: spacing.sm,
               background: colors.bgCard,
               border: `1px solid ${colors.border}`,
               borderRadius: '3px',
               color: colors.textPrimary,
-              fontSize: '1rem',
+              fontSize: typography.md,
               fontFamily: 'inherit',
               resize: 'vertical'
             }}
           />
           <p style={{
-            fontSize: '0.75rem',
+            fontSize: typography.xs,
             color: colors.textMuted,
-            marginTop: '5px',
+            marginTop: '6px',
             textAlign: 'right'
           }}>
             {customText.length}/200
@@ -522,7 +522,7 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
             style={{
               ...buttonStyle,
               width: '100%',
-              marginTop: '15px',
+              marginTop: spacing.md,
               opacity: customText.trim() ? 1 : 0.5,
               cursor: customText.trim() ? 'pointer' : 'not-allowed'
             }}
@@ -540,9 +540,9 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
       <div style={overlayStyle}>
         <div style={{ maxWidth: '450px', width: '100%' }}>
           <h2 style={{
-            fontSize: '1.3rem',
+            fontSize: typography.xl,
             fontWeight: 600,
-            marginBottom: '20px',
+            marginBottom: spacing.lg,
             color: colors.textPrimary,
             textAlign: 'center'
           }}>
@@ -552,15 +552,15 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
           {/* Pre-consented directions */}
           <div style={{
             display: 'grid',
-            gap: '12px',
-            marginBottom: '15px'
+            gap: spacing.sm,
+            marginBottom: spacing.md
           }}>
             {allowedDirections.map(direction => (
               <button
                 key={direction}
                 onClick={() => onYes(direction, 'pre_consented')}
                 style={{
-                  padding: '16px',
+                  padding: spacing.md,
                   background: colors.bgCard,
                   border: `1px solid ${colors.border}`,
                   borderRadius: '3px',
@@ -578,7 +578,7 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
                   {allDirections[direction].label}
                 </div>
                 <div style={{
-                  fontSize: '0.85rem',
+                  fontSize: typography.sm,
                   color: colors.textSecondary
                 }}>
                   {allDirections[direction].description}
@@ -608,47 +608,47 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
       <div style={{ maxWidth: '400px', textAlign: 'center' }}>
         <div style={{
           fontSize: '3rem',
-          marginBottom: '20px'
+          marginBottom: spacing.lg
         }}>
           ✓
         </div>
         <h2 style={{
-          fontSize: '1.5rem',
+          fontSize: typography.xl,
           fontWeight: 600,
-          marginBottom: '15px',
+          marginBottom: spacing.md,
           color: colors.textPrimary
         }}>
           Did they understand you?
         </h2>
         <div style={{
-          fontSize: '1.2rem',
+          fontSize: typography.lg,
           color: colors.textPrimary,
           fontFamily: 'monospace',
-          marginBottom: '15px',
+          marginBottom: spacing.md,
           fontWeight: 500
         }}>
           {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
         </div>
         <p style={{
-          fontSize: '1rem',
+          fontSize: typography.md,
           lineHeight: 1.6,
           color: colors.textSecondary,
-          marginBottom: '30px'
+          marginBottom: spacing.xxl
         }}>
           You decide if you were understood. Not them.
         </p>
 
         {validationAttempts > 0 && (
           <p style={{
-            fontSize: '0.9rem',
+            fontSize: typography.sm,
             color: colors.accent,
-            marginBottom: '20px'
+            marginBottom: spacing.lg
           }}>
             Validation attempt {validationAttempts + 1}
           </p>
         )}
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: spacing.sm }}>
           <button
             style={{ ...buttonStyle, background: colors.success }}
             onClick={() => setShowDirectionSelector(true)}
@@ -664,9 +664,9 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
         </div>
 
         <p style={{
-          fontSize: '0.85rem',
+          fontSize: typography.sm,
           color: colors.textMuted,
-          marginTop: '20px',
+          marginTop: spacing.lg,
           lineHeight: 1.5
         }}>
           Choosing "No" will restart from transmission to clarify.
@@ -722,24 +722,24 @@ export function DirectionPhase({
     return (
       <div style={overlayStyle}>
         <div style={{ maxWidth: '450px', textAlign: 'center' }}>
-          <h2 style={{ fontSize: '1.3rem', fontWeight: 600, marginBottom: '20px', color: colors.textPrimary }}>
+          <h2 style={{ fontSize: typography.xl, fontWeight: 600, marginBottom: spacing.lg, color: colors.textPrimary }}>
             Custom Direction Request
           </h2>
-          <p style={{ fontSize: '1rem', color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.6 }}>
+          <p style={{ fontSize: typography.md, color: colors.textSecondary, marginBottom: spacing.lg, lineHeight: 1.6 }}>
             The receiver has requested:
           </p>
           <div style={{
             background: colors.bgCard,
-            padding: '20px',
+            padding: spacing.lg,
             borderRadius: '3px',
-            marginBottom: '30px',
+            marginBottom: spacing.xxl,
             border: `1px solid ${colors.border}`
           }}>
-            <p style={{ fontSize: '1.1rem', color: colors.textPrimary, lineHeight: 1.6 }}>
+            <p style={{ fontSize: typography.lg, color: colors.textPrimary, lineHeight: 1.6 }}>
               "{directionRequestText}"
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: spacing.sm }}>
             <button
               style={{ ...buttonStyle, flex: 1 }}
               onClick={() => onGiverCustomDirectionResponse(true)}
@@ -782,24 +782,24 @@ export function DirectionPhase({
         right: 0,
         background: colors.bgSecondary,
         borderBottom: `1px solid ${colors.border}`,
-        padding: '15px 20px',
+        padding: `${spacing.md} ${spacing.lg}`,
         zIndex: 98,
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+        <div style={{ fontSize: typography.sm, color: colors.accent, marginBottom: '6px', fontWeight: 600 }}>
           {directionLabels[directionSelected]}
         </div>
-        <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace', marginBottom: '10px' }}>
+        <div style={{ fontSize: typography.lg, color: colors.textPrimary, fontFamily: 'monospace', marginBottom: spacing.sm }}>
           {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
         </div>
 
         {turnState === 'turn1' && (
           <div>
-            <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, marginBottom: spacing.sm }}>
               Turn 1: Receiver proposes next step (Giver listens)
             </p>
             {userRole === 'receiver' && (
-              <button style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }} onClick={handleTurn1Done}>
+              <button style={{ ...buttonStyle, fontSize: typography.sm, padding: `${spacing.sm} ${spacing.lg}` }} onClick={handleTurn1Done}>
                 Done Proposing
               </button>
             )}
@@ -808,11 +808,11 @@ export function DirectionPhase({
 
         {turnState === 'turn2' && (
           <div>
-            <p style={{ fontSize: '0.9rem', color: colors.textSecondary, marginBottom: '10px' }}>
+            <p style={{ fontSize: typography.sm, color: colors.textSecondary, marginBottom: spacing.sm }}>
               Turn 2: Giver responds to proposal (Receiver listens)
             </p>
             {userRole === 'giver' && (
-              <button style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px' }} onClick={handleTurn2Done}>
+              <button style={{ ...buttonStyle, fontSize: typography.sm, padding: `${spacing.sm} ${spacing.lg}` }} onClick={handleTurn2Done}>
                 Done Responding
               </button>
             )}
@@ -820,7 +820,7 @@ export function DirectionPhase({
         )}
 
         {turnState === 'completed' && (
-          <p style={{ fontSize: '0.9rem', color: colors.accent }}>
+          <p style={{ fontSize: typography.sm, color: colors.accent }}>
             Template complete - continue or wind down
           </p>
         )}
@@ -838,20 +838,20 @@ export function DirectionPhase({
         right: 0,
         background: colors.bgSecondary,
         borderBottom: `1px solid ${colors.border}`,
-        padding: '15px 20px',
+        padding: `${spacing.md} ${spacing.lg}`,
         zIndex: 98,
         textAlign: 'center'
       }}>
-        <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+        <div style={{ fontSize: typography.sm, color: colors.accent, marginBottom: '6px', fontWeight: 600 }}>
           {directionLabels[directionSelected]}
         </div>
-        <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace', marginBottom: '10px' }}>
+        <div style={{ fontSize: typography.lg, color: colors.textPrimary, fontFamily: 'monospace', marginBottom: spacing.sm }}>
           {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
         </div>
 
         {showExtensionOption && (
           <button
-            style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
+            style={{ ...buttonStyle, fontSize: typography.sm, padding: `${spacing.sm} ${spacing.lg}`, marginTop: spacing.sm }}
             onClick={onRequestExtension}
           >
             Request +{BLOCK_MINUTES} minutes
@@ -870,20 +870,20 @@ export function DirectionPhase({
       right: 0,
       background: colors.bgSecondary,
       borderBottom: `1px solid ${colors.border}`,
-      padding: '15px 20px',
+      padding: `${spacing.md} ${spacing.lg}`,
       zIndex: 98,
       textAlign: 'center'
     }}>
-      <div style={{ fontSize: '0.85rem', color: colors.accent, marginBottom: '5px', fontWeight: 600 }}>
+      <div style={{ fontSize: typography.sm, color: colors.accent, marginBottom: '6px', fontWeight: 600 }}>
         {directionSelected ? directionLabels[directionSelected] : 'Direction Phase'}
       </div>
-      <div style={{ fontSize: '1.2rem', color: colors.textPrimary, fontFamily: 'monospace' }}>
+      <div style={{ fontSize: typography.lg, color: colors.textPrimary, fontFamily: 'monospace' }}>
         {minutesRemaining}:{secondsRemaining.toString().padStart(2, '0')}
       </div>
 
       {showExtensionOption && (
         <button
-          style={{ ...buttonStyle, fontSize: '0.85rem', padding: '10px 20px', marginTop: '10px' }}
+          style={{ ...buttonStyle, fontSize: typography.sm, padding: `${spacing.sm} ${spacing.lg}`, marginTop: spacing.sm }}
           onClick={onRequestExtension}
         >
           Request +{BLOCK_MINUTES} minutes
@@ -921,30 +921,30 @@ export function SessionEndedSummary({ endReason }: SessionEndedSummaryProps) {
       <div style={{ maxWidth: '400px', textAlign: 'center' }}>
         <div style={{
           fontSize: '4rem',
-          marginBottom: '20px'
+          marginBottom: spacing.lg
         }}>
           ✨
         </div>
         <h2 style={{
-          fontSize: '1.8rem',
+          fontSize: typography.xl,
           fontWeight: 600,
-          marginBottom: '20px',
+          marginBottom: spacing.lg,
           color: colors.textPrimary
         }}>
           Session Ended
         </h2>
 
         <p style={{
-          fontSize: '1rem',
+          fontSize: typography.md,
           lineHeight: 1.6,
           color: colors.textSecondary,
-          marginBottom: '30px'
+          marginBottom: spacing.xxl
         }}>
           {reasonMessages[endReason]}
         </p>
 
         <p style={{
-          fontSize: '0.9rem',
+          fontSize: typography.sm,
           color: colors.textMuted
         }}>
           Please proceed to feedback
