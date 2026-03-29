@@ -245,16 +245,18 @@ interface Booking {
 }
 
 const colors = {
-  bgPrimary: '#000000',
-  bgSecondary: '#0a0a0a',
-  bgCard: '#0f0f0f',
-  textPrimary: '#ffffff',
-  textSecondary: '#CFCFCF',
-  textMuted: 'rgba(255, 255, 255, 0.85)',
-  accent: '#b89d5f',
-  accentSoft: 'rgba(184, 157, 95, 0.1)',
-  border: '#1a1a1a',
-  success: '#b89d5f',
+  bgPrimary: '#060606',
+  bgSecondary: '#0B0B0C',
+  bgCard: '#111214',
+  textPrimary: '#F4F1EA',
+  textSecondary: 'rgba(244, 241, 234, 0.72)',
+  textMuted: 'rgba(244, 241, 234, 0.48)',
+  accent: '#C8AE6A',
+  accentHover: '#D7BE7D',
+  accentSoft: 'rgba(200, 174, 106, 0.1)',
+  border: 'rgba(255,255,255,0.08)',
+  borderEmphasis: 'rgba(200,174,106,0.35)',
+  success: '#C8AE6A',
   error: '#d9534f',
 }
 
@@ -276,6 +278,14 @@ const spacing = {
   lg: '20px',   // 5x
   xl: '24px',   // 6x
   xxl: '32px',  // 8x
+}
+
+// Border radius scale
+const radius = {
+  button: '14px',
+  card: '20px',
+  panel: '24px',
+  pill: '999px',
 }
 
 // Calendar-based availability: specific date + time
@@ -2228,8 +2238,8 @@ function App() {
 
       // Map hash routes to screen states
       if (hash === '#/admin/email-events' || hash === '#/emailEvents') {
-        console.log('[Hash Router] Setting screen to emailEvents')
-        setScreen('emailEvents')
+        console.log('[Hash Router] Admin route blocked, redirecting to sessions')
+        setScreen('sessions')
       } else if (hash === '#/sessions') {
         setScreen('sessions')
       } else if (hash === '#/bookings') {
@@ -3003,7 +3013,7 @@ function App() {
         console.error('JOIN SESSION: HTTP error', response.status, data)
 
         if (response.status === 401) {
-          throw new Error(`401 Unauthorized from ensure-fresh-room. Gateway rejected request. Response: ${JSON.stringify(data)}`)
+          throw new Error('Unable to join the session right now. Please try again.')
         }
 
         throw new Error(`ensure-fresh-room failed: ${data.error || 'Unknown error'} (stage: ${data.stage || 'unknown'})`)
@@ -4059,7 +4069,7 @@ function App() {
 
   const btnStyle: React.CSSProperties = {
     padding: `${spacing.md} ${spacing.xl}`,
-    borderRadius: '3px',
+    borderRadius: radius.button,
     fontSize: typography.base,
     fontWeight: 600,
     cursor: 'pointer',
@@ -4083,8 +4093,8 @@ function App() {
 
   const cardStyle: React.CSSProperties = {
     background: colors.bgCard,
-    border: `1px solid rgba(255, 255, 255, 0.06)`,
-    borderRadius: '3px',
+    border: `1px solid ${colors.border}`,
+    borderRadius: radius.card,
     padding: spacing.xl,
     marginBottom: spacing.xl,
     cursor: 'pointer',
@@ -4108,22 +4118,6 @@ function App() {
 
   const Nav = () => (
     <>
-      {/* Build tag - visible on all screens with nav */}
-      <div style={{
-        position: 'fixed',
-        bottom: '75px',
-        right: '10px',
-        fontSize: '0.6rem',
-        color: colors.textMuted,
-        opacity: 0.4,
-        fontFamily: 'monospace',
-        zIndex: 9999,
-        background: colors.bgPrimary,
-        padding: '2px 5px',
-        borderRadius: '3px'
-      }}>
-        v3-profiles-stripe-debug
-      </div>
       <nav style={navStyle}>
         {[
           { id: 'browse', icon: '🔍', label: 'Find' },
@@ -4444,8 +4438,8 @@ function App() {
     )
   }
 
-  // DEBUG ROUTE: Raw bookings data
-  if (screen === 'debug-bookings') {
+  // DEBUG ROUTE: Raw bookings data (dev-only)
+  if (import.meta.env.DEV && screen === 'debug-bookings') {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, position: 'relative' }}>
@@ -4472,24 +4466,14 @@ function App() {
             <div style={{ marginBottom: spacing.md, color: colors.accent }}>
               Total Bookings: {userBookings.length}
             </div>
-            {JSON.stringify(userBookings.map(b => ({
-              id: b.id,
-              status: b.status,
-              scheduled_time: b.scheduled_time,
-              seeker_id: b.seeker_id,
-              giver_id: b.giver_id,
-              amount_cents: b.amount_cents,
-              stripe_payment_id: b.stripe_payment_id,
-              video_room_url: b.video_room_url ? 'set' : 'null'
-            })), null, 2)}
           </div>
         </div>
       </div>
     )
   }
 
-  // ADMIN ROUTE: Email Events Audit Trail
-  if (screen === 'emailEvents') {
+  // ADMIN ROUTE: Email Events Audit Trail (dev-only)
+  if (import.meta.env.DEV && screen === 'emailEvents') {
     // Fetch email events on mount
     useEffect(() => {
       const fetchEmailEvents = async () => {
@@ -4518,14 +4502,7 @@ function App() {
             console.error('[Email Events] error:', error)
             console.error('[Email Events] error details:', JSON.stringify(error, null, 2))
 
-            // Detailed error message for UI
-            const errorDetails = {
-              message: error.message,
-              code: error.code,
-              details: error.details,
-              hint: error.hint
-            }
-            throw new Error(`${error.message}\n\nDetails: ${JSON.stringify(errorDetails, null, 2)}`)
+            throw new Error('Unable to load email events right now.')
           }
 
           // Never assume data is an array
@@ -4537,11 +4514,9 @@ function App() {
           console.error('[Email Events] error:', err)
 
           // Comprehensive error message for UI
-          let errorMsg = 'Failed to fetch email events'
+          let errorMsg = 'Unable to load email events right now.'
           if (err instanceof Error) {
             errorMsg = err.message
-          } else if (typeof err === 'object' && err !== null) {
-            errorMsg = `${errorMsg}\n\n${JSON.stringify(err, null, 2)}`
           }
 
           setEmailEventsError(errorMsg)
@@ -8423,60 +8398,6 @@ function App() {
           <SignOutButton />
 
           <h2 style={{ fontSize: typography.xl, fontWeight: 600, textAlign: 'center', marginBottom: spacing.sm }}>Your Calls</h2>
-          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-            <button
-              onClick={() => setScreen('debug-bookings')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: colors.textMuted,
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                marginBottom: '5px',
-                width: '100%'
-              }}
-            >
-              [DEV] View Raw Bookings Data
-            </button>
-            <button
-              onClick={() => {
-                setScreen('emailEvents')
-                window.location.hash = '#/admin/email-events'
-              }}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: colors.textMuted,
-                fontSize: '0.75rem',
-                cursor: 'pointer',
-                textDecoration: 'underline',
-                marginBottom: '5px',
-                width: '100%'
-              }}
-            >
-              [ADMIN] Email Events Audit Trail
-            </button>
-            <div style={{
-              fontSize: '0.65rem',
-              color: colors.textMuted,
-              opacity: 0.6,
-              fontFamily: 'monospace'
-            }}>
-              build: v3-profiles-stripe-debug
-            </div>
-            {stripeState && (
-              <div style={{
-                fontSize: '0.6rem',
-                color: colors.textMuted,
-                opacity: 0.5,
-                fontFamily: 'monospace',
-                marginTop: '3px'
-              }}>
-                STRIPE_STATE {JSON.stringify(stripeState)}
-              </div>
-            )}
-          </div>
 
           {/* Giver payout status card - Only show if is_giver true AND hasStripeAccountId false */}
           {(() => {

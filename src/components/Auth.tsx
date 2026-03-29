@@ -4,12 +4,19 @@ import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 
 const colors = {
-  bgPrimary: '#000000',
-  bgSecondary: '#0a0a0a',
-  textPrimary: '#ffffff',
-  textSecondary: '#999999',
-  accent: '#b89d5f',
-  border: '#1a1a1a',
+  bgPrimary: '#060606',
+  bgSecondary: '#0B0B0C',
+  bgCard: '#111214',
+  textPrimary: '#F4F1EA',
+  textSecondary: 'rgba(244, 241, 234, 0.72)',
+  textMuted: 'rgba(244, 241, 234, 0.48)',
+  accent: '#C8AE6A',
+  accentHover: '#D7BE7D',
+  accentSoft: 'rgba(200, 174, 106, 0.1)',
+  border: 'rgba(255,255,255,0.08)',
+  borderEmphasis: 'rgba(200,174,106,0.35)',
+  success: '#C8AE6A',
+  error: '#d9534f',
 }
 
 interface AuthProps {

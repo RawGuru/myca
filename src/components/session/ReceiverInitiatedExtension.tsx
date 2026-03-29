@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 
 const colors = {
-  bgPrimary: '#000000',
-  bgSecondary: '#0a0a0a',
-  bgCard: '#0f0f0f',
-  textPrimary: '#ffffff',
-  textSecondary: '#999999',
-  textMuted: '#666666',
-  accent: '#b89d5f',
-  accentSoft: 'rgba(184, 157, 95, 0.1)',
-  border: '#1a1a1a',
-  success: '#b89d5f',
+  bgPrimary: '#060606',
+  bgSecondary: '#0B0B0C',
+  bgCard: '#111214',
+  textPrimary: '#F4F1EA',
+  textSecondary: 'rgba(244, 241, 234, 0.72)',
+  textMuted: 'rgba(244, 241, 234, 0.48)',
+  accent: '#C8AE6A',
+  accentHover: '#D7BE7D',
+  accentSoft: 'rgba(200, 174, 106, 0.1)',
+  border: 'rgba(255,255,255,0.08)',
+  borderEmphasis: 'rgba(200,174,106,0.35)',
+  success: '#C8AE6A',
   error: '#d9534f',
 }
 
