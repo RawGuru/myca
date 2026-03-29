@@ -6246,6 +6246,8 @@ function App() {
   if (screen === 'payment' && currentBooking && selectedGiver && selectedBookingDate) {
     // PRICING MODEL: amount_cents stores gross amount (what receiver pays)
     const grossAmountCents = currentBooking.amount_cents
+    const netAmountCents = Math.floor(grossAmountCents * (1 - 0.15))
+    const platformFeeCents = grossAmountCents - netAmountCents
     const amountAfterCreditsCents = Math.max(0, grossAmountCents - creditsAppliedCents)
     const totalPayment = amountAfterCreditsCents / 100
     const hasCredits = creditsAppliedCents > 0
@@ -6304,10 +6306,50 @@ function App() {
                 </p>
               </div>
             </div>
+
+            {/* What happens first */}
+            <div style={{
+              marginBottom: spacing.lg,
+              padding: spacing.md,
+              background: colors.bgSecondary,
+              borderRadius: '3px'
+            }}>
+              <h4 style={{
+                fontSize: typography.base,
+                fontWeight: 600,
+                color: colors.textPrimary,
+                marginBottom: spacing.sm
+              }}>
+                What happens first
+              </h4>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6, marginBottom: spacing.xs }}>
+                You will have the floor first.
+              </p>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6, marginBottom: spacing.xs }}>
+                You will not be interrupted.
+              </p>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
+                Your holder will reflect back what they heard before the conversation opens.
+              </p>
+            </div>
+
             <div style={{ borderTop: `1px solid ${colors.border}`, paddingTop: spacing.md }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: hasCredits ? spacing.sm : '0' }}>
-                <span style={{ color: hasCredits ? colors.textSecondary : colors.textPrimary, fontWeight: hasCredits ? 400 : 600, fontSize: typography.base }}>Session</span>
-                <span style={{ fontSize: hasCredits ? typography.md : typography.lg, color: hasCredits ? colors.textSecondary : colors.accent, fontWeight: hasCredits ? 400 : 600 }}>${(grossAmountCents / 100).toFixed(2)}</span>
+              {/* Base rate */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: spacing.xs }}>
+                <span style={{ fontSize: typography.sm, color: colors.textSecondary }}>Session rate</span>
+                <span style={{ fontSize: typography.sm, color: colors.textSecondary }}>${(netAmountCents / 100).toFixed(2)}</span>
+              </div>
+
+              {/* Platform fee */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+                <span style={{ fontSize: typography.sm, color: colors.textSecondary }}>Platform fee</span>
+                <span style={{ fontSize: typography.sm, color: colors.textSecondary }}>${(platformFeeCents / 100).toFixed(2)}</span>
+              </div>
+
+              {/* Total (before credits) */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: spacing.xs, borderTop: `1px solid ${colors.border}`, marginBottom: hasCredits ? spacing.sm : '0' }}>
+                <span style={{ fontSize: typography.base, color: colors.textPrimary, fontWeight: 600 }}>Total</span>
+                <span style={{ fontSize: typography.lg, color: colors.accent, fontWeight: 600 }}>${(grossAmountCents / 100).toFixed(2)}</span>
               </div>
               {hasCredits && (
                 <>
