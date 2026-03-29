@@ -3488,7 +3488,7 @@ function App() {
 
     } catch (err) {
       console.error('[FINALIZE] Error during finalization:', err)
-      alert('Session ended but finalization may be incomplete. Please check your sessions page.')
+      alert('Your session ended, but there may have been a problem saving the final state. Please check Sessions.')
 
       // Clean up anyway to prevent stuck state
       setActiveSession(null)
@@ -7309,7 +7309,7 @@ function App() {
             <div style={{ textAlign: 'center', padding: '60px 20px' }}>
               <p style={{ color: colors.textPrimary, marginBottom: '15px', fontSize: '1.1rem' }}>You already have a giver profile</p>
               <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Manage your video and availability from your profile settings</p>
-              <button style={btnStyle} onClick={() => setScreen('editVideo')}>Manage Availability & Video</button>
+              <button style={btnStyle} onClick={() => setScreen('editVideo')}>Availability & video</button>
               <button style={{ ...btnSecondaryStyle, marginTop: '10px' }} onClick={() => setScreen('manageListings')}>Back to Your rooms</button>
             </div>
           </div>
@@ -9297,7 +9297,7 @@ function App() {
           <SignOutButton />
 
           <h2 style={{ fontSize: typography.xl, fontWeight: 600, textAlign: 'center', marginBottom: spacing.xxl }}>
-            {myGiverProfile ? 'Profile & Settings' : 'Settings'}
+            {myGiverProfile ? 'Account and Profile' : 'Settings'}
           </h2>
 
           {/* Account Info */}
@@ -9628,7 +9628,7 @@ function App() {
                   style={{ ...btnStyle, margin: 0, width: '100%' }}
                   onClick={() => setScreen('give')}
                 >
-                  Manage Availability
+                  Availability
                 </button>
               </div>
 
@@ -9810,7 +9810,7 @@ function App() {
                 }}
               >
                 <span style={{ fontSize: typography.lg }}>+</span>
-                Create Offer
+                Define your session style
               </button>
 
               {/* Manage Availability Button */}
@@ -9834,7 +9834,7 @@ function App() {
                 }}
                 onClick={() => setScreen('manageAvailability')}
               >
-                Manage Availability
+                Availability
               </button>
 
               {/* Offers List */}
