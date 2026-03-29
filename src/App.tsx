@@ -8673,12 +8673,9 @@ function App() {
                   borderRadius: '3px',
                   marginBottom: spacing.lg,
                   fontSize: typography.sm,
-                  fontFamily: 'monospace',
-                  textAlign: 'left'
+                  textAlign: 'center'
                 }}>
-                  <strong>[DEV ERROR]</strong><br/>
-                  Code: {bookingsFetchError.code}<br/>
-                  Message: {bookingsFetchError.message}
+                  Unable to load sessions. Please try again.
                 </div>
               )}
               <div style={{ fontSize: '3rem', marginBottom: spacing.lg }}>📅</div>
@@ -8753,7 +8750,15 @@ function App() {
                         {booking.status === 'confirmed'
                           ? 'Confirmed'
                           : booking.status === 'pending_approval'
-                          ? 'Pending'
+                          ? 'Requested'
+                          : booking.status === 'pending'
+                          ? 'Requested'
+                          : booking.status === 'in_progress'
+                          ? 'Live'
+                          : booking.status === 'completed'
+                          ? 'Completed'
+                          : booking.status === 'cancelled'
+                          ? 'Canceled'
                           : booking.status}
                       </div>
                     </div>
@@ -8941,7 +8946,7 @@ function App() {
                 return giverBookings.length > 0 ? (
                   <div>
                     <h3 style={{ fontSize: typography.base, fontWeight: 500, color: colors.textSecondary, marginBottom: spacing.md }}>
-                      As Giver ({giverBookings.length})
+                      As giver ({giverBookings.length})
                     </h3>
                     {giverBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
@@ -9004,7 +9009,15 @@ function App() {
                         {booking.status === 'confirmed'
                           ? 'Confirmed'
                           : booking.status === 'pending_approval'
-                          ? 'Pending'
+                          ? 'Requested'
+                          : booking.status === 'pending'
+                          ? 'Requested'
+                          : booking.status === 'in_progress'
+                          ? 'Live'
+                          : booking.status === 'completed'
+                          ? 'Completed'
+                          : booking.status === 'cancelled'
+                          ? 'Canceled'
                           : booking.status}
                       </div>
                     </div>
