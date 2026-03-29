@@ -8,6 +8,7 @@ import Auth from './components/Auth'
 import { SessionStateMachine } from './SessionStateMachine'
 import { ReceiverInitiatedExtension } from './components/session/ReceiverInitiatedExtension'
 import { WelcomeScreen } from './screens/WelcomeScreen'
+import ManageListingsScreen from './screens/ManageListingsScreen'
 
 // Video session wrapper to track mount/unmount
 function VideoSessionWrapper({ children }: { children: ReactNode }) {
@@ -9634,190 +9635,54 @@ function App() {
   // === LISTING MANAGEMENT SCREENS (Multi-Listing Architecture) ===
 
   if (screen === 'manageListings') {
-    if (!user) {
-      return (
-        <div style={containerStyle}>
-          <div style={screenStyle}>
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to manage listings</p>
-              <button style={btnStyle} onClick={() => setScreen('welcome')}>Go to Home</button>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
     return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
-          <SignOutButton />
-
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
-            <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Your rooms</h2>
-            <div style={{ width: '40px' }} />
-          </div>
-
-          {listingsLoading ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <p style={{ color: colors.textSecondary }}>Loading...</p>
-            </div>
-          ) : (
-            <>
-              {/* Create New Offer Button */}
-              <button
-                style={{
-                  ...btnStyle,
-                  marginBottom: spacing.sm,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing.xs
-                }}
-                onClick={() => {
-                  // Reset form
-                  setListingFormData({
-                    topic: '',
-                    mode: 'mirror',
-                    price_cents: 2500,
-                    description: '',
-                    selectedCategories: [],
-                    requires_approval: true,
-                    allow_instant_book: false,
-                    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step'],
-                    boundaries: ''
-                  })
-                  setSelectedListing(null)
-                  setScreen('createListing')
-                }}
-              >
-                <span style={{ fontSize: typography.lg }}>+</span>
-                Define your session style
-              </button>
-
-              {/* Manage Availability Button */}
-              <button
-                style={{
-                  padding: `${spacing.md} ${spacing.xl}`,
-                  borderRadius: '3px',
-                  fontSize: typography.base,
-                  fontWeight: 500,
-                  cursor: 'pointer',
-                  border: `1px solid ${colors.border}`,
-                  width: '100%',
-                  background: colors.bgSecondary,
-                  color: colors.textPrimary,
-                  marginBottom: spacing.lg,
-                  letterSpacing: '0.01em',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: spacing.xs
-                }}
-                onClick={() => setScreen('manageAvailability')}
-              >
-                Availability
-              </button>
-
-              {/* Offers List */}
-              {myListings.length === 0 ? (
-                <div style={{ ...cardStyle, cursor: 'default', textAlign: 'center' }}>
-                  <p style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
-                    No offers yet
-                  </p>
-                  <p style={{ color: colors.textMuted, fontSize: typography.base }}>
-                    Create an offer to start
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {myListings.map(listing => {
-                    return (
-                      <div
-                        key={listing.id}
-                        style={{
-                          ...cardStyle,
-                          borderLeft: `3px solid ${colors.accent}`
-                        }}
-                      >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: spacing.sm }}>
-                          <div style={{ flex: 1 }}>
-                            {listing.topic && (
-                              <h3 style={{ fontSize: typography.lg, marginBottom: '6px', fontWeight: 600 }}>
-                                {listing.topic}
-                              </h3>
-                            )}
-                            {/* Show mode badge */}
-                            <span style={{
-                              display: 'inline-block',
-                              padding: '4px 10px',
-                              background: colors.accentSoft,
-                              borderRadius: '3px',
-                              fontSize: typography.xs,
-                              color: colors.accent,
-                              fontWeight: 500
-                            }}>
-                              {MODES.find(m => m.value === listing.mode)?.label || listing.mode?.replace('_', ' ') || 'General'}
-                            </span>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary }}>
-                              ${(listing.price_cents / 100).toFixed(0)}
-                            </div>
-                            <div style={{ fontSize: typography.xs, color: colors.textMuted }}>
-                              per 25-min session
-                            </div>
-                          </div>
-                        </div>
-
-                        {listing.description && (
-                          <p style={{ fontSize: typography.base, color: colors.textSecondary, marginBottom: spacing.sm, lineHeight: '1.5' }}>
-                            {listing.description}
-                          </p>
-                        )}
-
-                        <div style={{ display: 'flex', gap: spacing.xs, marginTop: spacing.md }}>
-                          <button
-                            style={{
-                              flex: 1,
-                              padding: spacing.sm,
-                              background: colors.bgSecondary,
-                              border: `1px solid ${colors.border}`,
-                              borderRadius: '3px',
-                              color: colors.textPrimary,
-                              cursor: 'pointer',
-                              fontSize: typography.base
-                            }}
-                            onClick={() => {
-                              setSelectedListing(listing)
-                              setListingFormData({
-                                topic: listing.topic,
-                                mode: listing.mode,
-                                price_cents: listing.price_cents,
-                                description: listing.description || '',
-                                selectedCategories: listing.categories || [],
-                                requires_approval: listing.requires_approval !== undefined ? listing.requires_approval : true,
-                                allow_instant_book: listing.allow_instant_book || false,
-                                directions_allowed: listing.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
-                                boundaries: listing.boundaries || ''
-                              })
-                              setScreen('editListing')
-                            }}
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </>
-              )}
-            </>
-          )}
-
-          <Nav />
-        </div>
-      </div>
+      <ManageListingsScreen
+        user={user}
+        myListings={myListings}
+        listingsLoading={listingsLoading}
+        modes={MODES}
+        onNavigate={setScreen}
+        onCreateListing={() => {
+          // Reset form
+          setListingFormData({
+            topic: '',
+            mode: 'mirror',
+            price_cents: 2500,
+            description: '',
+            selectedCategories: [],
+            requires_approval: true,
+            allow_instant_book: false,
+            directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step'],
+            boundaries: ''
+          })
+          setSelectedListing(null)
+          setScreen('createListing')
+        }}
+        onEditListing={(listing) => {
+          setSelectedListing(listing)
+          setListingFormData({
+            topic: listing.topic,
+            mode: listing.mode,
+            price_cents: listing.price_cents,
+            description: listing.description || '',
+            selectedCategories: listing.categories || [],
+            requires_approval: listing.requires_approval !== undefined ? listing.requires_approval : true,
+            allow_instant_book: listing.allow_instant_book || false,
+            directions_allowed: listing.directions_allowed || ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
+            boundaries: listing.boundaries || ''
+          })
+          setScreen('editListing')
+        }}
+        Nav={Nav}
+        SignOutButton={SignOutButton}
+        colors={colors}
+        typography={typography}
+        spacing={spacing}
+        containerStyle={containerStyle}
+        screenStyle={screenStyle}
+        btnStyle={btnStyle}
+        cardStyle={cardStyle}
+      />
     )
   }
 
