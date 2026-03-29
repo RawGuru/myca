@@ -7,6 +7,7 @@ import { loadStripe, Stripe } from '@stripe/stripe-js'
 import Auth from './components/Auth'
 import { SessionStateMachine } from './SessionStateMachine'
 import { ReceiverInitiatedExtension } from './components/session/ReceiverInitiatedExtension'
+import { WelcomeScreen } from './screens/WelcomeScreen'
 
 // Video session wrapper to track mount/unmount
 function VideoSessionWrapper({ children }: { children: ReactNode }) {
@@ -4367,140 +4368,21 @@ function App() {
 
   if (screen === 'welcome') {
     return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', position: 'relative', minHeight: '90vh' }}>
-          <SignOutButton />
-
-          {/* MYCA Logo */}
-          <img
-            src="/myca-logo.webp"
-            alt="Myca"
-            style={{
-              width: '200px',
-              height: 'auto',
-              marginBottom: spacing.xxl,
-              opacity: 0.95
-            }}
-          />
-
-          <h1 style={{
-            fontSize: typography.xl,
-            fontWeight: 600,
-            color: colors.textPrimary,
-            maxWidth: '480px',
-            lineHeight: 1.4,
-            marginBottom: spacing.lg,
-            letterSpacing: '-0.02em'
-          }}>
-            Get understood first.
-          </h1>
-          <p style={{
-            fontSize: typography.sm,
-            fontWeight: 400,
-            color: colors.textSecondary,
-            maxWidth: '420px',
-            lineHeight: 1.8,
-            marginBottom: spacing.xxl,
-            marginTop: spacing.sm
-          }}>
-            You speak first without interruption.<br />
-            They reflect back what they heard.<br />
-            Then the conversation opens.
-          </p>
-          <div style={{ width: '100%', maxWidth: '360px', marginTop: spacing.md }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>Get heard</button>
-            <button
-              style={btnSecondaryStyle}
-              onClick={() => {
-                // If user already has a giver profile, go to manage listings
-                // Otherwise, go straight to listing form
-                if (myGiverProfile) {
-                  setScreen('manageListings')
-                } else {
-                  setScreen('createListing')
-                }
-              }}
-            >
-              Become available
-            </button>
-            <p style={{
-              fontSize: typography.sm,
-              color: colors.textMuted,
-              marginTop: spacing.lg,
-              textAlign: 'center'
-            }}>
-              Most people can do both.
-            </p>
-            {!user && (
-              <button
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: colors.textMuted,
-                  cursor: 'pointer',
-                  fontSize: typography.sm,
-                  padding: 0,
-                  marginTop: spacing.lg,
-                  opacity: 0.7
-                }}
-                onClick={() => setNeedsAuth(true)}
-              >
-                Sign in
-              </button>
-            )}
-          </div>
-
-          {/* Three-step section */}
-          <div style={{
-            marginTop: '64px',
-            maxWidth: '480px',
-            width: '100%'
-          }}>
-            {/* Step 1 */}
-            <div style={{ marginBottom: spacing.xl }}>
-              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                Speak first
-              </h3>
-              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
-                You begin without interruption.
-              </p>
-            </div>
-
-            {/* Step 2 */}
-            <div style={{ marginBottom: spacing.xl }}>
-              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                Be reflected back
-              </h3>
-              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
-                Your holder repeats back what they heard.
-              </p>
-            </div>
-
-            {/* Step 3 */}
-            <div style={{ marginBottom: spacing.xl }}>
-              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                Continue with clarity
-              </h3>
-              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
-                Then the conversation opens.
-              </p>
-            </div>
-
-            {/* Closing paragraph */}
-            <p style={{
-              fontSize: typography.sm,
-              color: colors.textSecondary,
-              lineHeight: 1.6,
-              marginTop: spacing.lg,
-              textAlign: 'center'
-            }}>
-              Your attention has weight. When you have room, make yourself available.
-            </p>
-          </div>
-
-          {user && <Nav />}
-        </div>
-      </div>
+      <WelcomeScreen
+        user={user}
+        hasGiverProfile={!!myGiverProfile}
+        onNavigate={setScreen}
+        onRequestAuth={() => setNeedsAuth(true)}
+        Nav={Nav}
+        SignOutButton={SignOutButton}
+        colors={colors}
+        typography={typography}
+        spacing={spacing}
+        containerStyle={containerStyle}
+        screenStyle={screenStyle}
+        btnStyle={btnStyle}
+        btnSecondaryStyle={btnSecondaryStyle}
+      />
     )
   }
 
@@ -9860,9 +9742,11 @@ function App() {
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: spacing.sm }}>
                           <div style={{ flex: 1 }}>
-                            <h3 style={{ fontSize: typography.lg, marginBottom: '6px', fontWeight: 600 }}>
-                              {listing.topic || 'Offer'}
-                            </h3>
+                            {listing.topic && (
+                              <h3 style={{ fontSize: typography.lg, marginBottom: '6px', fontWeight: 600 }}>
+                                {listing.topic}
+                              </h3>
+                            )}
                             {/* Show mode badge */}
                             <span style={{
                               display: 'inline-block',
@@ -9873,7 +9757,7 @@ function App() {
                               color: colors.accent,
                               fontWeight: 500
                             }}>
-                              {listing.mode?.replace('_', ' ') || 'General'}
+                              {MODES.find(m => m.value === listing.mode)?.label || listing.mode?.replace('_', ' ') || 'General'}
                             </span>
                           </div>
                           <div style={{ textAlign: 'right' }}>
