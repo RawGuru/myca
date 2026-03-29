@@ -412,9 +412,9 @@ export function ValidationPhase({ userRole, validationAttempts, sessionTimeRemai
 
   const allDirections: Record<DirectionType, { label: string; description: string }> = {
     go_deeper: { label: 'Go deeper', description: 'Explore this further together' },
-    hear_perspective: { label: 'Hear your perspective', description: 'Share your thoughts' },
-    think_together: { label: 'Think together', description: 'Collaborative dialogue' },
-    build_next_step: { label: 'Define next step', description: 'Plan concrete actions' },
+    hear_perspective: { label: 'Listening and reflection', description: 'Share your thoughts' },
+    think_together: { label: 'Thinking together', description: 'Collaborative dialogue' },
+    build_next_step: { label: 'Clarifying the next move', description: 'Plan concrete actions' },
     end_cleanly: { label: 'Wind down', description: 'Finish gracefully' }
   }
 

@@ -990,7 +990,7 @@ function VideoUpload({
                 style={{ ...buttonStyle, margin: 0, background: colors.accent, color: '#000', border: 'none' }}
                 onClick={startRecording}
               >
-                🎥 Record Video
+                🎥 Record video
               </button>
             )}
             {minDurationSeconds !== undefined && maxDurationSeconds !== undefined && !isRecording && (
@@ -4399,7 +4399,7 @@ function App() {
             Uninterrupted conversation with someone who holds the room.
           </p>
           <div style={{ width: '100%', maxWidth: '360px', marginTop: spacing.md }}>
-            <button style={btnStyle} onClick={() => setScreen('browse')}>Find a person</button>
+            <button style={btnStyle} onClick={() => setScreen('browse')}>Get heard</button>
             <button
               style={btnSecondaryStyle}
               onClick={() => {
@@ -4412,7 +4412,7 @@ function App() {
                 }
               }}
             >
-              Offer your time
+              Become available
             </button>
             {!user && (
               <button
@@ -5136,7 +5136,7 @@ function App() {
                           color: '#fff'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-                            {/* Profile Picture */}
+                            {/* Profile photo */}
                             <div style={{
                               width: '48px',
                               height: '48px',
@@ -5186,7 +5186,7 @@ function App() {
                             margin: `${spacing.sm} 0 0 0`,
                             letterSpacing: '-0.01em'
                           }}>
-                            ${(currentListing.price_cents / 100).toFixed(0)} per block
+                            ${(currentListing.price_cents / 100).toFixed(0)} per 25-min session
                           </p>
                           <p style={{
                             fontSize: typography.xs,
@@ -5226,7 +5226,7 @@ function App() {
                           {currentListing.description || currentListing.topic || giver.bio || 'Available now'}
                         </p>
                         <p style={{ fontSize: '1.3rem', color: colors.accent, fontWeight: 600 }}>
-                          ${(currentListing.price_cents / 100).toFixed(0)} per block
+                          ${(currentListing.price_cents / 100).toFixed(0)} per 25-min session
                         </p>
                         <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '15px' }}>
                           Tap to view profile
@@ -5503,11 +5503,11 @@ function App() {
                       {giver.listings.length} {giver.listings.length === 1 ? 'offering' : 'offerings'}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
-                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} per block
+                      ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} per 25-min session
                     </div>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>per block</span></div>
+                  <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>${giver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '0.9rem' }}>per 25-min session</span></div>
                 )}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <button
@@ -5571,7 +5571,7 @@ function App() {
     return (
       <div style={containerStyle}>
         <div style={{ ...screenStyle, paddingBottom: '100px' }}>
-          {/* Profile Picture */}
+          {/* Profile photo */}
           {selectedGiver.profile_picture_url && (
             <div style={{
               width: '80px',
@@ -5646,7 +5646,7 @@ function App() {
                           ${(listing.price_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                          per block
+                          per 25-min session
                         </div>
                       </div>
                     </div>
@@ -5891,7 +5891,7 @@ function App() {
                   {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'offering' : 'offerings'} available
                 </div>
               ) : selectedGiver.rate_per_30 ? (
-                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>per block</span></div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>per 25-min session</span></div>
               ) : null}
             </div>
           </div>
@@ -5934,7 +5934,7 @@ function App() {
                           ${(listing.price_cents / 100).toFixed(0)}
                         </div>
                         <div style={{ fontSize: '0.75rem', color: colors.textMuted }}>
-                          per block
+                          per 25-min session
                         </div>
                       </div>
                     </div>
@@ -6851,14 +6851,14 @@ function App() {
                   </div>
                 </div>
                 <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: '12px', borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: '0.9rem', fontWeight: 600 }}>
-                  Add Availability
+                  Add these times
                 </button>
               </div>
 
               {/* Current slots list */}
               {availabilitySlots.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
+                  <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Upcoming open times ({availabilitySlots.length})</h4>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
                       <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '3px', marginBottom: '8px', fontSize: '0.85rem' }}>
@@ -6892,20 +6892,17 @@ function App() {
             borderRadius: '12px',
             marginBottom: '20px',
           }}>
-            <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
-              Your Commitment
-            </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
               When someone books your time, they pay upfront.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-              If you cancel: They get refunded. You receive nothing.
+              If you cancel, they are refunded and you receive nothing.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-              If they cancel: You keep their payment.
+              If they cancel, platform policy applies.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
-              Only offer times you can reliably keep.
+              Only open times you can reliably keep.
             </p>
           </div>
 
@@ -6994,14 +6991,14 @@ function App() {
                   </div>
                 </div>
                 <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: typography.base, fontWeight: 600 }}>
-                  Add Availability
+                  Add these times
                 </button>
               </div>
 
               {/* Current slots list */}
               {availabilitySlots.length > 0 && (
                 <div>
-                  <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Your Slots ({availabilitySlots.length})</h4>
+                  <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Upcoming open times ({availabilitySlots.length})</h4>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
                       <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: spacing.sm, background: colors.bgSecondary, borderRadius: '3px', marginBottom: spacing.xs, fontSize: typography.sm }}>
@@ -7042,13 +7039,13 @@ function App() {
               When someone books, they pay upfront.
             </p>
             <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
-              If you cancel: They get refunded. You receive nothing.
+              If you cancel, they are refunded and you receive nothing.
             </p>
             <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
-              If they cancel: You keep their payment.
+              If they cancel, platform policy applies.
             </p>
             <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5, marginTop: spacing.xs }}>
-              Only offer times you can keep.
+              Only open times you can reliably keep.
             </p>
           </div>
 
@@ -7083,7 +7080,7 @@ function App() {
               <p style={{ color: colors.textPrimary, marginBottom: '15px', fontSize: '1.1rem' }}>You already have a giver profile</p>
               <p style={{ color: colors.textSecondary, marginBottom: '30px' }}>Manage your video and availability from your profile settings</p>
               <button style={btnStyle} onClick={() => setScreen('editVideo')}>Manage Availability & Video</button>
-              <button style={{ ...btnSecondaryStyle, marginTop: '10px' }} onClick={() => setScreen('manageListings')}>Back to My Offers</button>
+              <button style={{ ...btnSecondaryStyle, marginTop: '10px' }} onClick={() => setScreen('manageListings')}>Back to Your rooms</button>
             </div>
           </div>
         </div>
@@ -7164,7 +7161,7 @@ function App() {
           {/* Bio/Background */}
           <div style={{ marginBottom: spacing.lg }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.sm }}>
-              Bio/background <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
+              Why do people leave clearer after talking to you? <span style={{ color: colors.textMuted }}>(optional, 500 char max)</span>
             </label>
             <textarea
               value={giverBio}
@@ -7186,7 +7183,7 @@ function App() {
                 resize: 'vertical',
                 fontFamily: 'inherit'
               }}
-              placeholder="Share a bit about your background and experience..."
+              placeholder="Describe what kind of clarity, challenge, steadiness, or perspective you tend to bring."
             />
             <p style={{ color: colors.textMuted, fontSize: typography.xs, marginTop: '6px', textAlign: 'right' }}>
               {giverBio.length}/500
@@ -7555,7 +7552,7 @@ function App() {
                 borderBottom: `2px solid ${colors.border}`
               }}>
                 <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>
-                  Bulk Add Availability
+                  Bulk add these times
                 </h4>
                 <p style={{ fontSize: '0.8rem', color: colors.textMuted, marginBottom: '15px' }}>
                   Add multiple time slots at once for selected days
@@ -7846,20 +7843,17 @@ function App() {
             borderRadius: '12px',
             marginBottom: '20px',
           }}>
-            <p style={{ fontSize: '0.85rem', color: colors.textPrimary, marginBottom: '8px', fontWeight: 600 }}>
-              Your Commitment
-            </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
               When someone books your time, they pay upfront.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-              If you cancel: They get refunded. You receive nothing.
+              If you cancel, they are refunded and you receive nothing.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5 }}>
-              If they cancel: You keep their payment.
+              If they cancel, platform policy applies.
             </p>
             <p style={{ fontSize: '0.8rem', color: colors.textSecondary, lineHeight: 1.5, marginTop: '8px' }}>
-              Only offer times you can reliably keep.
+              Only open times you can reliably keep.
             </p>
           </div>
 
@@ -8009,7 +8003,7 @@ function App() {
             You're all set to receive payments!
           </p>
           <p style={{ color: colors.accent, fontSize: '1.1rem', fontWeight: 500, marginBottom: '30px' }}>
-            You receive ${myGiverProfile?.rate_per_30} per block
+            You receive ${myGiverProfile?.rate_per_30} per 25-min session
           </p>
           <button style={{ ...btnStyle, maxWidth: '320px' }} onClick={() => setScreen('giveConfirmation')}>
             Continue
@@ -8397,7 +8391,7 @@ function App() {
         <div style={{ ...screenStyle, position: 'relative' }}>
           <SignOutButton />
 
-          <h2 style={{ fontSize: typography.xl, fontWeight: 600, textAlign: 'center', marginBottom: spacing.sm }}>Your Calls</h2>
+          <h2 style={{ fontSize: typography.xl, fontWeight: 600, textAlign: 'center', marginBottom: spacing.sm }}>Sessions</h2>
 
           {/* Giver payout status card - Only show if is_giver true AND hasStripeAccountId false */}
           {(() => {
@@ -8479,7 +8473,7 @@ function App() {
                 return seekerBookings.length > 0 ? (
                   <div style={{ marginBottom: spacing.xxl }}>
                     <h3 style={{ fontSize: typography.base, color: colors.textSecondary, marginBottom: spacing.md, fontWeight: 500 }}>
-                      As Seeker ({seekerBookings.length})
+                      As seeker ({seekerBookings.length})
                     </h3>
                     {seekerBookings.map(booking => {
                 const scheduledDate = new Date(booking.scheduled_time)
@@ -9072,9 +9066,9 @@ function App() {
             </div>
           </div>
 
-          {/* Profile Picture */}
+          {/* Profile photo */}
           <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
-            <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Profile Picture</h3>
+            <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Profile photo</h3>
             <ImageUpload
               onUpload={async (publicUrl) => {
                 // Update profile with new picture URL
@@ -9171,7 +9165,7 @@ function App() {
                 </div>
 
                 <div style={{ marginBottom: spacing.md }}>
-                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>Tagline</label>
+                  <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>How do you hold the room?</label>
                   <input
                     value={giverTagline}
                     onChange={(e) => setGiverTagline(e.target.value)}
@@ -9200,7 +9194,7 @@ function App() {
                         setGiverBio(e.target.value)
                       }
                     }}
-                    placeholder="Share a bit about your background..."
+                    placeholder="Describe what kind of clarity, challenge, steadiness, or perspective you tend to bring."
                     style={{
                       width: '100%',
                       padding: spacing.sm,
@@ -9253,13 +9247,13 @@ function App() {
                     width: '100%'
                   }}
                 >
-                  Save Profile
+                  Save
                 </button>
               </div>
 
               {/* Rate */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
-                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Rate</h3>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>Your current rate</h3>
                 <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md }}>
                   <span style={{ color: colors.textPrimary, fontSize: typography.lg }}>$</span>
                   <input
@@ -9287,7 +9281,7 @@ function App() {
                       boxSizing: 'border-box'
                     }}
                   />
-                  <span style={{ color: colors.textSecondary, fontSize: typography.base }}>per block</span>
+                  <span style={{ color: colors.textSecondary, fontSize: typography.base }}>per 25-min session</span>
                 </div>
                 <p style={{ color: colors.textMuted, fontSize: typography.sm, marginBottom: spacing.md }}>Minimum $15</p>
                 <button
@@ -9375,7 +9369,7 @@ function App() {
                       style={{ ...btnStyle, margin: 0, width: '100%' }}
                       onClick={() => setScreen('editVideo')}
                     >
-                      Record Video
+                      Record video
                     </button>
                   </>
                 )}
@@ -9397,7 +9391,7 @@ function App() {
 
               {/* What You Offer */}
               <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
-                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Your Offers</h3>
+                <h3 style={{ fontSize: typography.lg, marginBottom: spacing.xs, fontWeight: 600 }}>Your rooms</h3>
                 <p style={{ color: colors.textSecondary, fontSize: typography.base, marginBottom: spacing.xs }}>
                   Different types of conversations at different prices
                 </p>
@@ -9409,7 +9403,7 @@ function App() {
                     style={{ ...btnStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('createListing')}
                   >
-                    Create Offer
+                    Define your session style
                   </button>
                   <button
                     style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
@@ -9535,7 +9529,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
             <button onClick={() => setScreen('userProfile')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>My Offers</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Your rooms</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -9644,7 +9638,7 @@ function App() {
                               ${(listing.price_cents / 100).toFixed(0)}
                             </div>
                             <div style={{ fontSize: typography.xs, color: colors.textMuted }}>
-                              per block
+                              per 25-min session
                             </div>
                           </div>
                         </div>
@@ -9721,7 +9715,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Create Offer</h2>
+            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Define your session style</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -9732,7 +9726,7 @@ function App() {
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                setListingFormError('Minimum price is $15 per block')
+                setListingFormError('Minimum price is $15 per 25-min session')
                 return
               }
 
@@ -9788,7 +9782,7 @@ function App() {
                 Price <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: typography.sm, marginTop: '-4px', marginBottom: spacing.xs }}>
-                per block ({BLOCK_MINUTES} minutes)
+                per 25-min session ({BLOCK_MINUTES} minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: spacing.sm }}>
                 <span style={{ fontSize: typography.lg, color: colors.textPrimary }}>$</span>
@@ -9819,18 +9813,18 @@ function App() {
             {/* Direction Types Selection */}
             <div id="listing-directions-section" style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
-                Directions you allow <span style={{ color: colors.accent }}>*</span>
+                What kind of room can you hold? <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: spacing.md, lineHeight: 1.5 }}>
                 Which directions they can choose during conversation
               </p>
               {[
                 { value: 'go_deeper', label: 'Keep going', description: 'Continue exploring together', required: true },
-                { value: 'hear_perspective', label: 'Hear your perspective', description: 'Share your thoughts and insights', required: false },
-                { value: 'think_together', label: 'Think together', description: 'Collaborative dialogue with turn-taking', required: false },
-                { value: 'build_next_step', label: 'Define next step', description: 'Help plan concrete actions', required: false },
+                { value: 'hear_perspective', label: 'Listening and reflection', description: 'Share your thoughts and insights', required: false },
+                { value: 'think_together', label: 'Thinking together', description: 'Collaborative dialogue with turn-taking', required: false },
+                { value: 'build_next_step', label: 'Clarifying the next move', description: 'Help plan concrete actions', required: false },
                 { value: 'end_cleanly', label: 'End cleanly', description: 'End conversation gracefully', required: true },
-                { value: 'pressure_test', label: 'Pressure test', description: 'Challenge their thinking directly', required: false }
+                { value: 'pressure_test', label: 'Direct challenge', description: 'Challenge their thinking directly', required: false }
               ].map(direction => (
                 <label
                   key={direction.value}
@@ -9872,7 +9866,7 @@ function App() {
             {/* Hard No's */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
-                Hard no's <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+                Boundaries <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: typography.sm, marginBottom: spacing.xs, lineHeight: 1.5 }}>
                 Topics that will end the conversation
@@ -9908,7 +9902,7 @@ function App() {
                 />
                 <div>
                   <div style={{ color: colors.textPrimary, fontSize: typography.base, fontWeight: 500 }}>
-                    Allow instant booking
+                    Instant booking
                   </div>
                   <div style={{ color: colors.textMuted, fontSize: typography.sm, marginTop: '4px' }}>
                     Bookings confirmed immediately without approval
@@ -9942,7 +9936,7 @@ function App() {
 
             {/* Submit */}
             <button type="submit" style={btnStyle}>
-              Create Offer
+              Define your session style
             </button>
           </form>
 
@@ -9973,7 +9967,7 @@ function App() {
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
             <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit Offer</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit your session style</h2>
             <div style={{ width: '40px' }} />
           </div>
 
@@ -9984,7 +9978,7 @@ function App() {
 
               // Validation
               if (listingFormData.price_cents < 1500) {
-                setListingFormError('Minimum price is $15 per block')
+                setListingFormError('Minimum price is $15 per 25-min session')
                 return
               }
 
@@ -10072,18 +10066,15 @@ function App() {
                   resize: 'vertical'
                 }}
               />
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                Stay within your selected category ({listingFormData.topic.length}/200)
-              </p>
             </div>
 
             {/* STEP 4 - Price for this offering */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Name your price <span style={{ color: colors.accent }}>*</span>
+                Current session rate <span style={{ color: colors.accent }}>*</span>
               </label>
               <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per block ({BLOCK_MINUTES} minutes)
+                per 25-min session ({BLOCK_MINUTES} minutes)
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
@@ -10114,7 +10105,7 @@ function App() {
             {/* STEP 5 - Description */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Make your offer irresistible <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
+                Why do people leave clearer after talking to you? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
               </label>
               <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
                 What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
