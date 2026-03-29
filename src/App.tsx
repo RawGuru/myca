@@ -4384,8 +4384,7 @@ function App() {
             marginBottom: spacing.lg,
             letterSpacing: '-0.02em'
           }}>
-            Get understood first.<br />
-            Everything else is optional.
+            Get understood first.
           </h1>
           <p style={{
             fontSize: typography.sm,
@@ -4396,7 +4395,9 @@ function App() {
             marginBottom: spacing.xxl,
             marginTop: spacing.sm
           }}>
-            Uninterrupted conversation with someone who holds the room.
+            You speak first without interruption.<br />
+            They reflect back what they heard.<br />
+            Then the conversation opens.
           </p>
           <div style={{ width: '100%', maxWidth: '360px', marginTop: spacing.md }}>
             <button style={btnStyle} onClick={() => setScreen('browse')}>Get heard</button>
@@ -4414,6 +4415,14 @@ function App() {
             >
               Become available
             </button>
+            <p style={{
+              fontSize: typography.sm,
+              color: colors.textMuted,
+              marginTop: spacing.lg,
+              textAlign: 'center'
+            }}>
+              Most people can do both.
+            </p>
             {!user && (
               <button
                 style={{
@@ -4432,6 +4441,55 @@ function App() {
               </button>
             )}
           </div>
+
+          {/* Three-step section */}
+          <div style={{
+            marginTop: '64px',
+            maxWidth: '480px',
+            width: '100%'
+          }}>
+            {/* Step 1 */}
+            <div style={{ marginBottom: spacing.xl }}>
+              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
+                Speak first
+              </h3>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
+                You begin without interruption.
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div style={{ marginBottom: spacing.xl }}>
+              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
+                Be reflected back
+              </h3>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
+                Your holder repeats back what they heard.
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div style={{ marginBottom: spacing.xl }}>
+              <h3 style={{ fontSize: typography.lg, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
+                Continue with clarity
+              </h3>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6 }}>
+                Then the conversation opens.
+              </p>
+            </div>
+
+            {/* Closing paragraph */}
+            <p style={{
+              fontSize: typography.sm,
+              color: colors.textSecondary,
+              lineHeight: 1.6,
+              marginTop: spacing.lg,
+              textAlign: 'center'
+            }}>
+              Your attention has weight. When you have room, make yourself available.
+            </p>
+          </div>
+
           {user && <Nav />}
         </div>
       </div>
