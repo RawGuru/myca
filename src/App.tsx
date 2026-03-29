@@ -318,6 +318,7 @@ interface Giver {
   instagram_handle?: string | null
   linkedin_handle?: string | null
   profile_picture_url?: string | null
+  giver_availability?: Array<{ date: string; time: string; is_booked: boolean }> | null
 }
 
 interface UserProfile {
@@ -2057,7 +2058,14 @@ function App() {
       console.log('📥 Fetching givers from profiles...')
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles_public')
-        .select('*')
+        .select(`
+          *,
+          giver_availability!left (
+            date,
+            time,
+            is_booked
+          )
+        `)
         .eq('is_giver', true)
 
       if (profilesError) {
@@ -5365,6 +5373,34 @@ function App() {
     )
   }
 
+  // Helper: compute availability text from giver's availability slots
+  const getGiverAvailabilityText = (availabilitySlots: Array<{ date: string; time: string; is_booked: boolean }> | null | undefined): string => {
+    if (!availabilitySlots || availabilitySlots.length === 0) return ''
+
+    const unbookedSlots = availabilitySlots.filter(slot => !slot.is_booked)
+    if (unbookedSlots.length === 0) return ''
+
+    const today = new Date().toISOString().split('T')[0]
+
+    // Check for today
+    const hasTodaySlot = unbookedSlots.some(slot => slot.date === today)
+    if (hasTodaySlot) return 'Available today'
+
+    // Find next available date
+    const futureSlots = unbookedSlots
+      .filter(slot => slot.date > today)
+      .sort((a, b) => a.date.localeCompare(b.date))
+
+    if (futureSlots.length > 0) {
+      // Use midday parse to avoid timezone weekday drift
+      const nextDate = new Date(`${futureSlots[0].date}T12:00:00`)
+      const dayName = nextDate.toLocaleDateString('en-US', { weekday: 'long' })
+      return `Next available: ${dayName}`
+    }
+
+    return ''
+  }
+
   if (screen === 'browse') {
     return (
       <div style={containerStyle}>
@@ -5516,9 +5552,18 @@ function App() {
                   }}>
                     {giver.tagline}
                   </p>
+                  {(giver.total_sessions_completed || 0) > 0 && (
+                    <p style={{
+                      fontSize: typography.xs,
+                      color: colors.textMuted,
+                      marginTop: spacing.xs
+                    }}>
+                      {giver.total_sessions_completed} booking{giver.total_sessions_completed === 1 ? '' : 's'} completed
+                    </p>
+                  )}
                 </div>
               </div>
-              {giver.bio && (
+              {giver.bio && giver.bio.trim() && (
                 <p style={{
                   fontSize: typography.sm,
                   color: colors.textSecondary,
@@ -5582,7 +5627,11 @@ function App() {
                   >
                     {savedGiverIds.has(giver.id) ? '♥' : '♡'}
                   </button>
-                  <div><span style={{ width: '10px', height: '10px', background: colors.success, borderRadius: '50%', display: 'inline-block', marginRight: '8px' }} />Available</div>
+                  {getGiverAvailabilityText(giver.giver_availability) && (
+                    <div style={{ fontSize: typography.sm, color: colors.textMuted }}>
+                      {getGiverAvailabilityText(giver.giver_availability)}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
