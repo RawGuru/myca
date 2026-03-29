@@ -1182,7 +1182,7 @@ function App() {
     selectedCategories: [] as Category[],
     requires_approval: true as boolean,
     allow_instant_book: false as boolean,
-    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'] as string[],
+    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step'] as string[],
     boundaries: '' as string
   })
   const [listingFormError, setListingFormError] = useState<string | null>(null)
@@ -9708,7 +9708,7 @@ function App() {
                     selectedCategories: [],
                     requires_approval: true,
                     allow_instant_book: false,
-                    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step', 'end_cleanly'],
+                    directions_allowed: ['go_deeper', 'hear_perspective', 'think_together', 'build_next_step'],
                     boundaries: ''
                   })
                   setSelectedListing(null)
@@ -9868,23 +9868,27 @@ function App() {
             <div style={{ width: '40px' }} />
           </div>
 
+          <p style={{ fontSize: typography.sm, color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.xl, maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto', lineHeight: 1.6 }}>
+            This is how people will understand what kind of space you can hold.
+          </p>
+
           <form
             onSubmit={async (e) => {
               e.preventDefault()
               setListingFormError(null)
 
               // Validation
-              if (listingFormData.price_cents < 1500) {
-                setListingFormError('Minimum price is $15 per 25-min session')
+              if (!listingFormData.topic.trim()) {
+                setListingFormError('Please add a one-line description of how you hold the room.')
                 return
               }
 
               const result = await createListing({
-                topic: '', // No longer used - giver offers themselves, not topics
-                mode: 'vault' as Mode, // Default mode - actual mode emerges after validation
-                price_cents: listingFormData.price_cents,
-                description: '', // No longer used
-                categories: [], // No longer used - no category filtering
+                topic: listingFormData.topic.trim(),
+                mode: 'vault' as Mode,
+                price_cents: 2500, // Trial rate fixed at $25
+                description: listingFormData.description.trim(),
+                categories: [],
                 requires_approval: listingFormData.requires_approval,
                 allow_instant_book: listingFormData.allow_instant_book,
                 directions_allowed: listingFormData.directions_allowed,
@@ -9925,8 +9929,78 @@ function App() {
               />
             </div>
 
-            {/* Price */}
+            {/* How do you hold the room? */}
             <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
+                How do you hold the room? <span style={{ color: colors.accent }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={listingFormData.topic}
+                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
+                placeholder="One line. What kind of space do you create?"
+                maxLength={120}
+                required
+                style={{
+                  width: '100%',
+                  padding: spacing.sm,
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '3px',
+                  color: colors.textPrimary,
+                  fontSize: typography.base,
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Who gets the most value from this room? */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
+              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
+                Who gets the most value from this room? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+              </label>
+              <textarea
+                value={listingFormData.description}
+                onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
+                placeholder="Describe the kind of person or situation where you are most useful."
+                maxLength={300}
+                style={{
+                  width: '100%',
+                  minHeight: '90px',
+                  padding: spacing.sm,
+                  background: colors.bgSecondary,
+                  border: `1px solid ${colors.border}`,
+                  borderRadius: '3px',
+                  color: colors.textPrimary,
+                  fontSize: typography.base,
+                  fontFamily: 'inherit',
+                  resize: 'vertical',
+                  boxSizing: 'border-box'
+                }}
+              />
+            </div>
+
+            {/* Trial Pricing Block */}
+            <div style={{
+              background: colors.bgCard,
+              border: `1px solid ${colors.borderEmphasis}`,
+              borderRadius: '3px',
+              padding: spacing.lg,
+              marginBottom: spacing.lg
+            }}>
+              <div style={{ fontSize: typography.base, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
+                Trial
+              </div>
+              <div style={{ fontSize: typography.xl, fontWeight: 600, color: colors.accent, marginBottom: spacing.sm }}>
+                $25 per 25-min session
+              </div>
+              <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.6, margin: 0 }}>
+                Your rate stays fixed during Trial. Graduate by completing 5 clean sessions over at least 14 days, with strong receiver confirmation and no reliability issues.
+              </p>
+            </div>
+
+            {/* Price */}
+            <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg, display: 'none' }}>
               <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.xs, fontSize: typography.base }}>
                 Price <span style={{ color: colors.accent }}>*</span>
               </label>
@@ -9972,7 +10046,6 @@ function App() {
                 { value: 'hear_perspective', label: 'Listening and reflection', description: 'Share your thoughts and insights', required: false },
                 { value: 'think_together', label: 'Thinking together', description: 'Collaborative dialogue with turn-taking', required: false },
                 { value: 'build_next_step', label: 'Clarifying the next move', description: 'Help plan concrete actions', required: false },
-                { value: 'end_cleanly', label: 'End cleanly', description: 'End conversation gracefully', required: true },
                 { value: 'pressure_test', label: 'Direct challenge', description: 'Challenge their thinking directly', required: false }
               ].map(direction => (
                 <label
@@ -10085,7 +10158,7 @@ function App() {
 
             {/* Submit */}
             <button type="submit" style={btnStyle}>
-              Define your session style
+              Create this room
             </button>
           </form>
 
