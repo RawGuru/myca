@@ -169,9 +169,9 @@ export default function EditVideoScreen({
 
         {/* Video Section */}
         <div style={{ marginBottom: '30px' }}>
-          <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-            Your Introduction Video
-          </label>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '15px', color: colors.textPrimary }}>
+            Introduction video
+          </h3>
 
           {myGiverProfile.video_url && !recordedUrl && videoStep === 'done' && (
             <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px', marginBottom: '15px' }}>
@@ -320,9 +320,9 @@ export default function EditVideoScreen({
 
         {/* Availability Section */}
         <div style={{ marginBottom: '30px' }}>
-          <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-            Your Availability
-          </label>
+          <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '15px', color: colors.textPrimary }}>
+            Availability
+          </h3>
 
           <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px' }}>
             {/* Bulk Add */}
@@ -382,7 +382,7 @@ export default function EditVideoScreen({
             {/* Current slots list */}
             {availabilitySlots.length > 0 && (
               <div>
-                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Upcoming open times ({availabilitySlots.length})</h4>
+                <h4 style={{ fontSize: '0.95rem', color: colors.textPrimary, marginBottom: '12px', fontWeight: 600 }}>Upcoming open times</h4>
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   {availabilitySlots.sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).map((slot) => (
                     <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: colors.bgSecondary, borderRadius: '3px', marginBottom: '8px', fontSize: '0.85rem' }}>

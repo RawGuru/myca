@@ -5461,23 +5461,6 @@ function App() {
                   {giver.bio.length > 120 ? `${giver.bio.slice(0, 120)}...` : giver.bio}
                 </p>
               )}
-              {(giver.qualities_offered || []).length > 0 && (
-                <div style={{ marginBottom: spacing.md, marginTop: spacing.md }}>
-                  {(giver.qualities_offered || []).slice(0, 3).map((q, i) => (
-                    <span key={q} style={{
-                      padding: `${spacing.xs} ${spacing.sm}`,
-                      background: i === 0 ? colors.accentSoft : 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '3px',
-                      fontSize: typography.xs,
-                      color: i === 0 ? colors.accent : colors.textMuted,
-                      marginRight: spacing.xs,
-                      border: i === 0 ? 'none' : `1px solid rgba(255, 255, 255, 0.06)`
-                    }}>
-                      {q}
-                    </span>
-                  ))}
-                </div>
-              )}
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
