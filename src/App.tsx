@@ -10,6 +10,7 @@ import { ReceiverInitiatedExtension } from './components/session/ReceiverInitiat
 import { WelcomeScreen } from './screens/WelcomeScreen'
 import ManageListingsScreen from './screens/ManageListingsScreen'
 import CreateListingScreen from './screens/CreateListingScreen'
+import EditListingScreen from './screens/EditListingScreen'
 
 // Video session wrapper to track mount/unmount
 function VideoSessionWrapper({ children }: { children: ReactNode }) {
@@ -9749,202 +9750,52 @@ function App() {
   }
 
   if (screen === 'editListing') {
-    if (!user || !selectedListing) {
-      return (
-        <div style={containerStyle}>
-          <div style={screenStyle}>
-            <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-              <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Offer not found</p>
-              <button style={btnStyle} onClick={() => setScreen('manageListings')}>Back to Offers</button>
-            </div>
-          </div>
-        </div>
-      )
-    }
-
     return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
-          <SignOutButton />
+      <EditListingScreen
+        user={user}
+        selectedListing={selectedListing}
+        listingFormData={listingFormData}
+        listingFormError={listingFormError}
+        onNavigate={setScreen}
+        onUpdateFormData={(updates) => setListingFormData({ ...listingFormData, ...updates })}
+        onSubmit={async (e) => {
+          e.preventDefault()
+          setListingFormError(null)
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-            <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Edit your session style</h2>
-            <div style={{ width: '40px' }} />
-          </div>
+          // Validation
+          if (listingFormData.price_cents < 1500) {
+            setListingFormError('Minimum price is $15 per 25-min session')
+            return
+          }
 
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault()
-              setListingFormError(null)
+          const result = await updateListing(selectedListing!.id, {
+            topic: listingFormData.topic.trim(),
+            price_cents: listingFormData.price_cents,
+            description: listingFormData.description.trim(),
+            categories: listingFormData.selectedCategories
+          })
 
-              // Validation
-              if (listingFormData.price_cents < 1500) {
-                setListingFormError('Minimum price is $15 per 25-min session')
-                return
-              }
-
-              const result = await updateListing(selectedListing.id, {
-                topic: listingFormData.topic.trim(),
-                price_cents: listingFormData.price_cents,
-                description: listingFormData.description.trim(),
-                categories: listingFormData.selectedCategories
-              })
-
-              if (result.success) {
-                setListingFormError(null)
-                setScreen('manageListings')
-              } else {
-                // Show the full error details to user
-                const errorMsg = result.error || 'Failed to update offer'
-                console.error('Update offer error - FULL DETAILS:', errorMsg)
-                setListingFormError(errorMsg)
-              }
-            }}
-          >
-            {/* STEP 2 - What category? */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '12px', fontSize: '0.9rem' }}>
-                What category? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(Select 1-3)</span>
-              </label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {CATEGORIES.map(cat => {
-                  const isSelected = listingFormData.selectedCategories.includes(cat.value)
-                  return (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => {
-                        if (isSelected) {
-                          setListingFormData({
-                            ...listingFormData,
-                            selectedCategories: listingFormData.selectedCategories.filter(c => c !== cat.value)
-                          })
-                        } else if (listingFormData.selectedCategories.length < 3) {
-                          setListingFormData({
-                            ...listingFormData,
-                            selectedCategories: [...listingFormData.selectedCategories, cat.value]
-                          })
-                        }
-                      }}
-                      style={{
-                        padding: '8px 16px',
-                        background: isSelected ? colors.accentSoft : colors.bgSecondary,
-                        border: `1px solid ${isSelected ? colors.accent : colors.border}`,
-                        borderRadius: '3px',
-                        color: isSelected ? colors.accent : colors.textSecondary,
-                        cursor: 'pointer',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      {cat.label}
-                    </button>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* STEP 3 - Specific topics */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Specific topics <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
-              </label>
-              <textarea
-                value={listingFormData.topic}
-                onChange={(e) => setListingFormData({ ...listingFormData, topic: e.target.value })}
-                placeholder="Separate with commas, e.g., judo, divorce recovery, website building"
-                maxLength={200}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '3px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                  minHeight: '80px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical'
-                }}
-              />
-            </div>
-
-            {/* STEP 4 - Price for this offering */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Current session rate <span style={{ color: colors.accent }}>*</span>
-              </label>
-              <p style={{ color: colors.textMuted, fontSize: '0.75rem', marginTop: '-4px', marginBottom: '8px' }}>
-                per 25-min session ({BLOCK_MINUTES} minutes)
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '1.5rem', color: colors.textPrimary }}>$</span>
-                <input
-                  type="number"
-                  min="15"
-                  step="1"
-                  value={listingFormData.price_cents / 100}
-                  onChange={(e) => {
-                    const dollars = parseFloat(e.target.value) || 15
-                    setListingFormData({ ...listingFormData, price_cents: Math.round(dollars * 100) })
-                  }}
-                  style={{
-                    flex: 1,
-                    padding: '12px',
-                    background: colors.bgSecondary,
-                    border: `1px solid ${colors.border}`,
-                    borderRadius: '3px',
-                    color: colors.textPrimary,
-                    fontSize: '1rem',
-                    boxSizing: 'border-box'
-                  }}
-                  required
-                />
-              </div>
-            </div>
-
-            {/* STEP 5 - Description */}
-            <div style={{ ...cardStyle, cursor: 'default', marginBottom: '20px' }}>
-              <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-                Why do people leave clearer after talking to you? <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional but recommended)</span>
-              </label>
-              <p style={{ color: colors.textSecondary, fontSize: '0.85rem', marginBottom: '10px', lineHeight: 1.5 }}>
-                What makes you uniquely qualified? What will someone walk away with? Example: "10+ years as a divorce lawyer. I've seen it all and I'll help you see your situation clearly."
-              </p>
-              <textarea
-                value={listingFormData.description}
-                onChange={(e) => setListingFormData({ ...listingFormData, description: e.target.value })}
-                placeholder="Example: Former Google PM. I'll help you debug your product strategy and ask the hard questions your team won't."
-                maxLength={500}
-                style={{
-                  width: '100%',
-                  padding: '12px',
-                  background: colors.bgSecondary,
-                  border: `1px solid ${colors.border}`,
-                  borderRadius: '3px',
-                  color: colors.textPrimary,
-                  fontSize: '1rem',
-                  boxSizing: 'border-box',
-                  minHeight: '100px',
-                  fontFamily: 'inherit',
-                  resize: 'vertical'
-                }}
-              />
-              <p style={{ color: colors.textMuted, fontSize: '0.85rem', marginTop: '5px' }}>
-                {listingFormData.description.length}/500 characters
-              </p>
-            </div>
-
-            {/* Submit */}
-            <button type="submit" style={btnStyle}>
-              Save Changes
-            </button>
-          </form>
-
-          <Nav />
-        </div>
-      </div>
+          if (result.success) {
+            setListingFormError(null)
+            setScreen('manageListings')
+          } else {
+            const errorMsg = result.error || 'Failed to update offer'
+            console.error('Update offer error - FULL DETAILS:', errorMsg)
+            setListingFormError(errorMsg)
+          }
+        }}
+        categories={CATEGORIES}
+        blockMinutes={BLOCK_MINUTES}
+        Nav={Nav}
+        SignOutButton={SignOutButton}
+        colors={colors}
+        typography={typography}
+        spacing={spacing}
+        containerStyle={containerStyle}
+        screenStyle={screenStyle}
+        btnStyle={btnStyle}
+        cardStyle={cardStyle}
+      />
     )
   }
 
