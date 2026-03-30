@@ -11,6 +11,7 @@ import { WelcomeScreen } from './screens/WelcomeScreen'
 import ManageListingsScreen from './screens/ManageListingsScreen'
 import CreateListingScreen from './screens/CreateListingScreen'
 import EditListingScreen from './screens/EditListingScreen'
+import ManageAvailabilityScreen from './screens/ManageAvailabilityScreen'
 
 // Video session wrapper to track mount/unmount
 function VideoSessionWrapper({ children }: { children: ReactNode }) {
@@ -6947,226 +6948,41 @@ function App() {
   }
 
   if (screen === 'manageAvailability') {
-    if (!user || !myGiverProfile) {
-      return (
-        <div style={containerStyle}>
-          <div style={screenStyle}>
-            <p style={{ color: colors.textSecondary }}>Please set up your giver profile first</p>
-            <button style={btnStyle} onClick={() => setScreen('giverIntro')}>Get Started</button>
-            <Nav />
-          </div>
-        </div>
-      )
-    }
-
     return (
-      <div style={containerStyle}>
-        <div style={{ ...screenStyle, position: 'relative', paddingBottom: '100px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xxl }}>
-            <button onClick={() => setScreen('manageListings')} style={{ width: '40px', height: '40px', borderRadius: '50%', background: colors.bgSecondary, border: `1px solid ${colors.border}`, color: colors.textPrimary, cursor: 'pointer' }}>←</button>
-            <h2 style={{ fontSize: typography.xl, fontWeight: 600 }}>Availability</h2>
-            <div style={{ width: '40px' }} />
-          </div>
-
-          {/* Trial Stage Display */}
-          <div style={{
-            background: colors.bgCard,
-            border: `1px solid ${colors.borderEmphasis}`,
-            borderRadius: '3px',
-            padding: spacing.md,
-            marginBottom: spacing.xl,
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: typography.base, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-              Trial
-            </div>
-            <div style={{ fontSize: typography.sm, color: colors.textSecondary }}>
-              1 session per day
-            </div>
-          </div>
-
-          {/* Availability Section */}
-          <div style={{ marginBottom: spacing.xxl }}>
-            <label style={{ display: 'block', color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.base }}>
-              Next open times
-            </label>
-
-            <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: spacing.lg }}>
-              {/* Bulk Add */}
-              <div style={{ marginBottom: spacing.xl, paddingBottom: spacing.lg, borderBottom: `1px solid ${colors.border}` }}>
-                <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Quick Add</h4>
-                <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.sm }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Date</label>
-                    <input type="date" value={bulkStartDate} onChange={(e) => setBulkStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm, boxSizing: 'border-box' }} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Date</label>
-                    <input type="date" value={bulkEndDate} min={bulkStartDate} onChange={(e) => setBulkEndDate(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm, boxSizing: 'border-box' }} />
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: spacing.sm, marginBottom: spacing.sm }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>Start Time</label>
-                    <select value={bulkStartTime} onChange={(e) => setBulkStartTime(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm }}>
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hour = i.toString().padStart(2, '0')
-                        return [
-                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
-                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
-                        ]
-                      })}
-                    </select>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: '6px' }}>End Time</label>
-                    <select value={bulkEndTime} onChange={(e) => setBulkEndTime(e.target.value)} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: `1px solid ${colors.border}`, background: colors.bgSecondary, color: colors.textPrimary, fontSize: typography.sm }}>
-                      {Array.from({ length: 24 }, (_, i) => {
-                        const hour = i.toString().padStart(2, '0')
-                        return [
-                          <option key={`${hour}:00`} value={`${hour}:00`}>{formatTimeTo12Hour(`${hour}:00`)}</option>,
-                          <option key={`${hour}:30`} value={`${hour}:30`}>{formatTimeTo12Hour(`${hour}:30`)}</option>
-                        ]
-                      })}
-                    </select>
-                  </div>
-                </div>
-                <div style={{ marginBottom: spacing.md }}>
-                  <label style={{ fontSize: typography.sm, color: colors.textSecondary, display: 'block', marginBottom: spacing.xs }}>Days</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: spacing.xs }}>
-                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                      <div key={index} onClick={() => toggleBulkDay(index)} style={{ padding: `${spacing.sm} 0`, borderRadius: '3px', textAlign: 'center', cursor: 'pointer', fontSize: typography.xs, fontWeight: 500, background: bulkSelectedDays.has(index) ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.has(index) ? colors.bgPrimary : colors.textSecondary, border: `1px solid ${bulkSelectedDays.has(index) ? colors.accent : colors.border}`, minWidth: 0 }}>
-                        {day}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <button onClick={addBulkAvailabilitySlots} disabled={bulkSelectedDays.size === 0} style={{ width: '100%', padding: spacing.sm, borderRadius: '3px', border: 'none', background: bulkSelectedDays.size > 0 ? colors.accent : colors.bgSecondary, color: bulkSelectedDays.size > 0 ? colors.bgPrimary : colors.textMuted, cursor: bulkSelectedDays.size > 0 ? 'pointer' : 'not-allowed', fontSize: typography.base, fontWeight: 600 }}>
-                  Add these times
-                </button>
-              </div>
-
-              {/* Grouped slots list */}
-              {availabilitySlots.length > 0 && (
-                <div>
-                  <h4 style={{ fontSize: typography.base, color: colors.textPrimary, marginBottom: spacing.sm, fontWeight: 600 }}>Your open times</h4>
-                  <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                    {(() => {
-                      // Filter to future dates only (including today)
-                      const today = new Date().toISOString().split('T')[0]
-                      const futureSlots = availabilitySlots.filter(slot => slot.date >= today)
-
-                      // Group slots by date
-                      const slotsByDay = futureSlots.reduce((acc, slot) => {
-                        if (!acc[slot.date]) acc[slot.date] = []
-                        acc[slot.date].push(slot)
-                        return acc
-                      }, {} as Record<string, typeof availabilitySlots>)
-
-                      // Sort dates
-                      const sortedDates = Object.keys(slotsByDay).sort()
-
-                      // Get next 7 future days
-                      const next7Days = sortedDates.slice(0, 7)
-                      const additionalDays = sortedDates.slice(7)
-
-                      return (
-                        <>
-                          {/* Next 7 days */}
-                          {next7Days.map(date => (
-                            <div key={date} style={{ marginBottom: spacing.md }}>
-                              <div style={{ fontSize: typography.sm, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                                {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                              </div>
-                              {slotsByDay[date].sort((a, b) => a.time.localeCompare(b.time)).map(slot => (
-                                <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: spacing.xs, paddingLeft: spacing.md, background: colors.bgSecondary, borderRadius: '3px', marginBottom: spacing.xs, fontSize: typography.sm }}>
-                                  <span style={{ color: colors.textPrimary }}>{formatTimeTo12Hour(slot.time)}</span>
-                                  <button onClick={() => removeAvailabilitySlot(slot.id)} style={{ padding: '4px 8px', borderRadius: '3px', border: 'none', background: 'transparent', color: colors.textMuted, cursor: 'pointer', fontSize: typography.sm }}>✕</button>
-                                </div>
-                              ))}
-                            </div>
-                          ))}
-
-                          {/* Show more for additional days */}
-                          {additionalDays.length > 0 && (
-                            <details style={{ marginTop: spacing.md }}>
-                              <summary style={{ fontSize: typography.sm, color: colors.accent, cursor: 'pointer', marginBottom: spacing.sm }}>
-                                Show {additionalDays.length} more {additionalDays.length === 1 ? 'day' : 'days'}
-                              </summary>
-                              {additionalDays.map(date => (
-                                <div key={date} style={{ marginBottom: spacing.md }}>
-                                  <div style={{ fontSize: typography.sm, fontWeight: 600, color: colors.textPrimary, marginBottom: spacing.xs }}>
-                                    {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                                  </div>
-                                  {slotsByDay[date].sort((a, b) => a.time.localeCompare(b.time)).map(slot => (
-                                    <div key={slot.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: spacing.xs, paddingLeft: spacing.md, background: colors.bgSecondary, borderRadius: '3px', marginBottom: spacing.xs, fontSize: typography.sm }}>
-                                      <span style={{ color: colors.textPrimary }}>{formatTimeTo12Hour(slot.time)}</span>
-                                      <button onClick={() => removeAvailabilitySlot(slot.id)} style={{ padding: '4px 8px', borderRadius: '3px', border: 'none', background: 'transparent', color: colors.textMuted, cursor: 'pointer', fontSize: typography.sm }}>✕</button>
-                                    </div>
-                                  ))}
-                                </div>
-                              ))}
-                            </details>
-                          )}
-                        </>
-                      )
-                    })()}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Giver Commitment Policy */}
-          <div style={{
-            padding: spacing.md,
-            background: 'rgba(201, 166, 107, 0.08)',
-            border: `1px solid ${colors.border}`,
-            borderRadius: '3px',
-            marginBottom: spacing.lg,
-          }}>
-            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
-              When someone books, they pay upfront.
-            </p>
-            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
-              If you cancel, they are refunded and you receive nothing.
-            </p>
-            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5 }}>
-              If they cancel, platform policy applies.
-            </p>
-            <p style={{ fontSize: typography.sm, color: colors.textSecondary, lineHeight: 1.5, marginTop: spacing.xs }}>
-              Only open times you can reliably keep.
-            </p>
-          </div>
-
-          {/* Clear All Slots */}
-          {availabilitySlots.length > 0 && (
-            <button onClick={async () => {
-              if (confirm('Remove all slots?')) {
-                for (const slot of availabilitySlots) {
-                  await supabase.from('giver_availability').delete().eq('id', slot.id)
-                }
-                setAvailabilitySlots([])
-              }
-            }} style={{
-              width: '100%',
-              padding: spacing.sm,
-              marginBottom: spacing.lg,
-              background: 'transparent',
-              border: `1px solid rgba(220,38,38,0.2)`,
-              borderRadius: '3px',
-              color: 'rgba(220,38,38,0.6)',
-              cursor: 'pointer',
-              fontSize: typography.sm,
-              fontWeight: 400
-            }}>
-              Clear all slots
-            </button>
-          )}
-
-          <Nav />
-        </div>
-      </div>
+      <ManageAvailabilityScreen
+        user={user}
+        myGiverProfile={myGiverProfile}
+        availabilitySlots={availabilitySlots}
+        bulkStartDate={bulkStartDate}
+        bulkEndDate={bulkEndDate}
+        bulkStartTime={bulkStartTime}
+        bulkEndTime={bulkEndTime}
+        bulkSelectedDays={bulkSelectedDays}
+        onNavigate={setScreen}
+        onSetBulkStartDate={setBulkStartDate}
+        onSetBulkEndDate={setBulkEndDate}
+        onSetBulkStartTime={setBulkStartTime}
+        onSetBulkEndTime={setBulkEndTime}
+        onToggleBulkDay={toggleBulkDay}
+        onAddBulkSlots={addBulkAvailabilitySlots}
+        onRemoveSlot={removeAvailabilitySlot}
+        onClearAllSlots={async () => {
+          if (confirm('Remove all slots?')) {
+            for (const slot of availabilitySlots) {
+              await supabase.from('giver_availability').delete().eq('id', slot.id)
+            }
+            setAvailabilitySlots([])
+          }
+        }}
+        formatTimeTo12Hour={formatTimeTo12Hour}
+        Nav={Nav}
+        colors={colors}
+        typography={typography}
+        spacing={spacing}
+        containerStyle={containerStyle}
+        screenStyle={screenStyle}
+        btnStyle={btnStyle}
+      />
     )
   }
 
