@@ -1233,7 +1233,7 @@ function App() {
           // Parse error to provide helpful message
           const errMsg = insertError.message || ''
           if (errMsg.includes('display_name') || errMsg.includes('name')) {
-            return { success: false, error: 'Please complete your profile with a name before creating an offer' }
+            return { success: false, error: 'Please complete your profile with a name before creating a room' }
           } else if (errMsg.includes('null value')) {
             return { success: false, error: 'Profile is missing required information. Please contact support.' }
           }
@@ -2721,7 +2721,7 @@ function App() {
       console.error('Error creating listing - FULL ERROR:', err)
 
       // Extract detailed error information from Supabase error
-      let errorMessage = 'Failed to create offer'
+      let errorMessage = 'Failed to create room'
       if (err && typeof err === 'object') {
         const supabaseError = err as any
         const parts = []
@@ -2785,7 +2785,7 @@ function App() {
       console.error('Error updating listing - FULL ERROR:', err)
 
       // Extract detailed error information from Supabase error
-      let errorMessage = 'Failed to update offer'
+      let errorMessage = 'Failed to update room'
       if (err && typeof err === 'object') {
         const supabaseError = err as any
         const parts = []
@@ -7223,7 +7223,7 @@ function App() {
           {/* Availability Section - Calendar Based */}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-              Availability * <span style={{ color: colors.textMuted }}>({getTotalSlots()} slots)</span>
+              Availability *
             </label>
 
             <div style={{
@@ -9096,7 +9096,7 @@ function App() {
                   Different types of conversations at different prices
                 </p>
                 <p style={{ color: colors.textMuted, fontSize: typography.sm, marginBottom: spacing.md }}>
-                  {myListings.length} {myListings.length === 1 ? 'offer' : 'offers'}
+                  {myListings.length} {myListings.length === 1 ? 'room' : 'rooms'}
                 </p>
                 <div style={{ display: 'flex', gap: spacing.sm }}>
                   <button
@@ -9109,7 +9109,7 @@ function App() {
                     style={{ ...btnSecondaryStyle, flex: 1, margin: 0 }}
                     onClick={() => setScreen('manageListings')}
                   >
-                    Manage
+                    Manage rooms
                   </button>
                 </div>
               </div>
@@ -9136,7 +9136,7 @@ function App() {
               {myGiverProfile && availabilitySlots.length > 0 && (
                 <div style={{ ...cardStyle, cursor: 'default', marginBottom: spacing.lg }}>
                   <h3 style={{ fontSize: typography.lg, marginBottom: spacing.md, fontWeight: 600 }}>
-                    Upcoming Availability ({availabilitySlots.length} slots)
+                    Upcoming Availability
                   </h3>
                   <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                     {Object.entries(
@@ -9195,7 +9195,7 @@ function App() {
                 style={{ ...btnStyle, margin: 0, width: '100%' }}
                 onClick={() => setScreen('giverIntro')}
               >
-                Offer Your Time
+                Become available
               </button>
             </div>
           )}
@@ -9295,8 +9295,8 @@ function App() {
             setScreen('manageListings')
           } else {
             // Show the full error details to user
-            const errorMsg = result.error || 'Failed to create offer'
-            console.error('Create offer error - FULL DETAILS:', errorMsg)
+            const errorMsg = result.error || 'Failed to create room'
+            console.error('Create room error - FULL DETAILS:', errorMsg)
             setListingFormError(errorMsg)
           }
         }}
@@ -9351,8 +9351,8 @@ function App() {
             setListingFormError(null)
             setScreen('manageListings')
           } else {
-            const errorMsg = result.error || 'Failed to update offer'
-            console.error('Update offer error - FULL DETAILS:', errorMsg)
+            const errorMsg = result.error || 'Failed to update room'
+            console.error('Update room error - FULL DETAILS:', errorMsg)
             setListingFormError(errorMsg)
           }
         }}

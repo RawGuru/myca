@@ -155,7 +155,7 @@ export default function ManageListingsScreen({
               onClick={onCreateListing}
             >
               <span style={{ fontSize: typography.lg }}>+</span>
-              Define your session style
+              Create new room
             </button>
 
             {/* Manage Availability Button */}
@@ -253,7 +253,7 @@ export default function ManageListingsScreen({
                           }}
                           onClick={() => onEditListing(listing)}
                         >
-                          Edit
+                          Edit room
                         </button>
                       </div>
                     </div>

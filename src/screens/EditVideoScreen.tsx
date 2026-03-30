@@ -321,7 +321,7 @@ export default function EditVideoScreen({
         {/* Availability Section */}
         <div style={{ marginBottom: '30px' }}>
           <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '10px', fontSize: '0.9rem' }}>
-            Your Availability <span style={{ color: colors.textMuted }}>({availabilitySlots.length} slots)</span>
+            Your Availability
           </label>
 
           <div style={{ background: colors.bgCard, border: `1px solid ${colors.border}`, borderRadius: '3px', padding: '20px' }}>

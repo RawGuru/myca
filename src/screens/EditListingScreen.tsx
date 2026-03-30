@@ -116,8 +116,8 @@ export default function EditListingScreen({
       <div style={containerStyle}>
         <div style={screenStyle}>
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Offer not found</p>
-            <button style={btnStyle} onClick={() => onNavigate('manageListings')}>Back to Offers</button>
+            <p style={{ color: colors.textSecondary, marginBottom: '20px' }}>Room not found</p>
+            <button style={btnStyle} onClick={() => onNavigate('manageListings')}>Back to Your rooms</button>
           </div>
         </div>
       </div>

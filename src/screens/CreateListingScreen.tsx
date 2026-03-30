@@ -105,7 +105,7 @@ export default function CreateListingScreen({
       <div style={containerStyle}>
         <div style={screenStyle}>
           <div style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to create an offer</p>
+            <p style={{ color: colors.textSecondary, marginBottom: spacing.lg }}>Please sign in to create a room</p>
             <button style={btnStyle} onClick={() => onNavigate('welcome')}>Go to Home</button>
           </div>
         </div>
@@ -363,7 +363,7 @@ export default function CreateListingScreen({
                 <span style={{ fontSize: typography.lg }}>⚠️</span>
                 <div>
                   <p style={{ color: '#fca5a5', fontWeight: 600, marginBottom: '5px', fontSize: typography.base }}>
-                    Cannot create offer
+                    Cannot create room
                   </p>
                   <p style={{ color: colors.textSecondary, fontSize: typography.sm, lineHeight: 1.5 }}>
                     {listingFormError}
