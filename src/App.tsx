@@ -4667,7 +4667,7 @@ function App() {
                 margin: '0 auto 25px'
               }}
             />
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '10px' }}>Quick profile</h2>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '10px' }}>Profile</h2>
             <p style={{ color: colors.textSecondary, fontSize: '0.95rem', lineHeight: 1.6 }}>
               Just the basics so givers know who they're talking to
             </p>
@@ -4721,7 +4721,7 @@ function App() {
           {/* One-liner (Optional) */}
           <div style={{ marginBottom: '30px' }}>
             <label style={{ display: 'block', color: colors.textSecondary, marginBottom: '8px', fontSize: '0.9rem' }}>
-              One-liner <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
+              Tagline <span style={{ color: colors.textMuted, fontWeight: 400 }}>(optional)</span>
             </label>
             <input
               type="text"
@@ -8139,7 +8139,7 @@ function App() {
               <p style={{ marginBottom: spacing.sm, fontSize: typography.base }}>No bookings</p>
               <p style={{ fontSize: typography.sm, marginBottom: spacing.xxl }}>
                 {myGiverProfile
-                  ? 'When someone books you, it appears here'
+                  ? 'Your sessions will appear here'
                   : 'Book time to get started'}
               </p>
               <button
