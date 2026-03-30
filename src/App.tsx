@@ -5600,7 +5600,7 @@ function App() {
           {/* Listings Menu (Multi-listing architecture) */}
           {selectedGiver.listings && selectedGiver.listings.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Rooms</h3>
               {selectedGiver.listings.map(listing => {
                 return (
                   <div
@@ -5668,7 +5668,7 @@ function App() {
                         }
                       }}
                     >
-                      Book This Offering
+                      Select this room
                     </button>
                   </div>
                 )
@@ -5888,7 +5888,7 @@ function App() {
           {/* Listings Menu (Multi-listing architecture) */}
           {selectedGiver.listings && selectedGiver.listings.length > 0 && (
             <div style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Offerings</h3>
+              <h3 style={{ fontSize: '1.3rem', marginBottom: '15px', fontWeight: 600 }}>Rooms</h3>
               {selectedGiver.listings.map(listing => {
                 return (
                   <div
@@ -5956,7 +5956,7 @@ function App() {
                         }
                       }}
                     >
-                      Book This Offering
+                      Select this room
                     </button>
                   </div>
                 )
