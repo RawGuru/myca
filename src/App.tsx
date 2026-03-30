@@ -6039,7 +6039,6 @@ function App() {
                 }}>
                   {availableDates.map(dateStr => {
                     const date = new Date(dateStr + 'T00:00:00')
-                    const slots = slotsByDate[dateStr]
                     return (
                       <div
                         key={dateStr}
@@ -6066,9 +6065,6 @@ function App() {
                             ? colors.accent : colors.textPrimary
                         }}>
                           {formatDate(date)}
-                        </div>
-                        <div style={{ fontSize: typography.xs, color: colors.textMuted, marginTop: '4px' }}>
-                          {slots.length} slot{slots.length > 1 ? 's' : ''}
                         </div>
                       </div>
                     )
