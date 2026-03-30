@@ -5236,7 +5236,7 @@ function App() {
                   style={{ ...btnSecondaryStyle, margin: 0 }}
                   onClick={() => setScreen('giverIntro')}
                 >
-                  Offer time
+                  Become available
                 </button>
               </div>
             </div>
@@ -5490,7 +5490,7 @@ function App() {
                 {giver.listings && giver.listings.length > 0 ? (
                   <div>
                     <div style={{ fontSize: '1.1rem', fontWeight: 600 }}>
-                      {giver.listings.length} {giver.listings.length === 1 ? 'offering' : 'offerings'}
+                      {giver.listings.length} {giver.listings.length === 1 ? 'room' : 'rooms'}
                     </div>
                     <div style={{ fontSize: '0.85rem', color: colors.textSecondary }}>
                       ${Math.min(...giver.listings.map(l => l.price_cents / 100))} - ${Math.max(...giver.listings.map(l => l.price_cents / 100))} per 25-min session
@@ -5882,7 +5882,7 @@ function App() {
               {/* Show listing count or fallback to single rate */}
               {selectedGiver.listings && selectedGiver.listings.length > 0 ? (
                 <div style={{ fontSize: '1.1rem', color: colors.accent }}>
-                  {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'offering' : 'offerings'} available
+                  {selectedGiver.listings.length} {selectedGiver.listings.length === 1 ? 'room' : 'rooms'} available
                 </div>
               ) : selectedGiver.rate_per_30 ? (
                 <div style={{ fontSize: '1.5rem', fontWeight: 600, color: colors.accent }}>${selectedGiver.rate_per_30} <span style={{ fontWeight: 400, color: colors.textSecondary, fontSize: '1rem' }}>per 25-min session</span></div>
@@ -6002,7 +6002,7 @@ function App() {
             {selectedGiver.listings && selectedGiver.listings.length > 0 && (
               <>
                 <p style={{ color: colors.textSecondary, marginBottom: spacing.sm, fontSize: typography.base }}>
-                  Select offering
+                  Select room
                 </p>
                 <div style={{ marginBottom: spacing.lg }}>
                   {selectedGiver.listings.map(listing => {
@@ -6557,7 +6557,7 @@ function App() {
           />
 
           <h2 style={{ fontSize: '1.5rem', fontWeight: 600, marginBottom: '30px' }}>
-            Offer time
+            Become available
           </h2>
 
           <p style={{ fontSize: '1.05rem', color: colors.textSecondary, maxWidth: '380px', lineHeight: 1.7, marginBottom: '60px' }}>
@@ -6565,7 +6565,7 @@ function App() {
           </p>
 
           <div style={{ width: '100%', maxWidth: '320px' }}>
-            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create your first offer</button>
+            <button style={btnStyle} onClick={() => setScreen('createListing')}>Create your first room</button>
             <button style={{ ...btnSecondaryStyle, marginBottom: 0 }} onClick={() => setScreen('giverCode')}>
               How it works <span style={{ fontSize: '0.85rem', opacity: 0.7 }}>(optional)</span>
             </button>
@@ -6633,7 +6633,7 @@ function App() {
             <Auth onBack={() => setScreen('giverIntro')} />
           ) : (
             <>
-              <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Offer</button>
+              <button style={btnStyle} onClick={() => setScreen('give')}>Create Your First Room</button>
               <button
                 style={{
                   background: 'none',
