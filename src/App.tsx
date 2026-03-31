@@ -5682,11 +5682,6 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
                 {selectedGiver.total_sessions_completed} booking{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
               </p>
-              {(selectedGiver.times_joined_late || 0) > 0 && (
-                <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
-                  Joined late {selectedGiver.times_joined_late} time{selectedGiver.times_joined_late === 1 ? '' : 's'}
-                </p>
-              )}
             </div>
           )}
 
@@ -5970,11 +5965,6 @@ function App() {
               <p style={{ fontSize: '0.8rem', color: colors.textMuted }}>
                 {selectedGiver.total_sessions_completed} booking{selectedGiver.total_sessions_completed === 1 ? '' : 's'} completed
               </p>
-              {(selectedGiver.times_joined_late || 0) > 0 && (
-                <p style={{ fontSize: '0.8rem', color: '#dc2626', marginTop: '4px' }}>
-                  Joined late {selectedGiver.times_joined_late} time{selectedGiver.times_joined_late === 1 ? '' : 's'}
-                </p>
-              )}
             </div>
           )}
 
